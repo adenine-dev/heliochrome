@@ -1,5 +1,3 @@
-pub struct Color {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-}
+use crate::maths::*;
+
+vec3_impl!(Color, f32, r, g, b);

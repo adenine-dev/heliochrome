@@ -1,10 +1,15 @@
+#![feature(portable_simd)]
+#![feature(const_trait_impl)]
+
+use maths::{vec2, vec3};
 use softbuffer::GraphicsContext;
 use winit::{
-    event::{Event, WindowEvent},
+    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
 
+mod camera;
 mod color;
 mod context;
 mod image;
@@ -14,10 +19,16 @@ mod maths;
 use wasm_bindgen::prelude::*;
 
 async fn run(event_loop: EventLoop<()>, window: Window) {
-    let mut context = context::Context::new(maths::Size::new(
-        window.inner_size().width as u16,
-        window.inner_size().height as u16,
-    ));
+    let mut context = context::Context::new(
+        maths::Size::new(
+            window.inner_size().width as u16,
+            window.inner_size().height as u16,
+        ),
+        camera::Camera::new(
+            vec3::new(0.0, 0.0, 0.0),
+            window.inner_size().width as f32 / window.inner_size().height as f32,
+        ),
+    );
 
     let mut softbuffer_context = unsafe { GraphicsContext::new(window) }.unwrap();
 
@@ -57,7 +68,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 pub fn heliochrome() {
     let event_loop = EventLoop::new();
     let window = winit::window::WindowBuilder::new()
-        .with_inner_size(winit::dpi::PhysicalSize::new(800, 600))
+        .with_inner_size(winit::dpi::PhysicalSize::new(400, 225))
         .build(&event_loop)
         .unwrap();
 

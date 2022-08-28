@@ -1,17 +1,20 @@
+use crate::camera::Camera;
 use crate::color::Color;
 use crate::image::Image;
-use crate::maths::Size;
+use crate::maths::*;
 
 pub struct Context {
+    pub camera: Camera,
+
     size: Size<u16>,
     image: Image,
-
     pixel_buffer: Vec<u32>,
 }
 
 impl Context {
-    pub fn new(size: Size<u16>) -> Self {
+    pub fn new(size: Size<u16>, camera: Camera) -> Self {
         Self {
+            camera,
             size,
             image: Image::new(size),
             pixel_buffer: vec![0; size.width as usize * size.height as usize],
@@ -30,23 +33,40 @@ impl Context {
         self.size = size;
         self.image = Image::new(size);
         self.pixel_buffer = vec![0; size.width as usize * size.height as usize];
+        self.camera = Camera::new(self.camera.eye, size.width as f32 / size.height as f32);
     }
 
-    pub fn trace(&self, u: f32, v: f32) -> Color {
-        Color { r: u, g: 0.0, b: v }
+    pub fn render_fragment(&self, uv: &vec2) -> Color {
+        let ray = self.camera.get_ray(uv);
+
+        let hit = {
+            let center = vec3::new(0.0, 0.0, 1.0);
+            let radius = 0.5;
+            let oc = ray.origin - center;
+            let a = ray.direction.dot(ray.direction);
+            let b = 2.0 * oc.dot(ray.direction);
+            let c = oc.dot(oc) - radius * radius;
+            let discriminant = b * b - 4.0 * a * c;
+            discriminant > 0.0
+        };
+
+        if hit {
+            Color::new(1.0, 0.0, 0.0)
+        } else {
+            let t = (ray.direction.y + 1.0) / 2.0;
+            (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
+        }
     }
 
     pub fn render(&mut self) -> &Vec<u32> {
         for y in 0..self.size.height {
             for x in 0..self.size.width {
-                self.image.set_pixel(
-                    x,
-                    y,
-                    self.trace(
-                        x as f32 / self.size.width as f32,
-                        y as f32 / self.size.height as f32,
-                    ),
-                )
+                let uv = vec2::new(
+                    x as f32 / (self.size.width - 1) as f32,
+                    y as f32 / (self.size.height - 1) as f32,
+                );
+
+                self.image.set_pixel(x, y, self.render_fragment(&uv))
             }
         }
 
