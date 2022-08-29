@@ -1,7 +1,6 @@
 #![feature(portable_simd)]
 #![feature(const_trait_impl)]
 
-use maths::{vec2, vec3};
 use softbuffer::GraphicsContext;
 use winit::{
     event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
@@ -9,28 +8,16 @@ use winit::{
     window::Window,
 };
 
-mod camera;
-mod color;
-mod context;
-mod image;
-mod maths;
-mod objects;
+mod heliochrome;
+use heliochrome::*;
+
+mod make_context;
+use make_context::make_context;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-async fn run(event_loop: EventLoop<()>, window: Window) {
-    let mut context = context::Context::new(
-        maths::Size::new(
-            window.inner_size().width as u16,
-            window.inner_size().height as u16,
-        ),
-        camera::Camera::new(
-            vec3::new(0.0, 0.0, 0.0),
-            window.inner_size().width as f32 / window.inner_size().height as f32,
-        ),
-    );
-
+async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: Window) {
     let mut softbuffer_context = unsafe { GraphicsContext::new(window) }.unwrap();
 
     event_loop.run(move |event, _, control_flow| {
@@ -67,9 +54,14 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub fn heliochrome() {
+    let context = make_context();
+
     let event_loop = EventLoop::new();
     let window = winit::window::WindowBuilder::new()
-        .with_inner_size(winit::dpi::PhysicalSize::new(400, 225))
+        .with_inner_size(winit::dpi::PhysicalSize::new(
+            context.get_size().width,
+            context.get_size().height,
+        ))
         .build(&event_loop)
         .unwrap();
 
@@ -77,7 +69,7 @@ pub fn heliochrome() {
     {
         env_logger::init();
         // Temporarily avoid srgb formats for the swapchain on the web
-        pollster::block_on(run(event_loop, window));
+        pollster::block_on(run(context, event_loop, window));
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -94,6 +86,6 @@ pub fn heliochrome() {
                     .ok()
             })
             .expect("couldn't append canvas to document body");
-        wasm_bindgen_futures::spawn_local(run(event_loop, window));
+        wasm_bindgen_futures::spawn_local(run(context, event_loop, window));
     }
 }
