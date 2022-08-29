@@ -2,6 +2,7 @@ use crate::camera::Camera;
 use crate::color::Color;
 use crate::image::Image;
 use crate::maths::*;
+use crate::objects::{Hittable, Sphere};
 
 pub struct Context {
     pub camera: Camera,
@@ -38,20 +39,12 @@ impl Context {
 
     pub fn render_fragment(&self, uv: &vec2) -> Color {
         let ray = self.camera.get_ray(uv);
+        let sphere = Sphere::new(vec3::new(0.0, 0.0, -1.0), 0.5);
+        let t = sphere.hit(&ray);
 
-        let hit = {
-            let center = vec3::new(0.0, 0.0, 1.0);
-            let radius = 0.5;
-            let oc = ray.origin - center;
-            let a = ray.direction.dot(ray.direction);
-            let b = 2.0 * oc.dot(ray.direction);
-            let c = oc.dot(oc) - radius * radius;
-            let discriminant = b * b - 4.0 * a * c;
-            discriminant > 0.0
-        };
-
-        if hit {
-            Color::new(1.0, 0.0, 0.0)
+        if t > 0.0 {
+            let normal = (ray.at(t) - sphere.center).normalize();
+            ((normal + vec3::splat(1.0)) / 2.0).into()
         } else {
             let t = (ray.direction.y + 1.0) / 2.0;
             (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
@@ -63,7 +56,7 @@ impl Context {
             for x in 0..self.size.width {
                 let uv = vec2::new(
                     x as f32 / (self.size.width - 1) as f32,
-                    y as f32 / (self.size.height - 1) as f32,
+                    1.0 - (y as f32 / (self.size.height - 1) as f32), // flip
                 );
 
                 self.image.set_pixel(x, y, self.render_fragment(&uv))

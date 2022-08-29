@@ -14,6 +14,7 @@ mod color;
 mod context;
 mod image;
 mod maths;
+mod objects;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
