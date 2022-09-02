@@ -1,11 +1,18 @@
+use std::time::Instant;
+
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::image::Image;
 use crate::maths::*;
-use crate::objects::{Hittable, Sphere};
+use crate::objects::{Hittable, HittableList};
+
+#[cfg(feature = "multithread")]
+use rayon::prelude::*;
 
 pub struct Context {
     pub camera: Camera,
+
+    hittables: HittableList,
 
     size: Size<u16>,
     image: Image,
@@ -16,10 +23,15 @@ impl Context {
     pub fn new(size: Size<u16>, camera: Camera) -> Self {
         Self {
             camera,
+            hittables: HittableList { hittables: vec![] },
             size,
             image: Image::new(size),
             pixel_buffer: vec![0; size.width as usize * size.height as usize],
         }
+    }
+
+    pub fn add_hittable(&mut self, hittable: impl Hittable + 'static) {
+        self.hittables.hittables.push(Box::new(hittable));
     }
 
     pub fn get_size(&self) -> Size<u16> {
@@ -39,43 +51,69 @@ impl Context {
 
     pub fn render_fragment(&self, uv: &vec2) -> Color {
         let ray = self.camera.get_ray(uv);
-        let sphere = Sphere::new(vec3::new(0.0, 0.0, -1.0), 0.5);
-        let t = sphere.hit(&ray);
+        let hit = self.hittables.hit(&ray, 0.0, 1000.0);
 
-        if t > 0.0 {
-            let normal = (ray.at(t) - sphere.center).normalize();
-            ((normal + vec3::splat(1.0)) / 2.0).into()
+        if let Some(mut hit) = hit {
+            if hit.normal.dot(ray.direction) > 0.0 {
+                hit.normal = -hit.normal;
+            }
+            ((hit.normal + vec3::splat(1.0)) / 2.0).into()
         } else {
             let t = (ray.direction.y + 1.0) / 2.0;
-            (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
+            (1.0 - t) * Color::new(0.0, 0.0, 0.0) + t * Color::new(0.1, 0.05, 0.15)
         }
     }
 
     pub fn render(&mut self) -> &Vec<u32> {
-        for y in 0..self.size.height {
-            for x in 0..self.size.width {
-                let uv = vec2::new(
-                    x as f32 / (self.size.width - 1) as f32,
-                    1.0 - (y as f32 / (self.size.height - 1) as f32), // flip
-                );
+        let start = Instant::now();
 
-                self.image.set_pixel(x, y, self.render_fragment(&uv))
-            }
+        let per_pixel = |(i, _)| {
+            let x = i % self.image.size.width as usize;
+            let y = i / self.image.size.width as usize;
+            let uv = vec2::new(
+                x as f32 / (self.size.width - 1) as f32,
+                1.0 - (y as f32 / (self.size.height - 1) as f32), // flip
+            );
+
+            self.render_fragment(&uv)
+        };
+
+        #[cfg(feature = "multithread")]
+        {
+            self.image.buffer = self
+                .image
+                .buffer
+                .par_iter()
+                .enumerate()
+                .map(per_pixel)
+                .collect();
         }
 
-        self.pixel_buffer = self
-            .pixel_buffer
-            .iter()
+        #[cfg(not(feature = "multithread"))]
+        {
+            self.image.buffer = self
+                .image
+                .buffer
+                .iter()
+                .enumerate()
+                .map(per_pixel)
+                .collect();
+        }
+
+        self.pixel_buffer
+            .iter_mut()
             .enumerate()
-            .map(|(idx, _)| {
-                let red = (self.image.buffer[idx * 3 + 0] * 255.999).floor() as u32;
-                let green = (self.image.buffer[idx * 3 + 1] * 255.999).floor() as u32;
-                let blue = (self.image.buffer[idx * 3 + 2] * 255.999).floor() as u32;
+            .for_each(|(i, color)| {
+                let out_color = self.image.buffer[i] * 255.999;
+                let red = (out_color.r).floor() as u32;
+                let green = (out_color.g).floor() as u32;
+                let blue = (out_color.b).floor() as u32;
 
-                blue | (green << 8) | (red << 16)
-            })
-            .collect::<Vec<_>>();
+                *color = blue | (green << 8) | (red << 16)
+            });
 
+        let elapsed = start.elapsed();
+        println!("frame render time: {elapsed:?}");
         &self.pixel_buffer
     }
 }

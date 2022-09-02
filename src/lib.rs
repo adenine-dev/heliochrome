@@ -1,9 +1,10 @@
 #![feature(portable_simd)]
 #![feature(const_trait_impl)]
+#![feature(stmt_expr_attributes)]
 
 use softbuffer::GraphicsContext;
 use winit::{
-    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event::{ElementState, Event, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
@@ -40,6 +41,49 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                     width: size.width as u16,
                     height: size.height as u16,
                 });
+            }
+            Event::WindowEvent {
+                window_id,
+                event:
+                    WindowEvent::KeyboardInput {
+                        device_id: _,
+                        input,
+                        is_synthetic: _,
+                    },
+            } if window_id == softbuffer_context.window().id() => {
+                let mut should_update = true;
+                match input.virtual_keycode {
+                    Some(VirtualKeyCode::A) => {
+                        context.camera.eye -= context.camera.horizontal.normalize();
+                    }
+                    Some(VirtualKeyCode::D) => {
+                        context.camera.eye += context.camera.horizontal.normalize();
+                    }
+                    Some(VirtualKeyCode::W) => {
+                        context.camera.eye += context.camera.vertical.normalize();
+                    }
+                    Some(VirtualKeyCode::S) => {
+                        context.camera.eye -= context.camera.vertical.normalize();
+                    }
+                    Some(VirtualKeyCode::Q) => {
+                        context.camera.eye += context
+                            .camera
+                            .vertical
+                            .cross(context.camera.horizontal)
+                            .normalize();
+                    }
+                    Some(VirtualKeyCode::E) => {
+                        context.camera.eye -= context
+                            .camera
+                            .vertical
+                            .cross(context.camera.horizontal)
+                            .normalize();
+                    }
+                    _ => should_update = false,
+                }
+                if should_update && input.state == ElementState::Released {
+                    softbuffer_context.window().request_redraw();
+                }
             }
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,

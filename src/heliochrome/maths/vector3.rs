@@ -180,6 +180,13 @@ macro_rules! vec3_impl {
                 $n::new(self / rhs.$x, self / rhs.$y, self / rhs.$z)
             }
         }
+
+        impl Neg for $n {
+            type Output = $n;
+            fn neg(self) -> $n {
+                $n::new(-self.$x, -self.$y, -self.$z)
+            }
+        }
     };
 }
 

@@ -1,4 +1,4 @@
-pub(crate) trait Splat<T> {
+pub trait Splat<T> {
     fn splat(val: T) -> Self;
 }
 

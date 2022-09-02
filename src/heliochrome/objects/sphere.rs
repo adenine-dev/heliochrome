@@ -1,4 +1,7 @@
-use crate::{maths::*, objects::Hittable};
+use crate::{
+    maths::*,
+    objects::{Hit, Hittable},
+};
 
 pub struct Sphere {
     pub center: vec3,
@@ -12,17 +15,29 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray) -> f32 {
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
         let oc = ray.origin - self.center;
         let a = ray.direction.mag_sq();
         let half_b = oc.dot(ray.direction);
         let c = oc.mag_sq() - self.radius * self.radius;
-        let discriminant = half_b * half_b - a * c;
 
+        let discriminant = half_b * half_b - a * c;
         if discriminant < 0.0 {
-            -1.0
-        } else {
-            (-half_b - discriminant.sqrt()) / a
+            return None;
         }
+        let sqrt_d = discriminant.sqrt();
+
+        let mut root = (-half_b - sqrt_d) / a;
+        if root < t_min || t_max < root {
+            root = (-half_b + sqrt_d) / a;
+            if root < t_min || t_max < root {
+                return None;
+            }
+        }
+
+        Some(Hit {
+            t: root,
+            normal: ((ray.at(root) - self.center) / self.radius),
+        })
     }
 }
