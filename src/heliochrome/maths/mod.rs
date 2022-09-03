@@ -5,6 +5,7 @@ mod size;
 pub use size::*;
 
 pub use core::ops::*; // to make the impl macros work
+pub use rand::distributions::{Distribution, Uniform};
 mod vector2;
 pub use vector2::*;
 

@@ -2,6 +2,8 @@
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
 
+use std::time::Instant;
+
 use softbuffer::GraphicsContext;
 use winit::{
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
@@ -22,16 +24,31 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
     let mut softbuffer_context = unsafe { GraphicsContext::new(window) }.unwrap();
 
     event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Wait;
+        *control_flow = ControlFlow::Poll;
 
         match event {
             Event::RedrawRequested(window_id) if window_id == softbuffer_context.window().id() => {
-                context.render();
+                let start = Instant::now();
+
+                context.render_sample();
                 softbuffer_context.set_buffer(
                     context.get_pixel_buffer(),
                     context.get_size().width,
                     context.get_size().height,
                 );
+
+                let elapsed = start.elapsed();
+                println!(
+                    "frame render time: {elapsed:?} ({} sample(s))",
+                    context.samples
+                );
+            }
+            Event::MainEventsCleared => {
+                if context.samples < 100 {
+                    softbuffer_context.window().request_redraw();
+                } else {
+                    *control_flow = ControlFlow::Wait;
+                }
             }
             Event::WindowEvent {
                 event: WindowEvent::Resized(size),
@@ -82,6 +99,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                     _ => should_update = false,
                 }
                 if should_update && input.state == ElementState::Released {
+                    context.reset_samples();
                     softbuffer_context.window().request_redraw();
                 }
             }

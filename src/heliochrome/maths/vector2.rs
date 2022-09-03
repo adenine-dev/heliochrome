@@ -1,5 +1,6 @@
 use crate::maths::misc::*;
 use core::ops::*;
+use rand::prelude::*;
 
 macro_rules! vec2_impl {
     ($n:ident, $t:ident, $x:ident, $y:ident) => {
@@ -31,6 +32,11 @@ macro_rules! vec2_impl {
                     $x: $t::splat(0.0),
                     $y: $t::splat(1.0),
                 }
+            }
+
+            pub fn random() -> Self {
+                let mut rng = rand::thread_rng();
+                Self::new(rng.gen(), rng.gen()).normalize()
             }
 
             pub fn dot(&self, other: $n) -> $t {

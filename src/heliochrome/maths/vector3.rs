@@ -1,5 +1,7 @@
 use crate::maths::misc::*;
 use core::ops::*;
+use rand::distributions::{Distribution, Uniform};
+use rand::prelude::*;
 
 macro_rules! vec3_impl {
     ($n:ident, $t:ident, $x:ident, $y:ident, $z:ident) => {
@@ -60,9 +62,30 @@ macro_rules! vec3_impl {
                 )
             }
 
+            pub fn random() -> Self {
+                Self::new(
+                    rand::random::<$t>(),
+                    rand::random::<$t>(),
+                    rand::random::<$t>(),
+                )
+            }
+
+            pub fn random_in_unit_sphere() -> Self {
+                let mut rng = rand::thread_rng();
+                let s = Uniform::new_inclusive(-1.0, 1.0);
+
+                loop {
+                    let ret = Self::new(s.sample(&mut rng), s.sample(&mut rng), s.sample(&mut rng));
+                    if ret.mag_sq() < 1.0 {
+                        return ret;
+                    }
+                }
+            }
+
             pub fn mag_sq(&self) -> $t {
                 (self.$x * self.$x) + (self.$y * self.$y) + (self.$z * self.$z)
             }
+
             pub fn mag(&self) -> $t {
                 self.mag_sq().sqrt()
             }
@@ -70,6 +93,14 @@ macro_rules! vec3_impl {
             pub fn normalize(&mut self) -> Self {
                 *self /= self.mag();
                 *self
+            }
+
+            pub fn sqrt(&self) -> Self {
+                Self::new(self.$x.sqrt(), self.$y.sqrt(), self.$z.sqrt())
+            }
+
+            pub fn powf(&self, n: $t) -> Self {
+                Self::new(self.$x.powf(n), self.$y.powf(n), self.$z.powf(n))
             }
 
             pub fn normalized(&self) -> Self {
