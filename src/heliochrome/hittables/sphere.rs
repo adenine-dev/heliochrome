@@ -1,6 +1,6 @@
 use crate::{
+    hittables::{Hit, Hittable},
     maths::*,
-    objects::{Hit, Hittable},
 };
 
 pub struct Sphere {

@@ -12,8 +12,8 @@ pub fn make_context() -> Context {
         ),
     );
 
-    context.add_hittable(objects::Sphere::new(vec3::new(0.0, 0.0, -1.0), 0.5));
-    context.add_hittable(objects::Sphere::new(vec3::new(0.0, -100.5, -1.0), 100.0));
+    context.add_hittable(hittables::Sphere::new(vec3::new(0.0, 0.0, -1.0), 0.5).into());
+    context.add_hittable(hittables::Sphere::new(vec3::new(0.0, -100.5, -1.0), 100.0).into());
 
     context
 }

@@ -2,7 +2,7 @@ use super::*;
 use crate::heliochrome::maths;
 
 pub struct HittableList {
-    pub hittables: Vec<Box<dyn Hittable>>,
+    pub hittables: Vec<HittableObject>,
 }
 
 impl Hittable for HittableList {

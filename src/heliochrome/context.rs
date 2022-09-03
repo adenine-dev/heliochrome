@@ -2,12 +2,14 @@ use rand::prelude::*;
 
 use crate::camera::Camera;
 use crate::color::Color;
+use crate::hittables::{Hittable, HittableList};
 use crate::image::Image;
 use crate::maths::*;
-use crate::objects::{Hittable, HittableList};
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
+
+use super::hittables::HittableObject;
 
 pub struct Context {
     pub camera: Camera,
@@ -39,8 +41,8 @@ impl Context {
         }
     }
 
-    pub fn add_hittable(&mut self, hittable: impl Hittable + 'static) {
-        self.hittables.hittables.push(Box::new(hittable));
+    pub fn add_hittable(&mut self, hittable: HittableObject) {
+        self.hittables.hittables.push(hittable);
     }
 
     pub fn get_size(&self) -> Size<u16> {

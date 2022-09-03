@@ -26,6 +26,7 @@ pollster = "0.2.5"
 softbuffer = "0.1.1"
 rayon = "1.5.3"
 rand = "0.8"
+enum_dispatch = "0.3.8"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
