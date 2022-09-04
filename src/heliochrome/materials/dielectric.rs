@@ -9,11 +9,12 @@ use crate::heliochrome::{
 
 pub struct Dielectric {
     pub ir: f32,
+    pub color: Color,
 }
 
 impl Dielectric {
-    pub fn new(ir: f32) -> Self {
-        Self { ir }
+    pub fn new(ir: f32, color: Color) -> Self {
+        Self { ir, color }
     }
 }
 
@@ -40,7 +41,7 @@ impl Scatterable for Dielectric {
         };
 
         Some(Scatter {
-            attenuation: Color::splat(1.0),
+            attenuation: self.color,
             outgoing: Ray::new(ray.at(hit.t), direction),
         })
     }
