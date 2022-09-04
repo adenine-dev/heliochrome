@@ -1,7 +1,6 @@
 use crate::maths::misc::*;
 use core::ops::*;
 use rand::distributions::{Distribution, Uniform};
-use rand::prelude::*;
 
 macro_rules! vec3_impl {
     ($n:ident, $t:ident, $x:ident, $y:ident, $z:ident) => {

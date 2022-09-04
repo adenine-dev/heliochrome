@@ -1,5 +1,3 @@
-use rand::prelude::*;
-
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::hittables::{Hittable, HittableList};
@@ -152,9 +150,5 @@ impl Context {
             });
 
         &self.pixel_buffer
-    }
-
-    pub fn render(&mut self) -> &Vec<u32> {
-        self.render_sample()
     }
 }

@@ -16,7 +16,7 @@ pub fn make_context() -> Context {
         hittables::Sphere::new(
             vec3::new(0.0, 0.0, -1.0),
             0.5,
-            Lambertian::new(Color::new(0.8, 0.8, 0.0)).into(),
+            Lambertian::new(Color::new(0.8, 0.3, 1.0)).into(),
         )
         .into(),
     );
@@ -24,7 +24,7 @@ pub fn make_context() -> Context {
         hittables::Sphere::new(
             vec3::new(0.0, -100.5, -1.0),
             100.0,
-            Lambertian::new(Color::new(0.7, 0.3, 0.3)).into(),
+            Lambertian::new(Color::new(0.5, 0.5, 0.5)).into(),
         )
         .into(),
     );
