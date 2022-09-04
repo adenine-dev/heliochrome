@@ -161,32 +161,29 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                     return;
                 }
                 let mut should_update = true;
+                let camera_speed = 0.1;
                 match input.virtual_keycode {
                     Some(VirtualKeyCode::A) => {
-                        context.camera.eye -= context.camera.horizontal.normalize();
+                        context.camera.eye -=
+                            context.camera.at.cross(context.camera.up).normalize() * camera_speed;
                     }
                     Some(VirtualKeyCode::D) => {
-                        context.camera.eye += context.camera.horizontal.normalize();
+                        context.camera.eye +=
+                            context.camera.at.cross(context.camera.up).normalize() * camera_speed;
                     }
                     Some(VirtualKeyCode::W) => {
-                        context.camera.eye += context.camera.vertical.normalize();
+                        context.camera.eye +=
+                            (context.camera.at - context.camera.eye).normalize() * camera_speed;
                     }
                     Some(VirtualKeyCode::S) => {
-                        context.camera.eye -= context.camera.vertical.normalize();
+                        context.camera.eye -=
+                            (context.camera.at - context.camera.eye).normalize() * camera_speed;
                     }
                     Some(VirtualKeyCode::Q) => {
-                        context.camera.eye += context
-                            .camera
-                            .vertical
-                            .cross(context.camera.horizontal)
-                            .normalize();
+                        context.camera.eye += context.camera.up.normalize() * camera_speed;
                     }
                     Some(VirtualKeyCode::E) => {
-                        context.camera.eye -= context
-                            .camera
-                            .vertical
-                            .cross(context.camera.horizontal)
-                            .normalize();
+                        context.camera.eye -= context.camera.up.normalize() * camera_speed;
                     }
                     _ => should_update = false,
                 }

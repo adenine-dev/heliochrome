@@ -4,41 +4,38 @@ pub struct Camera {
     pub eye: vec3,
     pub at: vec3,
     pub up: vec3,
-    pub horizontal: vec3,
-    pub vertical: vec3,
-    pub lower_left: vec3,
     pub vfov: f32,
+    pub aspect_ratio: f32,
 }
 
 impl Camera {
     pub fn new(eye: vec3, at: vec3, up: vec3, vfov: f32, aspect_ratio: f32) -> Self {
-        let h = (vfov.to_radians() / 2.0).tan();
-        let viewport_h = 2.0 * h;
-        let viewport_w = aspect_ratio * viewport_h;
+        Self {
+            eye,
+            at,
+            up,
+            vfov,
+            aspect_ratio,
+        }
+    }
 
-        let w = (eye - at).normalize();
-        let u = up.cross(w).normalize();
+    pub fn get_ray(&self, uv: &vec2) -> Ray {
+        let h = (self.vfov.to_radians() / 2.0).tan();
+        let viewport_h = 2.0 * h;
+        let viewport_w = self.aspect_ratio * viewport_h;
+
+        let w = (self.eye - self.at).normalize();
+        let u = self.up.cross(w).normalize();
         let v = w.cross(u);
 
         let horizontal = viewport_w * u;
         let vertical = viewport_h * v;
 
-        Self {
-            eye,
-            at,
-            up,
-            horizontal,
-            vertical,
-            lower_left: eye - horizontal / 2.0 - vertical / 2.0 - w,
-            vfov,
-        }
-    }
+        let lower_left = self.eye - horizontal / 2.0 - vertical / 2.0 - w;
 
-    pub fn get_ray(&self, uv: &vec2) -> Ray {
         Ray::new(
             self.eye,
-            (self.lower_left + uv.x * self.horizontal + uv.y * self.vertical - self.eye)
-                .normalize(),
+            (lower_left + uv.x * horizontal + uv.y * vertical - self.eye).normalize(),
         )
     }
 }

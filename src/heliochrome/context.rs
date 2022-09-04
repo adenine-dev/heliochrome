@@ -55,6 +55,7 @@ impl Context {
     pub fn reset_samples(&mut self) {
         self.samples = 0;
         self.pixel_buffer = vec![0; self.size.width as usize * self.size.height as usize];
+        self.accumulated_image = Image::new(self.size);
     }
 
     pub fn resize(&mut self, size: Size<u16>) {
@@ -62,13 +63,7 @@ impl Context {
         self.accumulated_image = Image::new(size);
         self.samples = 0;
         self.pixel_buffer = vec![0; size.width as usize * size.height as usize];
-        self.camera = Camera::new(
-            self.camera.eye,
-            self.camera.at,
-            self.camera.up,
-            self.camera.vfov,
-            size.width as f32 / size.height as f32,
-        );
+        self.camera.aspect_ratio = size.width as f32 / size.height as f32;
     }
 
     pub fn render_fragment(&self, uv: &vec2) -> Color {

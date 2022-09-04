@@ -10,7 +10,7 @@ pub fn make_context() -> Context {
             maths::vec3::new(-2.0, 2.0, 1.0),
             maths::vec3::new(0.0, 0.0, -1.0),
             vec3::unit_y(),
-            20.0,
+            90.0,
             WIDTH as f32 / HEIGHT as f32,
         ),
     );
