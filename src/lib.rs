@@ -2,8 +2,17 @@
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
 
-use std::time::Instant;
+use std::{
+    error,
+    fs::File,
+    io::BufWriter,
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
+use instant;
+use log::info;
+use png;
 use softbuffer::GraphicsContext;
 use winit::{
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
@@ -12,13 +21,60 @@ use winit::{
 };
 
 mod heliochrome;
-use heliochrome::*;
+use heliochrome::{maths::Size, *};
 
 mod make_context;
 use make_context::make_context;
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+
+fn write_image(size: Size<u16>, buffer: &[u32]) -> Result<(), Box<dyn error::Error>> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        Err("Cannot save file on web, try right clicking the canvas.")?;
+    }
+
+    let now = SystemTime::now().duration_since(UNIX_EPOCH)?;
+    let pathstr = format!("out_{}.png", now.as_secs()).to_string();
+    let path = Path::new(&pathstr);
+    let file = File::create(path)?;
+
+    let ref mut w = BufWriter::new(file);
+
+    let mut encoder = png::Encoder::new(w, size.width.into(), size.height.into()); // Width is 2 pixels and height is 1.
+    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_depth(png::BitDepth::Eight);
+    encoder.set_source_gamma(png::ScaledFloat::new(1.0 / 2.2)); // 1.0 / 2.2, unscaled, but rounded
+
+    let source_chromaticities = png::SourceChromaticities::new(
+        // Using unscaled instantiation here
+        (0.31270, 0.32900),
+        (0.64000, 0.33000),
+        (0.30000, 0.60000),
+        (0.15000, 0.06000),
+    );
+    encoder.set_source_chromaticities(source_chromaticities);
+    let mut writer = encoder.write_header()?;
+    let data = buffer
+        .iter()
+        .map(|x| {
+            let bytes = x.to_be_bytes();
+            let r = bytes[1];
+            let g = bytes[2];
+            let b = bytes[3];
+            let a = bytes[0];
+
+            [r, g, b, a]
+        })
+        .flatten()
+        .collect::<Vec<_>>();
+
+    writer.write_image_data(data.as_slice())?;
+    // Save
+
+    Ok(())
+}
 
 async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: Window) {
     let mut softbuffer_context = unsafe { GraphicsContext::new(window) }.unwrap();
@@ -28,7 +84,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
 
         match event {
             Event::RedrawRequested(window_id) if window_id == softbuffer_context.window().id() => {
-                let start = Instant::now();
+                let start = instant::Instant::now();
 
                 context.render_sample();
                 softbuffer_context.set_buffer(
@@ -38,7 +94,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                 );
 
                 let elapsed = start.elapsed();
-                println!(
+                info!(
                     "frame render time: {elapsed:?} ({} sample(s))",
                     context.samples
                 );
@@ -68,6 +124,18 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                         is_synthetic: _,
                     },
             } if window_id == softbuffer_context.window().id() => {
+                if input.virtual_keycode == Some(VirtualKeyCode::S) && input.modifiers.ctrl() {
+                    if input.state == ElementState::Released {
+                        if let Err(err) =
+                            write_image(context.get_size(), context.get_pixel_buffer())
+                        {
+                            info!("Could not write image :<\n{}", err.to_string())
+                        } else {
+                            info!("Wrote image.");
+                        }
+                    }
+                    return;
+                }
                 let mut should_update = true;
                 match input.virtual_keycode {
                     Some(VirtualKeyCode::A) => {

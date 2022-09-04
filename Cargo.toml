@@ -27,11 +27,14 @@ softbuffer = "0.1.1"
 rayon = "1.5.3"
 rand = "0.8"
 enum_dispatch = "0.3.8"
+png = "0.17.5"
+instant = "0.1.12"
+log = "0.4.17"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"
 console_log = "0.2.0"
-wgpu = { version = "0.13", features = ["webgl"]}
+wgpu = { version = "0.13", features = ["webgl"] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4.30"
 # wasm-bindgen-rayon = { version = "1.0", features = ["no-bundler"] }
@@ -40,3 +43,4 @@ web-sys = { version = "0.3", features = [
     "Window",
     "Element",
 ]}
+getrandom = { version = "0.2.7", features = ["js"] }

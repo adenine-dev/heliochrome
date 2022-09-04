@@ -127,8 +127,8 @@ impl Context {
 
         #[cfg(not(feature = "multithread"))]
         {
-            self.image.buffer = self
-                .image
+            self.accumulated_image.buffer = self
+                .accumulated_image
                 .buffer
                 .iter()
                 .enumerate()
@@ -148,7 +148,7 @@ impl Context {
                 let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u32;
                 let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u32;
 
-                *color = blue | (green << 8) | (red << 16)
+                *color = blue | (green << 8) | (red << 16) | (0xFF << 24)
             });
 
         &self.pixel_buffer
