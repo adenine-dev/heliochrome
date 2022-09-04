@@ -80,12 +80,8 @@ impl Context {
                 }
                 if let Some(scatter) = hit.material.scatter(&ray, &hit) {
                     color *= scatter.attenuation;
+                    ray = scatter.outgoing;
                 }
-
-                ray = Ray::new(
-                    ray.at(hit.t),
-                    hit.normal + vec3::random_in_unit_sphere().normalize(),
-                );
             } else {
                 let t = (ray.direction.y + 1.0) / 2.0;
                 color *= (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);

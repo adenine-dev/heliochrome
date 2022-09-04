@@ -111,6 +111,10 @@ macro_rules! vec3_impl {
             pub fn normalized(&self) -> Self {
                 self.clone().normalize()
             }
+
+            pub fn reflect_over(&self, n: $n) -> Self {
+                *self - (2.0 * self.dot(n) * n)
+            }
         }
 
         impl Add for $n {
