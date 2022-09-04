@@ -1,19 +1,16 @@
-const WIDTH: u16 = 640;
-const HEIGHT: u16 = 360;
+const WIDTH: u16 = 400;
+const HEIGHT: u16 = 225;
 
-use crate::heliochrome::{
-    color::Color,
-    context::Context,
-    materials::{Lambertian, Metal},
-    maths::*,
-    *,
-};
+use crate::heliochrome::{color::Color, context::Context, materials::*, maths::*, *};
 
 pub fn make_context() -> Context {
     let mut context = Context::new(
         maths::Size::new(WIDTH, HEIGHT),
         camera::Camera::new(
-            maths::vec3::new(0.0, 0.0, 0.0),
+            maths::vec3::new(-2.0, 2.0, 1.0),
+            maths::vec3::new(0.0, 0.0, -1.0),
+            vec3::unit_y(),
+            20.0,
             WIDTH as f32 / HEIGHT as f32,
         ),
     );
@@ -29,16 +26,20 @@ pub fn make_context() -> Context {
 
     context.add_hittable(
         hittables::Sphere::new(
-            vec3::new(1.0, 0.0, -1.0),
-            0.5,
-            Metal::new(Color::splat(0.8), 0.0).into(),
+            vec3::new(-1.0, 0.0, -1.0),
+            -0.4,
+            Dielectric::new(1.5).into(),
         )
         .into(),
     );
 
     context.add_hittable(
+        hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.5, Dielectric::new(1.5).into()).into(),
+    );
+
+    context.add_hittable(
         hittables::Sphere::new(
-            vec3::new(-1.0, 0.0, -1.0),
+            vec3::new(1.0, 0.0, -1.0),
             0.5,
             Metal::new(Color::new(0.3, 0.3, 0.7), 0.3).into(),
         )

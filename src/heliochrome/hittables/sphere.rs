@@ -41,10 +41,11 @@ impl Hittable for Sphere {
             }
         }
 
-        Some(Hit {
-            t: root,
-            normal: ((ray.at(root) - self.center) / self.radius),
-            material: &self.material,
-        })
+        Some(Hit::new(
+            ray,
+            root,
+            (ray.at(root) - self.center) / self.radius,
+            &self.material,
+        ))
     }
 }

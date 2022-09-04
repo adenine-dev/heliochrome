@@ -1,11 +1,9 @@
 use crate::heliochrome::{
     color::Color,
     hittables::Hit,
-    materials::Scatterable,
+    materials::{Scatter, Scatterable},
     maths::{vec3, Ray},
 };
-
-use super::Scatter;
 
 pub struct Metal {
     albedo: Color,

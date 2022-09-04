@@ -31,6 +31,7 @@ png = "0.17.5"
 instant = "0.1.12"
 log = "0.4.17"
 indicatif = "0.17.0"
+impl_ops = "0.1.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.6"

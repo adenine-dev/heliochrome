@@ -22,7 +22,7 @@ use winit::{
 };
 
 mod heliochrome;
-use heliochrome::{maths::Size, *};
+use heliochrome::{camera::Camera, maths::Size, *};
 
 mod make_context;
 use make_context::make_context;

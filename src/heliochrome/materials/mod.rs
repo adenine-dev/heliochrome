@@ -9,6 +9,9 @@ pub use lambertian::*;
 mod metal;
 pub use metal::*;
 
+mod dielectric;
+pub use dielectric::*;
+
 use super::hittables::Hit;
 use super::maths::Ray;
 
@@ -16,4 +19,5 @@ use super::maths::Ray;
 pub enum Material {
     Lambertian,
     Metal,
+    Dielectric,
 }

@@ -4,8 +4,10 @@ pub use misc::*;
 mod size;
 pub use size::*;
 
-pub use core::ops::*; // to make the impl macros work
+pub use impl_ops::*;
 pub use rand::distributions::{Distribution, Uniform};
+pub use std::ops; // to make the impl macros work
+
 mod vector2;
 pub use vector2::*;
 

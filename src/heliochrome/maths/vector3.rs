@@ -1,11 +1,13 @@
 use crate::maths::misc::*;
-use core::ops::*;
+use impl_ops::*;
 use rand::distributions::{Distribution, Uniform};
+use std::ops;
+use std::ops::*;
 
 macro_rules! vec3_impl {
     ($n:ident, $t:ident, $x:ident, $y:ident, $z:ident) => {
         #[repr(C)]
-        #[derive(Clone, Copy, Debug, Default, PartialEq)]
+        #[derive(Copy, Clone, Debug, Default, PartialEq)]
         pub struct $n {
             pub $x: $t,
             pub $y: $t,
@@ -113,120 +115,81 @@ macro_rules! vec3_impl {
             }
 
             pub fn reflect_over(&self, n: $n) -> Self {
-                *self - (2.0 * self.dot(n) * n)
+                self - 2.0 * self.dot(n) * n
             }
+
+            pub fn refract(self, n: $n, etai_over_etat: $t) -> $n {
+                let cos_theta = (-self).dot(n).min(1.0);
+                let r_out_perp = etai_over_etat * (self + cos_theta * n);
+                let r_out_parallel = -(1.0 - r_out_perp.mag_sq()).abs().sqrt() * n;
+                r_out_perp + r_out_parallel
+            }
+
         }
 
-        impl Add for $n {
-            type Output = Self;
-            fn add(self, rhs: $n) -> Self {
-                $n::new(self.$x + rhs.$x, self.$y + rhs.$y, self.$z + rhs.$z)
-            }
-        }
+        impl_op_ex!(+ |lhs: &$n, rhs: &$n| -> $n {
+            $n::new(lhs.$x + rhs.$x, lhs.$y + rhs.$y, lhs.$z + rhs.$z)
+        });
 
-        impl AddAssign for $n {
-            fn add_assign(&mut self, rhs: $n) {
-                self.$x += rhs.$x;
-                self.$y += rhs.$y;
-                self.$z += rhs.$z;
-            }
-        }
+        impl_op_ex!(- |lhs: &$n, rhs: &$n| -> $n {
+            $n::new(lhs.$x - rhs.$x, lhs.$y - rhs.$y, lhs.$z - rhs.$z)
+        });
 
-        impl Sub for $n {
-            type Output = Self;
-            fn sub(self, rhs: $n) -> Self {
-                $n::new(self.$x - rhs.$x, self.$y - rhs.$y, self.$z - rhs.$z)
-            }
-        }
+        impl_op_ex!(* |lhs: &$n, rhs: &$n| -> $n {
+            $n::new(lhs.$x * rhs.$x, lhs.$y * rhs.$y, lhs.$z * rhs.$z)
+        });
 
-        impl SubAssign for $n {
-            fn sub_assign(&mut self, rhs: $n) {
-                self.$x -= rhs.$x;
-                self.$y -= rhs.$y;
-                self.$z -= rhs.$z;
-            }
-        }
+        impl_op_ex!(/ |lhs: &$n, rhs: &$n| -> $n {
+            $n::new(lhs.$x / rhs.$x, lhs.$y / rhs.$y, lhs.$z / rhs.$z)
+        });
 
-        impl Mul for $n {
-            type Output = Self;
-            fn mul(self, rhs: $n) -> Self {
-                $n::new(self.$x * rhs.$x, self.$y * rhs.$y, self.$z * rhs.$z)
-            }
-        }
+        impl_op_ex_commutative!(* |lhs: &$n, rhs: &$t| -> $n {
+            $n::new(lhs.$x * rhs, lhs.$y * rhs, lhs.$z * rhs)
+        });
 
-        impl MulAssign for $n {
-            fn mul_assign(&mut self, rhs: $n) {
-                self.$x *= rhs.$x;
-                self.$y *= rhs.$y;
-                self.$z *= rhs.$z;
-            }
-        }
+        impl_op_ex_commutative!(/ |lhs: &$n, rhs: &$t| -> $n {
+            $n::new(lhs.$x / rhs, lhs.$y / rhs, lhs.$z / rhs)
+        });
 
-        impl Mul<$t> for $n {
-            type Output = Self;
-            fn mul(self, rhs: $t) -> Self {
-                $n::new(self.$x * rhs, self.$y * rhs, self.$z * rhs)
-            }
-        }
+        impl_op_ex!(+= |lhs: &mut $n, rhs: &$n| {
+            lhs.$x += rhs.$x;
+            lhs.$y += rhs.$y;
+            lhs.$z += rhs.$z;
+        });
 
-        impl MulAssign<$t> for $n {
-            fn mul_assign(&mut self, rhs: $t) {
-                self.$x *= rhs;
-                self.$y *= rhs;
-                self.$z *= rhs;
-            }
-        }
+        impl_op_ex!(-= |lhs: &mut $n, rhs: &$n| {
+            lhs.$x -= rhs.$x;
+            lhs.$y -= rhs.$y;
+            lhs.$z -= rhs.$z;
+        });
 
-        impl Mul<$n> for $t {
-            type Output = $n;
-            fn mul(self, rhs: $n) -> $n {
-                $n::new(self * rhs.$x, self * rhs.$y, self * rhs.$z)
-            }
-        }
+        impl_op_ex!(*= |lhs: &mut $n, rhs: &$n| {
+            lhs.$x *= rhs.$x;
+            lhs.$y *= rhs.$y;
+            lhs.$z *= rhs.$z;
+        });
 
-        impl Div for $n {
-            type Output = Self;
-            fn div(self, rhs: $n) -> Self {
-                $n::new(self.$x * rhs.$x, self.$y * rhs.$y, self.$z * rhs.$z)
-            }
-        }
+        impl_op_ex!(/= |lhs: &mut $n, rhs: &$n| {
+            lhs.$x /= rhs.$x;
+            lhs.$y /= rhs.$y;
+            lhs.$z /= rhs.$z;
+        });
 
-        impl DivAssign for $n {
-            fn div_assign(&mut self, rhs: $n) {
-                self.$x /= rhs.$x;
-                self.$y /= rhs.$y;
-                self.$z /= rhs.$z;
-            }
-        }
+        impl_op_ex!(*= |lhs: &mut $n, rhs: &$t| {
+            lhs.$x *= rhs;
+            lhs.$y *= rhs;
+            lhs.$z *= rhs;
+        });
 
-        impl Div<$t> for $n {
-            type Output = Self;
-            fn div(self, rhs: $t) -> Self {
-                $n::new(self.$x / rhs, self.$y / rhs, self.$z / rhs)
-            }
-        }
+        impl_op_ex!(/= |lhs: &mut $n, rhs: &$t| {
+            lhs.$x /= rhs;
+            lhs.$y /= rhs;
+            lhs.$z /= rhs;
+        });
 
-        impl DivAssign<$t> for $n {
-            fn div_assign(&mut self, rhs: $t) {
-                self.$x /= rhs;
-                self.$y /= rhs;
-                self.$z /= rhs;
-            }
-        }
-
-        impl Div<$n> for $t {
-            type Output = $n;
-            fn div(self, rhs: $n) -> $n {
-                $n::new(self / rhs.$x, self / rhs.$y, self / rhs.$z)
-            }
-        }
-
-        impl Neg for $n {
-            type Output = $n;
-            fn neg(self) -> $n {
-                $n::new(-self.$x, -self.$y, -self.$z)
-            }
-        }
+        impl_op_ex!(- |lhs: &$n| -> $n {
+            $n::new(-lhs.$x, -lhs.$y, -lhs.$z)
+        });
     };
 }
 

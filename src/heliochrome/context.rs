@@ -62,7 +62,13 @@ impl Context {
         self.accumulated_image = Image::new(size);
         self.samples = 0;
         self.pixel_buffer = vec![0; size.width as usize * size.height as usize];
-        self.camera = Camera::new(self.camera.eye, size.width as f32 / size.height as f32);
+        self.camera = Camera::new(
+            self.camera.eye,
+            self.camera.at,
+            self.camera.up,
+            self.camera.vfov,
+            size.width as f32 / size.height as f32,
+        );
     }
 
     pub fn render_fragment(&self, uv: &vec2) -> Color {
@@ -74,10 +80,7 @@ impl Context {
             }
             let hit = self.hittables.hit(&ray, 0.001, f32::INFINITY);
 
-            if let Some(mut hit) = hit {
-                if hit.normal.dot(ray.direction) > 0.0 {
-                    hit.normal = -hit.normal;
-                }
+            if let Some(hit) = hit {
                 if let Some(scatter) = hit.material.scatter(&ray, &hit) {
                     color *= scatter.attenuation;
                     ray = scatter.outgoing;
