@@ -44,7 +44,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                 );
             }
             Event::MainEventsCleared => {
-                if context.samples < 100 {
+                if context.samples < 500 {
                     softbuffer_context.window().request_redraw();
                 } else {
                     *control_flow = ControlFlow::Wait;

@@ -1,7 +1,7 @@
 const WIDTH: u16 = 640;
 const HEIGHT: u16 = 360;
 
-use crate::heliochrome::{context::Context, maths::*, *};
+use crate::heliochrome::{color::Color, context::Context, materials::Lambertian, maths::*, *};
 
 pub fn make_context() -> Context {
     let mut context = Context::new(
@@ -12,8 +12,22 @@ pub fn make_context() -> Context {
         ),
     );
 
-    context.add_hittable(hittables::Sphere::new(vec3::new(0.0, 0.0, -1.0), 0.5).into());
-    context.add_hittable(hittables::Sphere::new(vec3::new(0.0, -100.5, -1.0), 100.0).into());
+    context.add_hittable(
+        hittables::Sphere::new(
+            vec3::new(0.0, 0.0, -1.0),
+            0.5,
+            Lambertian::new(Color::new(0.8, 0.8, 0.0)).into(),
+        )
+        .into(),
+    );
+    context.add_hittable(
+        hittables::Sphere::new(
+            vec3::new(0.0, -100.5, -1.0),
+            100.0,
+            Lambertian::new(Color::new(0.7, 0.3, 0.3)).into(),
+        )
+        .into(),
+    );
 
     context
 }

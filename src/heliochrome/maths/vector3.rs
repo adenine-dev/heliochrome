@@ -82,6 +82,12 @@ macro_rules! vec3_impl {
                 }
             }
 
+            pub fn near_zero(&self) -> bool {
+                self.$x.abs() < $t::EPSILON
+                    && self.$y.abs() < $t::EPSILON
+                    && self.$z.abs() < $t::EPSILON
+            }
+
             pub fn mag_sq(&self) -> $t {
                 (self.$x * self.$x) + (self.$y * self.$y) + (self.$z * self.$z)
             }

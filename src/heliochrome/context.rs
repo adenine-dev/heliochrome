@@ -4,6 +4,7 @@ use crate::camera::Camera;
 use crate::color::Color;
 use crate::hittables::{Hittable, HittableList};
 use crate::image::Image;
+use crate::materials::*;
 use crate::maths::*;
 
 #[cfg(feature = "multithread")]
@@ -67,8 +68,6 @@ impl Context {
     }
 
     pub fn render_fragment(&self, uv: &vec2) -> Color {
-        let ray = self.camera.get_ray(uv);
-
         let mut ray = self.camera.get_ray(uv);
         let mut color = Color::splat(1.0);
         for depth in 0..MAX_DEPTH {
@@ -81,11 +80,14 @@ impl Context {
                 if hit.normal.dot(ray.direction) > 0.0 {
                     hit.normal = -hit.normal;
                 }
+                if let Some(scatter) = hit.material.scatter(&ray, &hit) {
+                    color *= scatter.attenuation;
+                }
+
                 ray = Ray::new(
                     ray.at(hit.t),
                     hit.normal + vec3::random_in_unit_sphere().normalize(),
                 );
-                color *= 0.5;
             } else {
                 let t = (ray.direction.y + 1.0) / 2.0;
                 color *= (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
