@@ -71,6 +71,19 @@ macro_rules! vec3_impl {
                 )
             }
 
+            pub fn random_in_unit_xy_disk() -> Self {
+                let mut rng = rand::thread_rng();
+                let s = Uniform::new_inclusive(-1.0, 1.0);
+
+                loop {
+                    let ret = Self::new(s.sample(&mut rng), s.sample(&mut rng), 0.0);
+                    if ret.mag_sq() < 1.0 {
+                        return ret;
+                    }
+                }
+
+            }
+
             pub fn random_in_unit_sphere() -> Self {
                 let mut rng = rand::thread_rng();
                 let s = Uniform::new_inclusive(-1.0, 1.0);

@@ -7,12 +7,14 @@ pub fn make_context() -> Context {
     let mut context = Context::new(
         maths::Size::new(WIDTH, HEIGHT),
         camera::Camera::new(
-            maths::vec3::new(-2.0, 2.0, 1.0),
-            maths::vec3::new(0.0, 0.0, 0.0),
+            maths::vec3::new(3.0, 3.0, 2.0),
+            maths::vec3::new(-1.0, 0.0, 1.0),
             vec3::unit_y(),
-            90.0,
+            20.0,
             WIDTH as f32 / HEIGHT as f32,
-        ),
+            0.1,
+        )
+        .into(),
     );
 
     // context.add_hittable(
@@ -28,13 +30,18 @@ pub fn make_context() -> Context {
     //     hittables::Sphere::new(
     //         vec3::new(-1.0, 0.0, -1.0),
     //         -0.4,
-    //         Dielectric::new(1.5).into(),
+    //         Dielectric::new(1.5, Color::splat(1.0)).into(),
     //     )
     //     .into(),
     // );
 
     // context.add_hittable(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.5, Dielectric::new(1.5).into()).into(),
+    //     hittables::Sphere::new(
+    //         vec3::new(-1.0, 0.0, -1.0),
+    //         0.5,
+    //         Dielectric::new(1.5, Color::splat(1.0)).into(),
+    //     )
+    //     .into(),
     // );
 
     // context.add_hittable(
