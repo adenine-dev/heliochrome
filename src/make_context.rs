@@ -1,7 +1,7 @@
 const WIDTH: u16 = 400;
 const HEIGHT: u16 = 225;
 
-use crate::heliochrome::{color::Color, context::Context, materials::*, maths::*, *};
+use crate::heliochrome::{color::Color, context::Context, hittables, materials::*, maths::*, *};
 
 pub fn make_context() -> Context {
     let mut context = Context::new(
@@ -13,6 +13,15 @@ pub fn make_context() -> Context {
             20.0,
             WIDTH as f32 / HEIGHT as f32,
             0.1,
+        )
+        .into(),
+    );
+
+    context.add_hittable(
+        hittables::InfinitePlane::new(
+            vec3::splat(0.0),
+            vec3::new(0.0, 1.0, 0.0).normalized(),
+            Lambertian::new(Color::splat(0.5)).into(),
         )
         .into(),
     );
@@ -97,14 +106,14 @@ pub fn make_context() -> Context {
         .into(),
     );
 
-    context.add_hittable(
-        hittables::Sphere::new(
-            vec3::new(0.0, -1000.5, -1.0),
-            1000.0,
-            Lambertian::new(Color::new(0.5, 0.5, 0.5)).into(),
-        )
-        .into(),
-    );
+    // context.add_hittable(
+    //     hittables::Sphere::new(
+    //         vec3::new(0.0, -1000.5, -1.0),
+    //         1000.0,
+    //         Lambertian::new(Color::new(0.5, 0.5, 0.5)).into(),
+    //     )
+    //     .into(),
+    // );
 
     context
 }
