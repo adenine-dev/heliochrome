@@ -27,7 +27,7 @@ softbuffer = "0.1.1"
 rayon = "1.5.3"
 rand = "0.8"
 enum_dispatch = "0.3.8"
-png = "0.17.5"
+stb = { version = "0.3.2", default-features = false, features = ["stb_image", "stb_image_write"] }
 instant = "0.1.12"
 log = "0.4.17"
 indicatif = "0.17.0"

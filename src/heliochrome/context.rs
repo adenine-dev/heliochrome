@@ -12,6 +12,7 @@ use super::hittables::HittableObject;
 
 pub struct Context {
     pub camera: Camera,
+    pub skybox: Option<Image>,
 
     hittables: HittableList,
 
@@ -32,6 +33,7 @@ impl Context {
     pub fn new(size: Size<u16>, camera: Camera) -> Self {
         Self {
             camera,
+            skybox: None,
             hittables: HittableList { hittables: vec![] },
             size,
             samples: 0,
@@ -81,8 +83,16 @@ impl Context {
                     ray = scatter.outgoing;
                 }
             } else {
-                let t = (ray.direction.y + 1.0) / 2.0;
-                color *= (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
+                if let Some(skybox) = &self.skybox {
+                    let uv = vec2::new(
+                        (0.5 + ray.direction.z.atan2(ray.direction.x) / std::f32::consts::TAU),
+                        (0.5 + ray.direction.y.asin() / std::f32::consts::PI),
+                    );
+                    color *= skybox.sample_uv(&uv);
+                } else {
+                    let t = (ray.direction.y + 1.0) / 2.0;
+                    color *= (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
+                }
                 break;
             }
         }

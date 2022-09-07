@@ -4,6 +4,7 @@
 
 use std::{
     error,
+    ffi::CString,
     fs::File,
     io::BufWriter,
     path::Path,
@@ -13,8 +14,8 @@ use std::{
 use indicatif::{ProgressBar, ProgressStyle};
 use instant;
 use log::info;
-use png;
 use softbuffer::GraphicsContext;
+use stb;
 use winit::{
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -39,26 +40,8 @@ fn write_image(size: Size<u16>, buffer: &[u32]) -> Result<(), Box<dyn error::Err
     }
 
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?;
-    let pathstr = format!("out_{}.png", now.as_secs()).to_string();
-    let path = Path::new(&pathstr);
-    let file = File::create(path)?;
+    let pathstr = CString::new(format!("out_{}.png", now.as_secs()))?;
 
-    let ref mut w = BufWriter::new(file);
-
-    let mut encoder = png::Encoder::new(w, size.width.into(), size.height.into()); // Width is 2 pixels and height is 1.
-    encoder.set_color(png::ColorType::Rgba);
-    encoder.set_depth(png::BitDepth::Eight);
-    encoder.set_source_gamma(png::ScaledFloat::new(1.0 / 2.2)); // 1.0 / 2.2, unscaled, but rounded
-
-    let source_chromaticities = png::SourceChromaticities::new(
-        // Using unscaled instantiation here
-        (0.31270, 0.32900),
-        (0.64000, 0.33000),
-        (0.30000, 0.60000),
-        (0.15000, 0.06000),
-    );
-    encoder.set_source_chromaticities(source_chromaticities);
-    let mut writer = encoder.write_header()?;
     let data = buffer
         .iter()
         .map(|x| {
@@ -71,10 +54,9 @@ fn write_image(size: Size<u16>, buffer: &[u32]) -> Result<(), Box<dyn error::Err
             [r, g, b, a]
         })
         .flatten()
-        .collect::<Vec<_>>();
+        .collect::<Vec<u8>>();
 
-    writer.write_image_data(data.as_slice())?;
-    // Save
+    stb::image_write::stbi_write_png(&pathstr, size.width as i32, size.height as i32, 4, &data, 0);
 
     Ok(())
 }
@@ -191,7 +173,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                     }
                     _ => should_update = false,
                 }
-                if should_update && input.state == ElementState::Released {
+                if should_update {
                     context.reset_samples();
                     #[cfg(not(target_arch = "wasm32"))]
                     pb.reset();

@@ -1,7 +1,11 @@
 const WIDTH: u16 = 400;
 const HEIGHT: u16 = 225;
 
-use crate::heliochrome::{color::Color, context::Context, hittables, materials::*, maths::*, *};
+use std::path::Path;
+
+use crate::heliochrome::{
+    color::Color, context::Context, hittables, image::Image, materials::*, maths::*, *,
+};
 
 pub fn make_context() -> Context {
     let mut context = Context::new(
@@ -17,9 +21,12 @@ pub fn make_context() -> Context {
         .into(),
     );
 
+    context.skybox =
+        Some(Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap());
+
     context.add_hittable(
         hittables::InfinitePlane::new(
-            vec3::splat(0.0),
+            vec3::new(0.0, -1.1, 0.0),
             vec3::new(0.0, 1.0, 0.0).normalized(),
             Lambertian::new(Color::splat(0.5)).into(),
         )
@@ -93,7 +100,7 @@ pub fn make_context() -> Context {
         hittables::Sphere::new(
             vec3::new(-1.0, 0.0, 1.0),
             0.95,
-            Dielectric::new(1.2, Color::new(1.0, 0.3, 0.3)).into(),
+            Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
         )
         .into(),
     );
@@ -101,7 +108,7 @@ pub fn make_context() -> Context {
         hittables::Sphere::new(
             vec3::new(-1.0, 0.0, 1.0),
             -0.85,
-            Dielectric::new(1.2, Color::new(1.0, 0.3, 0.3)).into(),
+            Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
         )
         .into(),
     );
