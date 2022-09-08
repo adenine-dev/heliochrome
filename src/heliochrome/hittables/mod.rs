@@ -12,6 +12,9 @@ pub use hittable_list::*;
 mod infinite_plane;
 pub use infinite_plane::*;
 
+mod rect;
+pub use rect::*;
+
 use crate::maths::Ray;
 
 #[enum_dispatch(Hittable)]
@@ -19,4 +22,5 @@ pub enum HittableObject {
     Sphere,
     HittableList,
     InfinitePlane,
+    Rect,
 }

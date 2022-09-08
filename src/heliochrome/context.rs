@@ -85,8 +85,8 @@ impl Context {
             } else {
                 if let Some(skybox) = &self.skybox {
                     let uv = vec2::new(
-                        (0.5 + ray.direction.z.atan2(ray.direction.x) / std::f32::consts::TAU),
-                        (0.5 + ray.direction.y.asin() / std::f32::consts::PI),
+                        0.5 + ray.direction.z.atan2(ray.direction.x) / std::f32::consts::TAU,
+                        0.5 + ray.direction.y.asin() / std::f32::consts::PI,
                     );
                     color *= skybox.sample_uv(&uv);
                 } else {
