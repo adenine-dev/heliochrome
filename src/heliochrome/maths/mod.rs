@@ -14,5 +14,8 @@ pub use vector2::*;
 mod vector3;
 pub use vector3::*;
 
+mod matrix3;
+pub use matrix3::*;
+
 mod ray;
 pub use ray::*;
