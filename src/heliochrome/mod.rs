@@ -5,3 +5,5 @@ pub mod hittables;
 pub mod image;
 pub mod materials;
 pub mod maths;
+pub mod object;
+pub mod transform;

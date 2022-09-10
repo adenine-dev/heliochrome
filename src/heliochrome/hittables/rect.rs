@@ -1,7 +1,4 @@
-use crate::heliochrome::{
-    materials::Material,
-    maths::{vec2, vec3, Ray},
-};
+use crate::heliochrome::maths::{vec2, vec3, Ray};
 
 use super::{Hit, Hittable};
 
@@ -10,17 +7,15 @@ pub struct Rect {
     sx: vec3,
     sy: vec3,
     normal: vec3,
-    material: Material,
 }
 
 impl Rect {
-    pub fn new(origin: vec3, sx: vec3, sy: vec3, material: Material) -> Self {
+    pub fn new(origin: vec3, sx: vec3, sy: vec3) -> Self {
         Rect {
             origin,
             sx,
             sy,
             normal: sx.cross(sy),
-            material,
         }
     }
 }
@@ -35,7 +30,7 @@ impl Hittable for Rect {
                 let q1m = ((p.dot(self.sx) / self.sx.mag()) * self.sx).mag();
                 let q2m = ((p.dot(self.sy) / self.sy.mag()) * self.sy).mag();
                 if 0.0 <= q1m && q1m <= self.sx.mag() && 0.0 <= q2m && q2m <= self.sy.mag() {
-                    return Some(Hit::new(ray, t, self.normal, &self.material));
+                    return Some(Hit::new(ray, t, self.normal));
                 }
             }
         }

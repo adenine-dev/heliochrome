@@ -8,13 +8,14 @@ use crate::maths::*;
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
 
-use super::hittables::HittableObject;
+use super::hittables::{Hit, HittableObject};
+use super::object::Object;
 
 pub struct Context {
     pub camera: Camera,
     pub skybox: Option<Image>,
 
-    hittables: HittableList,
+    objects: Vec<Object>,
 
     size: Size<u16>,
     pub samples: u16,
@@ -34,7 +35,7 @@ impl Context {
         Self {
             camera,
             skybox: None,
-            hittables: HittableList { hittables: vec![] },
+            objects: vec![],
             size,
             samples: 0,
             accumulated_image: Image::new(size),
@@ -42,8 +43,8 @@ impl Context {
         }
     }
 
-    pub fn add_hittable(&mut self, hittable: HittableObject) {
-        self.hittables.hittables.push(hittable);
+    pub fn add_object(&mut self, object: Object) {
+        self.objects.push(object);
     }
 
     pub fn get_size(&self) -> Size<u16> {
@@ -75,10 +76,27 @@ impl Context {
             if depth == MAX_DEPTH {
                 return Color::splat(0.0);
             }
-            let hit = self.hittables.hit(&ray, 0.001, f32::INFINITY);
+
+            let (hit, object) = {
+                let mut t_max = f32::INFINITY;
+                let mut t_min = 0.001;
+
+                let mut hit: Option<Hit> = None;
+                let mut obj = None;
+                for object in self.objects.iter() {
+                    let new_hit = object.get_hit(&ray, t_min, t_max);
+                    if new_hit.is_some() {
+                        hit = new_hit;
+                        obj = Some(object);
+                        t_max = hit.as_ref().unwrap().t;
+                    }
+                }
+
+                (hit, obj)
+            };
 
             if let Some(hit) = hit {
-                if let Some(scatter) = hit.material.scatter(&ray, &hit) {
+                if let Some(scatter) = object.unwrap().get_scatter(&ray, &hit) {
                     color *= scatter.attenuation;
                     ray = scatter.outgoing;
                 }

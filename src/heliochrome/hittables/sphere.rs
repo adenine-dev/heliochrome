@@ -1,22 +1,16 @@
 use crate::{
     hittables::{Hit, Hittable},
-    materials::Material,
     maths::*,
 };
 
 pub struct Sphere {
     pub center: vec3,
     pub radius: f32,
-    pub material: Material,
 }
 
 impl Sphere {
-    pub fn new(center: vec3, radius: f32, material: Material) -> Self {
-        Self {
-            center,
-            radius,
-            material,
-        }
+    pub fn new(center: vec3, radius: f32) -> Self {
+        Self { center, radius }
     }
 }
 
@@ -45,7 +39,6 @@ impl Hittable for Sphere {
             ray,
             root,
             (ray.at(root) - self.center) / self.radius,
-            &self.material,
         ))
     }
 }
