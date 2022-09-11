@@ -24,7 +24,7 @@ impl Scatterable for Lambertian {
             dir = hit.normal;
         }
         Some(Scatter {
-            outgoing: Ray::new(ray.at(hit.t), dir),
+            outgoing: Ray::new(hit.p, dir),
             attenuation: self.albedo,
         })
     }

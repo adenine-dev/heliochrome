@@ -21,10 +21,7 @@ impl Scatterable for Metal {
         let reflected = ray.direction.reflect_over(hit.normal);
         if reflected.dot(hit.normal) > 0.0 {
             Some(Scatter {
-                outgoing: Ray::new(
-                    ray.at(hit.t),
-                    reflected + self.fuzz * vec3::random_in_unit_sphere(),
-                ),
+                outgoing: Ray::new(hit.p, reflected + self.fuzz * vec3::random_in_unit_sphere()),
                 attenuation: self.albedo,
             })
         } else {

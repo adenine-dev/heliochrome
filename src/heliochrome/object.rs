@@ -27,17 +27,25 @@ impl Object {
     pub fn get_hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
         let r = if let Some(transform) = &self.transform {
             Ray::new(
-                transform.matrix * ray.origin,
-                transform.matrix * ray.direction,
+                transform.inverse * ray.origin,
+                transform.inverse * ray.direction,
             )
         } else {
             *ray
         };
 
-        self.hittable.hit(&r, t_min, t_max)
+        let mut hit = self.hittable.hit(&r, t_min, t_max);
+        if let Some(hit) = &mut hit {
+            if let Some(transform) = &self.transform {
+                hit.p = ray.at(hit.t);
+                hit.set_normal(&r, (transform.normal_matrix * hit.normal).normalize());
+            }
+        }
+
+        hit
     }
 
     pub fn get_scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter> {
-        self.material.scatter(ray, hit)
+        self.material.scatter(&ray, hit)
     }
 }

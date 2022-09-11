@@ -79,7 +79,7 @@ impl Context {
 
             let (hit, object) = {
                 let mut t_max = f32::INFINITY;
-                let mut t_min = 0.001;
+                let t_min = 0.001;
 
                 let mut hit: Option<Hit> = None;
                 let mut obj = None;
@@ -96,6 +96,10 @@ impl Context {
             };
 
             if let Some(hit) = hit {
+                // normals
+                // let n = 0.5 * (hit.normal.normalized() + vec3::splat(1.0));
+                // color = Color::new(n.x, n.y, n.z);
+                // break;
                 if let Some(scatter) = object.unwrap().get_scatter(&ray, &hit) {
                     color *= scatter.attenuation;
                     ray = scatter.outgoing;

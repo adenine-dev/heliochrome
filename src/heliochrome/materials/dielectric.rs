@@ -42,7 +42,7 @@ impl Scatterable for Dielectric {
 
         Some(Scatter {
             attenuation: self.color,
-            outgoing: Ray::new(ray.at(hit.t), direction),
+            outgoing: Ray::new(hit.p, direction),
         })
     }
 }
