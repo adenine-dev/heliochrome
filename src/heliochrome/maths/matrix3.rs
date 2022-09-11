@@ -40,12 +40,12 @@ impl mat3 {
             vec3::new(
                 cos_a * sin_b * sin_c - sin_a * cos_c,
                 sin_a * sin_b * sin_c + cos_a * cos_c,
-                cos_a * sin_b,
+                cos_b * sin_c,
             ),
             vec3::new(
                 cos_a * sin_b * cos_c - sin_a * sin_c,
-                cos_a * sin_b * sin_c + sin_a * cos_c,
-                cos_a * cos_b,
+                sin_a * sin_b * cos_c + cos_a * sin_c,
+                cos_b * cos_c,
             ),
         ])
     }
