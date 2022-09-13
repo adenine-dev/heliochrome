@@ -137,7 +137,29 @@ macro_rules! vec3_impl {
                 let r_out_parallel = -(1.0 - r_out_perp.mag_sq()).abs().sqrt() * n;
                 r_out_perp + r_out_parallel
             }
+        }
 
+        impl Index<usize> for $n {
+            type Output = $t;
+            fn index(&self, i: usize) -> &Self::Output {
+                match i {
+                    0 => &self.$x,
+                    1 => &self.$y,
+                    2 => &self.$z,
+                    _ => panic!("index out of bounds")
+                }
+            }
+        }
+
+        impl IndexMut<usize> for $n {
+            fn index_mut(&mut self, i: usize) -> &mut Self::Output {
+                match i {
+                    0 => &mut self.$x,
+                    1 => &mut self.$y,
+                    2 => &mut self.$z,
+                    _ => panic!("index out of bounds")
+                }
+            }
         }
 
         impl_op_ex!(+ |lhs: &$n, rhs: &$n| -> $n {
