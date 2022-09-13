@@ -18,7 +18,7 @@ impl Lambertian {
 }
 
 impl Scatterable for Lambertian {
-    fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter> {
+    fn scatter(&self, _ray: &Ray, hit: &Hit) -> Option<Scatter> {
         let mut dir = hit.normal + vec3::random_in_unit_sphere().normalize();
         if dir.near_zero() {
             dir = hit.normal;

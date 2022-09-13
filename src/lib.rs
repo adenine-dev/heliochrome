@@ -1,6 +1,7 @@
 #![feature(portable_simd)]
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
+#![allow(dead_code)]
 
 use std::{
     error,

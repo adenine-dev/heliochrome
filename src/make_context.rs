@@ -16,11 +16,11 @@ pub fn make_context() -> Context {
         maths::Size::new(WIDTH, HEIGHT),
         camera::Camera::new(
             maths::vec3::new(0.0, 0.0, 3.0),
-            vec3::new(1.0, -1.0, 0.0),
+            vec3::new(0.0, 0.0, 0.0),
             vec3::unit_y(),
-            20.0,
+            70.0,
             WIDTH as f32 / HEIGHT as f32,
-            0.1,
+            0.0,
         )
         .into(),
     );
@@ -41,7 +41,7 @@ pub fn make_context() -> Context {
     let (mut positions, indices) = load_obj("assets/torus.obj").unwrap();
     context.add_object(Object::new(
         hittables::Mesh::new(&positions, &indices).into(),
-        Metal::new(Color::new(0.8, 0.3, 0.8), 0.0).into(),
+        Dielectric::new(1.5, Color::new(0.8, 0.3, 0.8)).into(),
         Some(Transform::new(mat3::rotate(vec3::new(
             0.0,
             0.0,
@@ -57,11 +57,6 @@ pub fn make_context() -> Context {
         hittables::Mesh::new(&positions, &indices).into(),
         Metal::new(Color::new(0.5, 0.5, 0.9), 0.0).into(),
         None,
-        // Some(Transform::new(mat3::rotate(vec3::new(
-        //     0.0,
-        //     0.0,
-        //     std::f32::consts::TAU / 8.0,
-        // )))),
     ));
 
     // context.add_object(Object::new(

@@ -22,8 +22,12 @@ impl Hit {
     }
 
     pub fn set_normal(&mut self, src_ray: &Ray, normal: vec3) {
-        let front_face = src_ray.direction.dot(normal) < 0.0;
-        self.normal = if self.front_face { normal } else { -normal };
+        self.front_face = src_ray.direction.dot(normal) < 0.0;
+        self.normal = if src_ray.direction.dot(normal) < 0.0 {
+            normal
+        } else {
+            -normal
+        };
     }
 }
 

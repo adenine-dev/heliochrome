@@ -38,7 +38,7 @@ impl Object {
         if let Some(hit) = &mut hit {
             if let Some(transform) = &self.transform {
                 hit.p = ray.at(hit.t);
-                hit.set_normal(&r, (transform.normal_matrix * hit.normal).normalize());
+                hit.set_normal(&ray, (transform.normal_matrix * hit.normal).normalize());
             }
         }
 

@@ -42,7 +42,7 @@ pub(crate) fn ray_triangle_intersection(
         return None;
     }
 
-    Some(Hit::new(ray, t, edge1.cross(edge2).normalize()))
+    Some(Hit::new(ray, t, edge2.cross(edge1).normalize()))
 }
 
 impl Hittable for Triangle {
