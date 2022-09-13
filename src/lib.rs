@@ -5,9 +5,6 @@
 use std::{
     error,
     ffi::CString,
-    fs::File,
-    io::BufWriter,
-    path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -21,6 +18,8 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
+
+mod load_obj;
 
 mod heliochrome;
 use heliochrome::{camera::Camera, maths::Size, *};
