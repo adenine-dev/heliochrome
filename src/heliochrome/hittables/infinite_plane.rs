@@ -1,6 +1,6 @@
 use crate::heliochrome::maths::{vec3, Ray};
 
-use super::{Hit, Hittable};
+use super::{Hit, Hittable, AABB};
 
 pub struct InfinitePlane {
     pub origin: vec3,
@@ -23,6 +23,10 @@ impl Hittable for InfinitePlane {
             }
         }
 
+        None
+    }
+
+    fn make_bounding_box(&self) -> Option<AABB> {
         None
     }
 }

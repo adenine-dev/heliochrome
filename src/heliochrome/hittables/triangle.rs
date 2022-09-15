@@ -1,7 +1,8 @@
 use crate::heliochrome::maths::{vec3, Ray};
 
-use super::{Hit, Hittable};
+use super::{Hit, Hittable, AABB};
 
+#[derive(Clone, Default)]
 pub struct Triangle {
     vertices: [vec3; 3],
 }
@@ -45,8 +46,23 @@ pub(crate) fn ray_triangle_intersection(
     Some(Hit::new(ray, t, edge2.cross(edge1).normalize()))
 }
 
+pub(crate) fn triangle_bounding_box(vertices: &[vec3; 3]) -> AABB {
+    let mut min = vec3::splat(f32::INFINITY);
+    let mut max = vec3::splat(-f32::INFINITY);
+    for v in vertices {
+        min = min.min(v);
+        max = max.max(v);
+    }
+
+    AABB::new(min, max)
+}
+
 impl Hittable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
         ray_triangle_intersection(ray, &self.vertices, t_min, t_max)
+    }
+
+    fn make_bounding_box(&self) -> Option<AABB> {
+        Some(triangle_bounding_box(&self.vertices))
     }
 }

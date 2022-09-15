@@ -34,4 +34,7 @@ impl Hittable for Mesh {
 
         hit
     }
+    fn make_bounding_box(&self) -> Option<super::AABB> {
+        Some(super::AABB::default())
+    }
 }

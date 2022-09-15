@@ -43,8 +43,8 @@ impl mat3 {
                 cos_b * sin_c,
             ),
             vec3::new(
-                cos_a * sin_b * cos_c - sin_a * sin_c,
-                sin_a * sin_b * cos_c + cos_a * sin_c,
+                cos_a * sin_b * cos_c + sin_a * sin_c,
+                sin_a * sin_b * cos_c - cos_a * sin_c,
                 cos_b * cos_c,
             ),
         ])

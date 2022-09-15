@@ -15,12 +15,12 @@ pub fn make_context() -> Context {
     let mut context = Context::new(
         maths::Size::new(WIDTH, HEIGHT),
         camera::Camera::new(
-            maths::vec3::new(0.0, 0.0, 3.0),
-            vec3::new(0.0, 0.0, 0.0),
+            maths::vec3::new(0.0, 0.0, 5.0),
+            vec3::new(0.0, -0.5, 0.0),
             vec3::unit_y(),
-            40.0,
+            20.0,
             WIDTH as f32 / HEIGHT as f32,
-            0.0,
+            0.1,
         )
         .into(),
     );
@@ -28,44 +28,50 @@ pub fn make_context() -> Context {
     context.skybox =
         Some(Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap());
 
-    // context.add_object(Object::new(
-    //     hittables::InfinitePlane::new(
-    //         vec3::new(0.0, -3.0, 0.0),
-    //         vec3::new(0.0, 1.0, 0.0).normalized(),
-    //     )
-    //     .into(),
-    //     Lambertian::new(Color::splat(0.5)).into(),
-    //     None,
-    // ));
+    context.add_object(Object::new(
+        hittables::InfinitePlane::new(
+            vec3::new(0.0, -1.0, 0.0),
+            vec3::new(0.0, 1.0, 0.0).normalized(),
+        )
+        .into(),
+        Lambertian::new(Color::splat(0.3)).into(),
+        None,
+    ));
 
-    for x in 0..5 {
-        for y in 0..5 {
-            for z in 0..5 {
-                let p = vec3::new(x as f32 - 2.0, y as f32 - 2.0, z as f32 - 2.0);
-                context.add_object(Object::new(
-                    hittables::AABB::new(vec3::splat(-0.35) + p, vec3::splat(0.35) + p).into(),
-                    Lambertian::new(
-                        Color::new(x as f32 / 5.0, y as f32 / 5.0, z as f32 / 5.0) * 0.8
-                            + Color::splat(0.1),
-                        // 0.1,
-                    )
-                    .into(),
-                    None,
-                ));
-            }
-        }
-    }
+    // let mut objects = vec![];
+    // for x in 0..5 {
+    //     for y in 0..5 {
+    //         for z in 0..5 {
+    //             let p = vec3::new(x as f32 - 2.0, y as f32 - 2.0, z as f32 - 2.0);
+    //             objects.push(Object::new(
+    //                 hittables::AABB::new(vec3::splat(-0.35) + p, vec3::splat(0.35) + p).into(),
+    //                 Lambertian::new(
+    //                     Color::new(x as f32 / 5.0, y as f32 / 5.0, z as f32 / 5.0) * 0.8
+    //                         + Color::splat(0.1),
+    //                     // 0.1,
+    //                 )
+    //                 .into(),
+    //                 None,
+    //             ));
+    //         }
+    //     }
+    // }
 
-    // let (mut positions, indices) = load_obj("assets/torus.obj").unwrap();
-    // context.add_object(Object::new(
-    //     hittables::Mesh::new(&positions, &indices).into(),
-    //     Dielectric::new(1.5, Color::new(0.8, 0.3, 0.8)).into(),
-    //     Some(Transform::new(mat3::rotate(vec3::new(
-    //         0.0,
-    //         0.0,
-    //         std::f32::consts::TAU / 4.0,
-    //     )))),
-    // ));
+    let (mut positions, indices) = load_obj("assets/suzanne.obj").unwrap();
+    positions.iter_mut().for_each(|p| {
+        *p -= vec3::new(0.0, 0.55, 0.0);
+    });
+    context.add_object(Object::new(
+        hittables::Mesh::new(&positions, &indices).into(),
+        Metal::new(Color::new(0.97, 0.77, 0.06), 0.0).into(),
+        // Dielectric::new(1.5, Color::new(0.8, 0.3, 0.8)).into(),
+        // None,
+        Some(Transform::new(mat3::rotate(vec3::new(
+            0.0,
+            0.0,
+            -35.0f32.to_radians(),
+        )))),
+    ));
 
     // positions.iter_mut().for_each(|p| {
     //     *p += vec3::new(1.0, 0.0, 0.0);

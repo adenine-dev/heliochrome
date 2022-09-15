@@ -1,6 +1,8 @@
 use enum_dispatch::enum_dispatch;
 
-use crate::{heliochrome::maths::vec3, materials::Material, maths::Ray};
+use crate::{heliochrome::maths::vec3, maths::Ray};
+
+use super::AABB;
 
 pub struct Hit {
     pub t: f32,
@@ -34,4 +36,6 @@ impl Hit {
 #[enum_dispatch]
 pub trait Hittable: Send + Sync {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit>;
+
+    fn make_bounding_box(&self) -> Option<AABB>;
 }

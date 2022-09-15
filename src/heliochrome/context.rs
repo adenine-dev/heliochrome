@@ -1,14 +1,12 @@
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::hittables::{Hittable, HittableList};
 use crate::image::Image;
-use crate::materials::*;
 use crate::maths::*;
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
 
-use super::hittables::{Hit, HittableObject};
+use super::hittables::{Hit, Hittable};
 use super::object::Object;
 
 pub struct Context {
@@ -84,7 +82,7 @@ impl Context {
                 let mut hit: Option<Hit> = None;
                 let mut obj = None;
                 for object in self.objects.iter() {
-                    let new_hit = object.get_hit(&ray, t_min, t_max);
+                    let new_hit = object.hit(&ray, t_min, t_max);
                     if new_hit.is_some() {
                         hit = new_hit;
                         obj = Some(object);

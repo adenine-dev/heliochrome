@@ -1,6 +1,6 @@
 use crate::heliochrome::maths::{vec2, vec3, Ray};
 
-use super::{Hit, Hittable};
+use super::{Hit, Hittable, AABB};
 
 pub struct Rect {
     origin: vec3,
@@ -36,5 +36,19 @@ impl Hittable for Rect {
         }
 
         None
+    }
+    fn make_bounding_box(&self) -> Option<AABB> {
+        let min = self
+            .origin
+            .min(&(self.origin + self.sx))
+            .min(&(self.origin + self.sy))
+            .min(&(self.origin + self.sx + self.sy));
+        let max = self
+            .origin
+            .max(&(self.origin + self.sx))
+            .max(&(self.origin + self.sy))
+            .max(&(self.origin + self.sx + self.sy));
+
+        Some(AABB::new(min, max))
     }
 }

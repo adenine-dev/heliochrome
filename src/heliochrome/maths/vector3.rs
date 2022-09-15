@@ -131,11 +131,19 @@ macro_rules! vec3_impl {
                 self - 2.0 * self.dot(n) * n
             }
 
-            pub fn refract(self, n: $n, etai_over_etat: $t) -> $n {
+            pub fn refract(&self, n: $n, etai_over_etat: $t) -> $n {
                 let cos_theta = (-self).dot(n).min(1.0);
                 let r_out_perp = etai_over_etat * (self + cos_theta * n);
                 let r_out_parallel = -(1.0 - r_out_perp.mag_sq()).abs().sqrt() * n;
                 r_out_perp + r_out_parallel
+            }
+
+            pub fn min(&self, other: &$n) -> $n {
+                Self::new(self.$x.min(other.$x), self.$y.min(other.$y), self.$z.min(other.$z))
+            }
+
+            pub fn max(&self, other: &$n) -> $n {
+                Self::new(self.$x.max(other.$x), self.$y.max(other.$y), self.$z.max(other.$z))
             }
         }
 

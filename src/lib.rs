@@ -2,6 +2,7 @@
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
 #![allow(dead_code)]
+#![feature(let_chains)]
 
 use std::{
     error,
