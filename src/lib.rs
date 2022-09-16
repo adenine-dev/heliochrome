@@ -1,8 +1,10 @@
 #![feature(portable_simd)]
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
-#![allow(dead_code)]
 #![feature(let_chains)]
+// lib but not and maths
+#![allow(dead_code)]
+#![allow(non_camel_case_types)]
 
 use std::{
     error,
@@ -24,7 +26,7 @@ use winit::{
 mod load_obj;
 
 mod heliochrome;
-use heliochrome::{camera::Camera, maths::Size, *};
+use heliochrome::{maths::vec2, *};
 
 mod make_context;
 use make_context::make_context;
@@ -34,7 +36,7 @@ use wasm_bindgen::prelude::*;
 
 const NUM_SAMPLES: u16 = 500;
 
-fn write_image(size: Size<u16>, buffer: &[u32]) -> Result<(), Box<dyn error::Error>> {
+fn write_image(size: vec2, buffer: &[u32]) -> Result<(), Box<dyn error::Error>> {
     #[cfg(target_arch = "wasm32")]
     {
         Err("Cannot save file on web, try right clicking the canvas.")?;
@@ -57,7 +59,7 @@ fn write_image(size: Size<u16>, buffer: &[u32]) -> Result<(), Box<dyn error::Err
         .flatten()
         .collect::<Vec<u8>>();
 
-    stb::image_write::stbi_write_png(&pathstr, size.width as i32, size.height as i32, 4, &data, 0);
+    stb::image_write::stbi_write_png(&pathstr, size.x as i32, size.y as i32, 4, &data, 0);
 
     Ok(())
 }
@@ -87,8 +89,8 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                 context.render_sample();
                 softbuffer_context.set_buffer(
                     context.get_pixel_buffer(),
-                    context.get_size().width,
-                    context.get_size().height,
+                    context.get_size().x as u16,
+                    context.get_size().y as u16,
                 );
 
                 #[cfg(not(target_arch = "wasm32"))]
@@ -114,10 +116,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                 event: WindowEvent::Resized(size),
                 window_id,
             } if window_id == softbuffer_context.window().id() => {
-                context.resize(maths::Size {
-                    width: size.width as u16,
-                    height: size.height as u16,
-                });
+                context.resize(maths::vec2::new(size.width as f32, size.height as f32));
                 #[cfg(not(target_arch = "wasm32"))]
                 pb.reset();
             }
@@ -130,7 +129,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                         is_synthetic: _,
                     },
             } if window_id == softbuffer_context.window().id() => {
-                //
+                #[allow(deprecated)] // deprecated because this allows behavior to exist on web
                 if input.virtual_keycode == Some(VirtualKeyCode::S) && input.modifiers.ctrl() {
                     if input.state == ElementState::Released {
                         if let Err(err) =
@@ -199,8 +198,8 @@ pub fn heliochrome() {
     let event_loop = EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_inner_size(winit::dpi::PhysicalSize::new(
-            context.get_size().width,
-            context.get_size().height,
+            context.get_size().x as u16,
+            context.get_size().y as u16,
         ))
         .build(&event_loop)
         .unwrap();

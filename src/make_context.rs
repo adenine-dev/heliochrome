@@ -1,5 +1,5 @@
-const WIDTH: u16 = 400;
-const HEIGHT: u16 = 225;
+const WIDTH: f32 = 400.0;
+const HEIGHT: f32 = 225.0;
 
 use std::path::Path;
 
@@ -13,7 +13,7 @@ use crate::{
 
 pub fn make_context() -> Context {
     let mut context = Context::new(
-        maths::Size::new(WIDTH, HEIGHT),
+        maths::vec2::new(WIDTH, HEIGHT),
         camera::Camera::new(
             maths::vec3::new(0.0, 0.0, 5.0),
             vec3::new(0.0, -0.5, 0.0),

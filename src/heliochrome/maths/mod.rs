@@ -1,9 +1,6 @@
 mod misc;
 pub use misc::*;
 
-mod size;
-pub use size::*;
-
 pub use impl_ops::*;
 pub use rand::distributions::{Distribution, Uniform};
 pub use std::ops;

@@ -4,7 +4,7 @@ use crate::heliochrome::{
     color::Color,
     hittables::Hit,
     materials::{Scatter, Scatterable},
-    maths::{vec3, Ray},
+    maths::Ray,
 };
 
 pub struct Dielectric {

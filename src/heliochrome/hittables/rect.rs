@@ -1,4 +1,4 @@
-use crate::heliochrome::maths::{vec2, vec3, Ray};
+use crate::heliochrome::maths::{vec3, Ray};
 
 use super::{Hit, Hittable, AABB};
 

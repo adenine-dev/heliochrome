@@ -3,20 +3,19 @@ use std::fs::File;
 use std::path::Path;
 
 use crate::color::Color;
-use crate::maths::Size;
 
 use super::maths::vec2;
 
 pub struct Image {
-    pub size: Size<u16>,
+    pub size: vec2,
     pub buffer: Vec<Color>,
 }
 
 impl Image {
-    pub fn new(size: Size<u16>) -> Image {
+    pub fn new(size: vec2) -> Image {
         Image {
             size,
-            buffer: vec![Color::splat(0.0); size.width as usize * size.height as usize],
+            buffer: vec![Color::splat(0.0); size.x as usize * size.y as usize],
         }
     }
 
@@ -37,7 +36,7 @@ impl Image {
                 .collect::<Vec<Color>>();
 
             return Ok(Image {
-                size: Size::new(info.width as u16, info.height as u16),
+                size: vec2::new(info.width as f32, info.height as f32),
                 buffer,
             });
         }
@@ -46,8 +45,8 @@ impl Image {
     }
 
     pub fn sample_uv(&self, uv: &vec2) -> Color {
-        self.buffer[((uv.y * (self.size.height - 1) as f32).floor() as usize)
-            * self.size.width as usize
-            + ((uv.x * (self.size.width - 1) as f32).floor() as usize)]
+        //TODO: smooth sample
+        self.buffer[((uv.y * (self.size.y - 1.0)).floor() as usize) * self.size.x as usize
+            + ((uv.x * (self.size.x - 1.0)).floor() as usize)]
     }
 }

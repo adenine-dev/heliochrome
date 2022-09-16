@@ -15,7 +15,7 @@ pub struct Context {
 
     objects: Vec<Object>,
 
-    size: Size<u16>,
+    size: vec2,
     pub samples: u16,
     accumulated_image: Image,
 
@@ -29,7 +29,7 @@ fn gamma_correct(color: Color, gamma: f32) -> Color {
 }
 
 impl Context {
-    pub fn new(size: Size<u16>, camera: Camera) -> Self {
+    pub fn new(size: vec2, camera: Camera) -> Self {
         Self {
             camera,
             skybox: None,
@@ -37,7 +37,7 @@ impl Context {
             size,
             samples: 0,
             accumulated_image: Image::new(size),
-            pixel_buffer: vec![0; size.width as usize * size.height as usize],
+            pixel_buffer: vec![0; size.x as usize * size.y as usize],
         }
     }
 
@@ -45,7 +45,7 @@ impl Context {
         self.objects.push(object);
     }
 
-    pub fn get_size(&self) -> Size<u16> {
+    pub fn get_size(&self) -> vec2 {
         self.accumulated_image.size
     }
 
@@ -55,16 +55,16 @@ impl Context {
 
     pub fn reset_samples(&mut self) {
         self.samples = 0;
-        self.pixel_buffer = vec![0; self.size.width as usize * self.size.height as usize];
+        self.pixel_buffer = vec![0; self.size.x as usize * self.size.y as usize];
         self.accumulated_image = Image::new(self.size);
     }
 
-    pub fn resize(&mut self, size: Size<u16>) {
+    pub fn resize(&mut self, size: vec2) {
         self.size = size;
         self.accumulated_image = Image::new(size);
         self.samples = 0;
-        self.pixel_buffer = vec![0; size.width as usize * size.height as usize];
-        self.camera.aspect_ratio = size.width as f32 / size.height as f32;
+        self.pixel_buffer = vec![0; size.x as usize * size.y as usize];
+        self.camera.aspect_ratio = size.x / size.y;
     }
 
     pub fn render_fragment(&self, uv: &vec2) -> Color {
@@ -122,11 +122,11 @@ impl Context {
 
     pub fn render_sample(&mut self) -> &Vec<u32> {
         let per_pixel = |(i, color): (_, &Color)| {
-            let x = (i % self.accumulated_image.size.width as usize) as f32 + rand::random::<f32>();
-            let y = (i / self.accumulated_image.size.width as usize) as f32 + rand::random::<f32>();
+            let x = (i % self.accumulated_image.size.x as usize) as f32 + rand::random::<f32>();
+            let y = (i / self.accumulated_image.size.x as usize) as f32 + rand::random::<f32>();
             let uv = vec2::new(
-                x as f32 / (self.size.width - 1) as f32,
-                1.0 - (y as f32 / (self.size.height - 1) as f32), // flip
+                x as f32 / (self.size.x - 1.0),
+                1.0 - (y as f32 / (self.size.y - 1.0)), // flip
             );
             let fragment = self.render_fragment(&uv);
             if self.samples == 0 {
