@@ -1,10 +1,21 @@
+use std::collections::{HashSet, VecDeque};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread::{self, Thread};
+
+use spmc;
+// use threadpool::ThreadPool;
+
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::image::Image;
-use crate::maths::*;
+use crate::{maths::*, NUM_SAMPLES};
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
+
+use rayon::{ThreadPool, ThreadPoolBuilder};
 
 use super::hittables::{Hit, Hittable};
 use super::object::Object;
@@ -23,6 +34,7 @@ pub struct Context {
 }
 
 const MAX_DEPTH: u32 = 50;
+const CHUNK_SIZE: usize = 16;
 
 fn gamma_correct(color: Color, gamma: f32) -> Color {
     color.powf(1.0 / gamma)
@@ -132,7 +144,7 @@ impl Context {
             if self.samples == 0 {
                 fragment
             } else {
-                *color + fragment
+                self.accumulated_image.buffer[i] + fragment
             }
         };
 
@@ -174,5 +186,135 @@ impl Context {
             });
 
         &self.pixel_buffer
+    }
+}
+
+pub struct RenderTask {
+    data_sender: Sender<(u32, usize)>,
+    pub data_receiver: Receiver<(u32, usize)>,
+    should_exit: Arc<AtomicBool>,
+    thread_pool: ThreadPool,
+    active_threads: Arc<AtomicU32>,
+    pub context: Arc<RwLock<Context>>,
+}
+
+impl RenderTask {
+    pub fn new(context: Context) -> Self {
+        let thread_pool = ThreadPoolBuilder::new().build().unwrap();
+        // let thread_pool = ThreadPool::new(
+        //     (thread::available_parallelism()
+        //         .unwrap_or(std::num::NonZeroUsize::new(1).unwrap())
+        //         .get() as i32
+        //         - 2)
+        //     .max(1) as usize,
+        // );
+
+        let (data_sender, data_receiver) = mpsc::channel::<(u32, usize)>();
+
+        RenderTask {
+            data_sender,
+            data_receiver,
+            should_exit: Arc::new(AtomicBool::new(false)),
+            active_threads: Arc::new(AtomicU32::new(0)),
+            thread_pool,
+            context: Arc::new(RwLock::new(context)),
+        }
+    }
+
+    pub fn kill(&mut self) {
+        self.should_exit.store(true, Ordering::Relaxed);
+
+        // has the effect of killing all active threads by dropping the previous thread pool, not great but yknow
+        while self.active_threads.load(Ordering::Relaxed) != 0 {}
+        // self.thread_pool = ThreadPoolBuilder::new().build().unwrap();
+        for _ in self.data_receiver.try_iter().take(usize::MAX) {}
+    }
+
+    pub fn render(&self) {
+        self.should_exit.store(false, Ordering::Relaxed);
+        self.active_threads.store(0, Ordering::Relaxed);
+
+        let (mut rs, rr) = spmc::channel::<(usize, usize)>();
+
+        let cx = (self.context.read().unwrap().size.x / CHUNK_SIZE as f32).ceil() as i32;
+        let cy = (self.context.read().unwrap().size.y / CHUNK_SIZE as f32).ceil() as i32;
+        let chunks = cx * cy;
+
+        let mut tx: i32 = 0;
+        let mut ty: i32 = 0;
+        let mut dx = 0;
+        let mut dy = -1;
+        for _ in 0..(cx.max(cy).pow(2)) {
+            if (-cx / 2 <= tx) && (tx <= cx / 2) && (-cy / 2 <= ty) && (ty <= cy / 2) {
+                rs.send(((tx + (cx / 2)) as usize, (ty + (cy / 2)) as usize))
+                    .unwrap();
+            }
+
+            if (tx == ty) || ((tx < 0) && (tx == -ty)) || ((tx > 0) && (tx == 1 - ty)) {
+                (dx, dy) = (-dy, dx)
+            }
+            tx += dx;
+            ty += dy;
+        }
+
+        let thread_count = 6;
+
+        for i in 0..thread_count {
+            let dtx = self.data_sender.clone();
+            let ctx = self.context.clone();
+            let should_exit = self.should_exit.clone();
+            let active_threads = self.active_threads.clone();
+            let rrs = rr.clone();
+            self.thread_pool.spawn(move || {
+                active_threads.fetch_add(1, Ordering::Acquire);
+                while let Ok((tx, ty)) = rrs.recv() {
+                    let ctx = ctx.read().unwrap();
+                    'y: for y in 0..CHUNK_SIZE {
+                        'x: for x in 0..CHUNK_SIZE {
+                            let x = x + ((tx) as usize * CHUNK_SIZE);
+                            let y = y + ((ty) as usize * CHUNK_SIZE);
+                            if x >= ctx.size.x as usize {
+                                continue 'x;
+                            }
+                            if y >= ctx.size.y as usize {
+                                continue 'y;
+                            }
+
+                            let i = x + (ctx.size.x as usize * y);
+                            let mut c = Color::splat(0.0);
+                            let sample_count = 50;
+                            for _ in 0..sample_count {
+                                if should_exit.load(Ordering::Relaxed) {
+                                    active_threads.fetch_sub(1, Ordering::Acquire);
+                                    return;
+                                }
+                                let x = (i % ctx.accumulated_image.size.x as usize) as f32
+                                    + rand::random::<f32>();
+                                let y = (i / ctx.accumulated_image.size.x as usize) as f32
+                                    + rand::random::<f32>();
+                                let uv = vec2::new(
+                                    x as f32 / (ctx.size.x - 1.0),
+                                    1.0 - (y as f32 / (ctx.size.y - 1.0)), // flip
+                                );
+                                let fragment = ctx.render_fragment(&uv);
+                                c += fragment;
+                            }
+
+                            let out_color = gamma_correct(c / sample_count as f32, 2.0);
+                            let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u32;
+                            let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u32;
+                            let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u32;
+
+                            dtx.send((blue | (green << 8) | (red << 16) | (0xFF << 24), i))
+                                .unwrap();
+                        }
+                    }
+                }
+                active_threads.fetch_sub(1, Ordering::Acquire);
+                // println!("end {i}");
+            });
+        }
+
+        drop(rs);
     }
 }

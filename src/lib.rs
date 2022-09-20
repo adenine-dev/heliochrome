@@ -1,3 +1,4 @@
+#![feature(map_first_last)]
 #![feature(portable_simd)]
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
@@ -9,14 +10,14 @@
 use std::{
     error,
     ffi::CString,
+    thread,
     time::{SystemTime, UNIX_EPOCH},
 };
 
 use indicatif::{ProgressBar, ProgressStyle};
-use instant;
+use instant::{self, Duration};
 use log::info;
 use softbuffer::GraphicsContext;
-use stb;
 use winit::{
     event::{ElementState, Event, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -26,7 +27,7 @@ use winit::{
 mod load_obj;
 
 mod heliochrome;
-use heliochrome::{maths::vec2, *};
+use heliochrome::{context::RenderTask, maths::vec2, *};
 
 mod make_context;
 use make_context::make_context;
@@ -34,50 +35,58 @@ use make_context::make_context;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
+#[cfg(target_arch = "wasm32")]
+pub use wasm_bindgen_rayon::init_thread_pool;
+
 const NUM_SAMPLES: u16 = 500;
 
 fn write_image(size: vec2, buffer: &[u32]) -> Result<(), Box<dyn error::Error>> {
     #[cfg(target_arch = "wasm32")]
     {
-        Err("Cannot save file on web, try right clicking the canvas.")?;
+        Err("Cannot save file on web, try right clicking the canvas.")?
     }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH)?;
+        let pathstr = CString::new(format!("out_{}.png", now.as_secs()))?;
 
-    let now = SystemTime::now().duration_since(UNIX_EPOCH)?;
-    let pathstr = CString::new(format!("out_{}.png", now.as_secs()))?;
+        let data = buffer
+            .iter()
+            .map(|x| {
+                let bytes = x.to_be_bytes();
+                let r = bytes[1];
+                let g = bytes[2];
+                let b = bytes[3];
+                let a = bytes[0];
 
-    let data = buffer
-        .iter()
-        .map(|x| {
-            let bytes = x.to_be_bytes();
-            let r = bytes[1];
-            let g = bytes[2];
-            let b = bytes[3];
-            let a = bytes[0];
+                [r, g, b, a]
+            })
+            .flatten()
+            .collect::<Vec<u8>>();
 
-            [r, g, b, a]
-        })
-        .flatten()
-        .collect::<Vec<u8>>();
+        stb::image_write::stbi_write_png(&pathstr, size.x as i32, size.y as i32, 4, &data, 0);
 
-    stb::image_write::stbi_write_png(&pathstr, size.x as i32, size.y as i32, 4, &data, 0);
-
-    Ok(())
+        Ok(())
+    }
 }
 
 async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: Window) {
     let mut softbuffer_context = unsafe { GraphicsContext::new(window) }.unwrap();
-    #[cfg(not(target_arch = "wasm32"))]
-    let pb = ProgressBar::new(NUM_SAMPLES as u64);
-    #[cfg(not(target_arch = "wasm32"))]
-    pb.set_style(
-        ProgressStyle::with_template(
-            "{spinner:.magenta} {elapsed_precise} {msg:>16} |{wide_bar}| {pos}/{len} samples",
-        )
-        .unwrap()
-        .tick_chars("🌑🌒🌓🌔🌕🌖🌗🌘 ")
-        .progress_chars(""),
-    );
-
+    // #[cfg(not(target_arch = "wasm32"))]
+    // let pb = ProgressBar::new(NUM_SAMPLES as u64);
+    // #[cfg(not(target_arch = "wasm32"))]
+    // pb.set_style(
+    //     ProgressStyle::with_template(
+    //         "{spinner:.magenta} {elapsed_precise} {msg:>16} |{wide_bar}| {pos}/{len} samples",
+    //     )
+    //     .unwrap()
+    //     .tick_chars("🌑🌒🌓🌔🌕🌖🌗🌘 ")
+    //     .progress_chars(""),
+    // );
+    let mut size = context.get_size();
+    let mut pixel_buffer = vec![0; size.x as usize * size.y as usize];
+    let mut render_task = RenderTask::new(context);
+    render_task.render();
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
 
@@ -85,40 +94,52 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
             Event::RedrawRequested(window_id) if window_id == softbuffer_context.window().id() => {
                 #[cfg(not(target_arch = "wasm32"))]
                 let start = instant::Instant::now();
+                softbuffer_context.set_buffer(&pixel_buffer, size.x as u16, size.y as u16);
 
-                context.render_sample();
-                softbuffer_context.set_buffer(
-                    context.get_pixel_buffer(),
-                    context.get_size().x as u16,
-                    context.get_size().y as u16,
-                );
-
-                #[cfg(not(target_arch = "wasm32"))]
-                {
-                    let elapsed = start.elapsed();
-                    pb.inc(1);
-                    pb.set_message(format!("{elapsed:?}"));
-                }
-
-                // println!(
-                //     "frame render time: {elapsed:?} ({} sample(s))",
-                //     context.samples
-                // );
+                // #[cfg(not(target_arch = "wasm32"))]
+                // {
+                //     let elapsed = start.elapsed();
+                //     pb.inc(1);
+                //     pb.set_message(format!("{elapsed:?}"));
+                // }
             }
             Event::MainEventsCleared => {
-                if context.samples < NUM_SAMPLES {
-                    softbuffer_context.window().request_redraw();
-                } else {
-                    *control_flow = ControlFlow::Wait;
-                }
+                render_task
+                    .data_receiver
+                    .try_iter()
+                    .take(100)
+                    .for_each(|(c, idx)| {
+                        pixel_buffer[idx] = c;
+                    });
+
+                softbuffer_context.window().request_redraw();
+
+                // if context.samples < NUM_SAMPLES {
+                // } else {
+                //     *control_flow = ControlFlow::Wait;
+                // }
             }
             Event::WindowEvent {
-                event: WindowEvent::Resized(size),
+                event: WindowEvent::Resized(newsize),
                 window_id,
             } if window_id == softbuffer_context.window().id() => {
-                context.resize(maths::vec2::new(size.width as f32, size.height as f32));
-                #[cfg(not(target_arch = "wasm32"))]
-                pb.reset();
+                if newsize.width as f32 != size.x || newsize.height as f32 != size.y {
+                    render_task.kill();
+                    size = vec2::new(newsize.width as f32, newsize.height as f32);
+                    render_task
+                        .context
+                        .write()
+                        .unwrap()
+                        .resize(maths::vec2::new(
+                            newsize.width as f32,
+                            newsize.height as f32,
+                        ));
+                    pixel_buffer = vec![0; newsize.width as usize * newsize.height as usize];
+                    render_task.render();
+                }
+
+                // #[cfg(not(target_arch = "wasm32"))]
+                // pb.reset();
             }
             Event::WindowEvent {
                 window_id,
@@ -129,56 +150,56 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
                         is_synthetic: _,
                     },
             } if window_id == softbuffer_context.window().id() => {
-                #[allow(deprecated)] // deprecated because this allows behavior to exist on web
-                if input.virtual_keycode == Some(VirtualKeyCode::S) && input.modifiers.ctrl() {
-                    if input.state == ElementState::Released {
-                        if let Err(err) =
-                            write_image(context.get_size(), context.get_pixel_buffer())
-                        {
-                            info!("Could not write image :<\n{}", err.to_string())
-                        } else {
-                            info!("Wrote image.");
-                        }
-                    }
-                    return;
-                }
-                let mut should_update = true;
-                let camera_speed = 0.1;
-                match input.virtual_keycode {
-                    Some(VirtualKeyCode::A) => {
-                        context.camera.eye -= (context.camera.at - context.camera.eye)
-                            .cross(context.camera.up)
-                            .normalize()
-                            * camera_speed;
-                    }
-                    Some(VirtualKeyCode::D) => {
-                        context.camera.eye += (context.camera.at - context.camera.eye)
-                            .cross(context.camera.up)
-                            .normalize()
-                            * camera_speed;
-                    }
-                    Some(VirtualKeyCode::W) => {
-                        context.camera.eye +=
-                            (context.camera.at - context.camera.eye).normalize() * camera_speed;
-                    }
-                    Some(VirtualKeyCode::S) => {
-                        context.camera.eye -=
-                            (context.camera.at - context.camera.eye).normalize() * camera_speed;
-                    }
-                    Some(VirtualKeyCode::Q) => {
-                        context.camera.eye += context.camera.up.normalize() * camera_speed;
-                    }
-                    Some(VirtualKeyCode::E) => {
-                        context.camera.eye -= context.camera.up.normalize() * camera_speed;
-                    }
-                    _ => should_update = false,
-                }
-                if should_update {
-                    context.reset_samples();
-                    #[cfg(not(target_arch = "wasm32"))]
-                    pb.reset();
-                    softbuffer_context.window().request_redraw();
-                }
+                // #[allow(deprecated)] // deprecated because this allows behavior to exist on web
+                // if input.virtual_keycode == Some(VirtualKeyCode::S) && input.modifiers.ctrl() {
+                //     if input.state == ElementState::Released {
+                //         if let Err(err) =
+                //             write_image(context.get_size(), context.get_pixel_buffer())
+                //         {
+                //             info!("Could not write image :<\n{}", err.to_string())
+                //         } else {
+                //             info!("Wrote image.");
+                //         }
+                //     }
+                //     return;
+                // }
+                // let mut should_update = true;
+                // let camera_speed = 0.1;
+                // match input.virtual_keycode {
+                //     Some(VirtualKeyCode::A) => {
+                //         context.camera.eye -= (context.camera.at - context.camera.eye)
+                //             .cross(context.camera.up)
+                //             .normalize()
+                //             * camera_speed;
+                //     }
+                //     Some(VirtualKeyCode::D) => {
+                //         context.camera.eye += (context.camera.at - context.camera.eye)
+                //             .cross(context.camera.up)
+                //             .normalize()
+                //             * camera_speed;
+                //     }
+                //     Some(VirtualKeyCode::W) => {
+                //         context.camera.eye +=
+                //             (context.camera.at - context.camera.eye).normalize() * camera_speed;
+                //     }
+                //     Some(VirtualKeyCode::S) => {
+                //         context.camera.eye -=
+                //             (context.camera.at - context.camera.eye).normalize() * camera_speed;
+                //     }
+                //     Some(VirtualKeyCode::Q) => {
+                //         context.camera.eye += context.camera.up.normalize() * camera_speed;
+                //     }
+                //     Some(VirtualKeyCode::E) => {
+                //         context.camera.eye -= context.camera.up.normalize() * camera_speed;
+                //     }
+                //     _ => should_update = false,
+                // }
+                // if should_update {
+                //     context.reset_samples();
+                //     #[cfg(not(target_arch = "wasm32"))]
+                //     pb.reset();
+                //     softbuffer_context.window().request_redraw();
+                // }
             }
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
@@ -191,7 +212,7 @@ async fn run(mut context: context::Context, event_loop: EventLoop<()>, window: W
     });
 }
 
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
+#[cfg_attr(target_arch = "wasm32", wasm_bindgen)]
 pub fn heliochrome() {
     let context = make_context();
 
