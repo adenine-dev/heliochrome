@@ -1,6 +1,6 @@
 use std::{error::Error, path::Path};
 
-use crate::heliochrome::maths::vec3;
+use crate::maths::vec3;
 
 pub fn load_obj<P: AsRef<Path> + std::fmt::Debug>(
     path: P,

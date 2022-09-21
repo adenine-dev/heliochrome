@@ -3,13 +3,11 @@ const HEIGHT: f32 = 225.0;
 
 use std::path::Path;
 
-use crate::{
-    heliochrome::{
-        color::Color, context::Context, hittables, image::Image, materials::*, maths::*,
-        object::Object, transform::Transform, *,
-    },
-    load_obj::load_obj,
+use heliochrome::{
+    color::Color, context::Context, hittables, image::Image, load_obj::load_obj, materials::*,
+    maths::*, object::Object, transform::Transform, *,
 };
+
 
 pub fn make_context() -> Context {
     let mut context = Context::new(

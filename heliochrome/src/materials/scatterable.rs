@@ -1,6 +1,6 @@
 use enum_dispatch::enum_dispatch;
 
-use crate::heliochrome::{color::Color, hittables::Hit, maths::Ray};
+use crate::{color::Color, hittables::Hit, maths::Ray};
 
 pub struct Scatter {
     pub outgoing: Ray,

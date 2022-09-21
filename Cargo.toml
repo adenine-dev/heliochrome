@@ -1,50 +1,8 @@
-[package]
-name = "heliochrome"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = [
+    "driver", "heliochrome"
+]
+default = "driver"
 
 [profile.dev]
-opt-level = 3 # ray tracers are slow lol
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[[bin]]
-name = "heliochrome"
-path = "src/main.rs"
-
-[features]
-default = ["multithread"]
-multithread = []
-
-[dependencies]
-winit = "0.27.2"
-wgpu = "0.13.1"
-env_logger = "0.9.0"
-pollster = "0.2.5"
-softbuffer = "0.1.1"
-rayon = "1.5.3"
-rand = "0.8"
-enum_dispatch = "0.3.8"
-stb = { version = "0.3.2", default-features = false, features = ["stb_image", "stb_image_write"] }
-instant = "0.1.12"
-log = "0.4.17"
-indicatif = "0.17.0"
-impl_ops = "0.1.1"
-tobj = "3.2.3"
-spmc = "0.3.0"
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1.6"
-console_log = "0.2.0"
-wgpu = { version = "0.13", features = ["webgl"] }
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.30"
-# wasm-bindgen-rayon = { version = "1.0", features = ["no-bundler"] }
-web-sys = { version = "0.3", features = [
-    "Document",
-    "Window",
-    "Element",
-]}
-getrandom = { version = "0.2.7", features = ["js"] }
+opt-level = 3

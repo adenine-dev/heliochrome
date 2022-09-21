@@ -10,7 +10,7 @@ use spmc;
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::image::Image;
-use crate::{maths::*, NUM_SAMPLES};
+use crate::maths::*;
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
@@ -190,8 +190,8 @@ impl Context {
 }
 
 pub struct RenderTask {
-    data_sender: Sender<(u32, usize)>,
-    pub data_receiver: Receiver<(u32, usize)>,
+    data_sender: Sender<([u8; 4], vec2)>,
+    pub data_receiver: Receiver<([u8; 4], vec2)>,
     should_exit: Arc<AtomicBool>,
     thread_pool: ThreadPool,
     active_threads: Arc<AtomicU32>,
@@ -199,7 +199,7 @@ pub struct RenderTask {
 }
 
 impl RenderTask {
-    pub fn new(context: Context) -> Self {
+    pub fn new(context: Arc<RwLock<Context>>) -> Self {
         let thread_pool = ThreadPoolBuilder::new().build().unwrap();
         // let thread_pool = ThreadPool::new(
         //     (thread::available_parallelism()
@@ -209,7 +209,7 @@ impl RenderTask {
         //     .max(1) as usize,
         // );
 
-        let (data_sender, data_receiver) = mpsc::channel::<(u32, usize)>();
+        let (data_sender, data_receiver) = mpsc::channel::<([u8; 4], vec2)>();
 
         RenderTask {
             data_sender,
@@ -217,7 +217,7 @@ impl RenderTask {
             should_exit: Arc::new(AtomicBool::new(false)),
             active_threads: Arc::new(AtomicU32::new(0)),
             thread_pool,
-            context: Arc::new(RwLock::new(context)),
+            context,
         }
     }
 
@@ -268,19 +268,19 @@ impl RenderTask {
             self.thread_pool.spawn(move || {
                 active_threads.fetch_add(1, Ordering::Acquire);
                 while let Ok((tx, ty)) = rrs.recv() {
-                    let ctx = ctx.read().unwrap();
+                    let context = ctx.read().unwrap();
                     'y: for y in 0..CHUNK_SIZE {
                         'x: for x in 0..CHUNK_SIZE {
                             let x = x + ((tx) as usize * CHUNK_SIZE);
                             let y = y + ((ty) as usize * CHUNK_SIZE);
-                            if x >= ctx.size.x as usize {
+                            if x >= context.size.x as usize {
                                 continue 'x;
                             }
-                            if y >= ctx.size.y as usize {
+                            if y >= context.size.y as usize {
                                 continue 'y;
                             }
 
-                            let i = x + (ctx.size.x as usize * y);
+                            let i = x + (context.size.x as usize * y);
                             let mut c = Color::splat(0.0);
                             let sample_count = 50;
                             for _ in 0..sample_count {
@@ -288,25 +288,28 @@ impl RenderTask {
                                     active_threads.fetch_sub(1, Ordering::Acquire);
                                     return;
                                 }
-                                let x = (i % ctx.accumulated_image.size.x as usize) as f32
+                                let u = (i % context.accumulated_image.size.x as usize) as f32
                                     + rand::random::<f32>();
-                                let y = (i / ctx.accumulated_image.size.x as usize) as f32
+                                let v = (i / context.accumulated_image.size.x as usize) as f32
                                     + rand::random::<f32>();
                                 let uv = vec2::new(
-                                    x as f32 / (ctx.size.x - 1.0),
-                                    1.0 - (y as f32 / (ctx.size.y - 1.0)), // flip
+                                    u / (context.size.x - 1.0),
+                                    1.0 - (v / (context.size.y - 1.0)), // flip
                                 );
-                                let fragment = ctx.render_fragment(&uv);
+                                let fragment = context.render_fragment(&uv);
                                 c += fragment;
                             }
 
                             let out_color = gamma_correct(c / sample_count as f32, 2.0);
-                            let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u32;
-                            let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u32;
-                            let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u32;
+                            let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u8;
+                            let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u8;
+                            let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u8;
 
-                            dtx.send((blue | (green << 8) | (red << 16) | (0xFF << 24), i))
-                                .unwrap();
+                            dtx.send((
+                                [red, green, blue, 0xff],
+                                // blue | (green << 8) | (red << 16) | (0xFF << 24),
+                                vec2::new(x as f32, y as f32),
+                            ));
                         }
                     }
                 }

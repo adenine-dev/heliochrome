@@ -1,4 +1,4 @@
-use crate::heliochrome::{
+use crate::{
     color::Color,
     hittables::Hit,
     materials::{Scatter, Scatterable},

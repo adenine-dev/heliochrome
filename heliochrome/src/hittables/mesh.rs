@@ -1,4 +1,4 @@
-use crate::heliochrome::maths::{vec3, Ray};
+use crate::maths::{vec3, Ray};
 
 use super::{ray_triangle_intersection, Hit, Hittable};
 

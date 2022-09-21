@@ -1,0 +1,23 @@
+[package]
+name = "heliochrome"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["multithread"]
+multithread = []
+
+[dependencies]
+rayon = "1.5.3"
+rand = "0.8"
+enum_dispatch = "0.3.8"
+stb = { version = "0.3.2", default-features = false, features = ["stb_image", "stb_image_write"] }
+instant = "0.1.12"
+impl_ops = "0.1.1"
+tobj = "3.2.3"
+spmc = "0.3.0"
+

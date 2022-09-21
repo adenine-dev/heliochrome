@@ -1,5 +1,3 @@
-use indicatif::ProgressBar;
-
 use super::{
     hittables::{Hit, Hittable, AABB},
     maths::Ray,
@@ -74,8 +72,6 @@ impl<T: Hittable> BVH<T> {
             available[i] = true;
         }
 
-        let pb = ProgressBar::new((hittables.len() * 2 - 1) as u64);
-
         while nodes.len() < hittables.len() * 2 - 1 {
             let mut best = f32::INFINITY;
             let mut bounds = AABB::default();
@@ -107,8 +103,6 @@ impl<T: Hittable> BVH<T> {
                 children: [l, r],
             });
             available[nodes.len() - 1] = true;
-
-            pb.inc(1);
         }
 
         Self { hittables, nodes }

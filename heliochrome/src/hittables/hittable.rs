@@ -1,6 +1,6 @@
 use enum_dispatch::enum_dispatch;
 
-use crate::{heliochrome::maths::vec3, maths::Ray};
+use crate::{maths::vec3, maths::Ray};
 
 use super::AABB;
 
