@@ -36,6 +36,7 @@ pub mod materials;
 pub mod maths;
 pub mod object;
 pub mod transform;
+pub mod scene;
 
 // use context::{Context, RenderTask};
 // use maths::vec2;

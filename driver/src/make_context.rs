@@ -1,17 +1,15 @@
-const WIDTH: f32 = 400.0;
-const HEIGHT: f32 = 225.0;
+const WIDTH: f32 = 1280.0;
+const HEIGHT: f32 = 720.0;
 
 use std::path::Path;
 
 use heliochrome::{
     color::Color, context::Context, hittables, image::Image, load_obj::load_obj, materials::*,
-    maths::*, object::Object, transform::Transform, *,
+    maths::*, object::Object, scene::Scene, transform::Transform, *,
 };
 
-
 pub fn make_context() -> Context {
-    let mut context = Context::new(
-        maths::vec2::new(WIDTH, HEIGHT),
+    let mut scene = Scene::new(
         camera::Camera::new(
             maths::vec3::new(0.0, 0.0, 5.0),
             vec3::new(0.0, -0.5, 0.0),
@@ -22,11 +20,10 @@ pub fn make_context() -> Context {
         )
         .into(),
     );
-
-    context.skybox =
+    scene.skybox =
         Some(Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap());
 
-    context.add_object(Object::new(
+    scene.add_object(Object::new(
         hittables::InfinitePlane::new(
             vec3::new(0.0, -1.0, 0.0),
             vec3::new(0.0, 1.0, 0.0).normalized(),
@@ -35,6 +32,40 @@ pub fn make_context() -> Context {
         Lambertian::new(Color::splat(0.3)).into(),
         None,
     ));
+
+    scene.add_object(Object::new(
+        hittables::Sphere::new(vec3::new(0.0, 0.0, 0.0), 0.95).into(),
+        Metal::new(Color::new(0.8, 0.8, 0.8), 0.0).into(),
+        Some(Transform::new(
+            mat3::rotate(vec3::new(std::f32::consts::TAU / 3.0, 0.0, 0.0))
+                * mat3::scale(vec3::new(1.0, 2.0, 1.0)),
+        )),
+    ));
+
+    scene.add_object(Object::new(
+        hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95).into(),
+        Lambertian::new(Color::new(0.1, 0.1, 0.1)).into(),
+        None,
+    ));
+
+    scene.add_object(Object::new(
+        hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95).into(),
+        Metal::new(Color::new(0.3, 0.3, 0.3), 0.7).into(),
+        None,
+    ));
+
+    scene.add_object(Object::new(
+        hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95).into(),
+        Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
+        None,
+    ));
+    scene.add_object(Object::new(
+        hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85).into(),
+        Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
+        None,
+    ));
+
+    Context::new(maths::vec2::new(WIDTH, HEIGHT), scene)
 
     // let mut objects = vec![];
     // for x in 0..5 {
@@ -128,38 +159,4 @@ pub fn make_context() -> Context {
     //     )
     //     .into(),
     // );
-
-    context.add_object(Object::new(
-        hittables::Sphere::new(vec3::new(0.0, 0.0, 0.0), 0.95).into(),
-        Metal::new(Color::new(0.8, 0.8, 0.8), 0.0).into(),
-        Some(Transform::new(
-            mat3::rotate(vec3::new(std::f32::consts::TAU / 3.0, 0.0, 0.0))
-                * mat3::scale(vec3::new(1.0, 2.0, 1.0)),
-        )),
-    ));
-
-    context.add_object(Object::new(
-        hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95).into(),
-        Lambertian::new(Color::new(0.1, 0.1, 0.1)).into(),
-        None,
-    ));
-
-    context.add_object(Object::new(
-        hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95).into(),
-        Metal::new(Color::new(0.3, 0.3, 0.3), 0.7).into(),
-        None,
-    ));
-
-    context.add_object(Object::new(
-        hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95).into(),
-        Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
-        None,
-    ));
-    context.add_object(Object::new(
-        hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85).into(),
-        Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
-        None,
-    ));
-
-    context
 }
