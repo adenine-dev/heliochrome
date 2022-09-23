@@ -976,6 +976,7 @@ version = "0.1.0"
 dependencies = [
  "enum_dispatch",
  "impl_ops",
+ "indicatif",
  "instant",
  "rand",
  "rayon",
@@ -1038,6 +1039,7 @@ checksum = "bfddc9561e8baf264e0e45e197fd7696320026eb10a8180340debc27b18f535b"
 dependencies = [
  "console",
  "number_prefix",
+ "rayon",
  "unicode-width",
 ]
 

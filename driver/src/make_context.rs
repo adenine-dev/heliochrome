@@ -12,11 +12,12 @@ pub fn make_context() -> Context {
     let mut scene = Scene::new(
         camera::Camera::new(
             maths::vec3::new(0.0, 0.0, 5.0),
-            vec3::new(0.0, -0.5, 0.0),
+            vec3::new(0.0, 0.0, 0.0),
             vec3::unit_y(),
             20.0,
             WIDTH as f32 / HEIGHT as f32,
             0.1,
+            None,
         )
         .into(),
     );
@@ -33,13 +34,26 @@ pub fn make_context() -> Context {
         None,
     ));
 
+    // let (mut positions, indices) = load_obj("assets/suzanne.obj").unwrap();
+    // positions.iter_mut().for_each(|p| {
+    //     *p -= vec3::new(0.0, 0.55, 0.0);
+    // });
+    // scene.add_object(Object::new(
+    //     hittables::Mesh::new(&positions, &indices).into(),
+    //     Metal::new(Color::new(0.97, 0.77, 0.06), 0.0).into(),
+    //     // Dielectric::new(1.5, Color::new(0.8, 0.3, 0.8)).into(),
+    //     // None,
+    //     Some(Transform::new(mat3::rotate(vec3::new(
+    //         0.0,
+    //         0.0,
+    //         -35.0f32.to_radians(),
+    //     )))),
+    // ));
+
     scene.add_object(Object::new(
-        hittables::Sphere::new(vec3::new(0.0, 0.0, 0.0), 0.95).into(),
+        hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95).into(),
         Metal::new(Color::new(0.8, 0.8, 0.8), 0.0).into(),
-        Some(Transform::new(
-            mat3::rotate(vec3::new(std::f32::consts::TAU / 3.0, 0.0, 0.0))
-                * mat3::scale(vec3::new(1.0, 2.0, 1.0)),
-        )),
+        None,
     ));
 
     scene.add_object(Object::new(
@@ -85,22 +99,6 @@ pub fn make_context() -> Context {
     //         }
     //     }
     // }
-
-    // let (mut positions, indices) = load_obj("assets/suzanne.obj").unwrap();
-    // positions.iter_mut().for_each(|p| {
-    //     *p -= vec3::new(0.0, 0.55, 0.0);
-    // });
-    // context.add_object(Object::new(
-    //     hittables::Mesh::new(&positions, &indices).into(),
-    //     Metal::new(Color::new(0.97, 0.77, 0.06), 0.0).into(),
-    //     // Dielectric::new(1.5, Color::new(0.8, 0.3, 0.8)).into(),
-    //     // None,
-    //     Some(Transform::new(mat3::rotate(vec3::new(
-    //         0.0,
-    //         0.0,
-    //         -35.0f32.to_radians(),
-    //     )))),
-    // ));
 
     // positions.iter_mut().for_each(|p| {
     //     *p += vec3::new(1.0, 0.0, 0.0);

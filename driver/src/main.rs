@@ -14,7 +14,7 @@ use eframe::{
     egui::{
         self,
         plot::{Legend, Plot, PlotImage, PlotPoint},
-        Direction, Layout, TextureFilter, Ui, WidgetText,
+        CollapsingHeader, Direction, Key, Layout, TextureFilter, Ui, WidgetText,
     },
     emath::Align,
     epaint::{Color32, ColorImage, ImageData, TextureHandle, Vec2},
@@ -22,15 +22,19 @@ use eframe::{
 };
 
 use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
-use heliochrome::{context::Context, maths::vec2};
+use heliochrome::{context::Context, maths::vec2, scene::Scene};
 
 struct StateData {
+    pub changed: bool,
     pub context: Context,
 }
 
 impl StateData {
     pub fn new(context: Context) -> Self {
-        Self { context }
+        Self {
+            changed: false,
+            context,
+        }
     }
 }
 
@@ -96,7 +100,127 @@ impl Tab for ConfigTab {
     }
 }
 
-struct PreviewTab {
+struct SceneTab {
+    state: State,
+}
+
+impl SceneTab {
+    fn new(state: State) -> Self {
+        Self { state }
+    }
+}
+
+impl Tab for SceneTab {
+    fn ui(&mut self, ui: &mut Ui) {
+        let mut changed = false;
+        CollapsingHeader::new("Camera")
+            .default_open(true)
+            .show(ui, |ui| {
+                egui::Grid::new("bounces/samples").show(ui, |ui| {
+                    ui.label("field of view: ");
+                    changed = changed
+                        || ui
+                            .add(egui::DragValue::new(
+                                &mut self
+                                    .state
+                                    .borrow_mut()
+                                    .context
+                                    .scene
+                                    .write()
+                                    .unwrap()
+                                    .camera
+                                    .vfov,
+                            ))
+                            .changed();
+                    ui.end_row();
+
+                    ui.label("aperture diameter: ");
+                    changed = changed
+                        || ui
+                            .add(egui::DragValue::new(
+                                &mut self
+                                    .state
+                                    .borrow_mut()
+                                    .context
+                                    .scene
+                                    .write()
+                                    .unwrap()
+                                    .camera
+                                    .aperture,
+                            ))
+                            .changed();
+                    ui.end_row();
+
+                    let focus_dist = self
+                        .state
+                        .borrow()
+                        .context
+                        .scene
+                        .read()
+                        .unwrap()
+                        .camera
+                        .focus_dist;
+                    let mut custom_focus_dist = focus_dist.is_some();
+                    // println!("{custom_focus_dist}");
+                    ui.label("focus distance: ");
+                    if ui.checkbox(&mut custom_focus_dist, "Custom").changed() {
+                        self.state
+                            .borrow_mut()
+                            .context
+                            .scene
+                            .write()
+                            .unwrap()
+                            .camera
+                            .focus_dist = if custom_focus_dist {
+                            Some(
+                                self.state
+                                    .borrow()
+                                    .context
+                                    .scene
+                                    .read()
+                                    .unwrap()
+                                    .camera
+                                    .get_default_focus_dist(),
+                            )
+                        } else {
+                            None
+                        }
+                    }
+
+                    ui.add_enabled_ui(custom_focus_dist, |ui| {
+                        let mut focus_dist = focus_dist.unwrap_or(0.0);
+                        if ui
+                            .add(
+                                egui::DragValue::new(&mut focus_dist)
+                                    .clamp_range(0.0..=f32::INFINITY)
+                                    .speed(0.05),
+                            )
+                            .changed()
+                        {
+                            self.state
+                                .borrow_mut()
+                                .context
+                                .scene
+                                .write()
+                                .unwrap()
+                                .camera
+                                .focus_dist = Some(focus_dist);
+                            changed = true;
+                        }
+                    });
+                    ui.end_row();
+                });
+            });
+
+        self.state.borrow_mut().changed = changed;
+    }
+
+    fn title(&mut self) -> WidgetText {
+        "Scene".into()
+    }
+}
+
+struct RenderTab {
     texture_handle: TextureHandle,
     state: State,
     rendering: bool,
@@ -105,10 +229,10 @@ struct PreviewTab {
 
 const EMPTY_TEXTURE_COLOR: Color32 = Color32::BLACK;
 
-impl PreviewTab {
+impl RenderTab {
     pub fn new(egui_ctx: &egui::Context, state: State) -> Self {
         let texture_handle = egui_ctx.load_texture(
-            "preview",
+            "render",
             ImageData::Color(ColorImage::new(
                 [
                     state.borrow().context.get_size().x as usize,
@@ -127,7 +251,7 @@ impl PreviewTab {
     }
 }
 
-impl Tab for PreviewTab {
+impl Tab for RenderTab {
     fn ui(&mut self, ui: &mut Ui) {
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.horizontal(|ui| {
@@ -182,7 +306,133 @@ impl Tab for PreviewTab {
             });
 
         ui.centered_and_justified(|ui| {
-            Plot::new("lines_demo")
+            Plot::new("render")
+                .legend(Legend::default())
+                .show_x(false)
+                .show_y(false)
+                .data_aspect(1.0)
+                .show_axes([false, false])
+                .show_background(false)
+                .show(ui, |pui| {
+                    pui.image(PlotImage::new(
+                        self.texture_handle.id(),
+                        PlotPoint::new(0, 0),
+                        Vec2::new(
+                            self.texture_handle.size()[0] as f32,
+                            self.texture_handle.size()[1] as f32,
+                        ),
+                    ));
+                });
+        });
+    }
+
+    fn title(&mut self) -> WidgetText {
+        "Render".into()
+    }
+}
+
+struct PreviewTab {
+    texture_handle: TextureHandle,
+    state: State,
+    rendering: bool,
+}
+
+impl PreviewTab {
+    pub fn new(egui_ctx: &egui::Context, state: State) -> Self {
+        let texture_handle = egui_ctx.load_texture(
+            "render",
+            ImageData::Color(ColorImage::new(
+                [
+                    state.borrow().context.get_size().x as usize,
+                    state.borrow().context.get_size().y as usize,
+                ],
+                EMPTY_TEXTURE_COLOR,
+            )),
+            TextureFilter::Nearest,
+        );
+        Self {
+            texture_handle,
+            state,
+            rendering: false,
+        }
+    }
+}
+
+impl Tab for PreviewTab {
+    fn ui(&mut self, ui: &mut Ui) {
+        let size = self.state.borrow().context.get_size();
+        let samples = self.state.borrow().context.samples;
+
+        if ui.button(format!("📷 {}", samples)).clicked() {
+            self.rendering = !self.rendering;
+        }
+
+        let reset = {
+            let state = self.state.borrow(); //
+            let camera = &mut state.context.scene.write().unwrap().camera;
+            let input = ui.input();
+            let mut should_update = true;
+            let camera_speed = 0.1;
+            if input.key_down(Key::A) {
+                camera.eye -= (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
+            } else if input.key_down(Key::D) {
+                camera.eye += (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
+            } else if input.key_down(Key::W) {
+                camera.eye += (camera.at - camera.eye).normalize() * camera_speed;
+            } else if input.key_down(Key::S) {
+                camera.eye -= (camera.at - camera.eye).normalize() * camera_speed;
+            } else if input.key_down(Key::Q) {
+                camera.eye += camera.up.normalize() * camera_speed;
+            } else if input.key_down(Key::E) {
+                camera.eye -= camera.up.normalize() * camera_speed;
+            } else {
+                should_update = false;
+            }
+
+            should_update || state.changed
+        };
+        {
+            let mut state = self.state.borrow_mut();
+            if reset {
+                state.context.reset_samples();
+                state.changed = false
+            }
+        }
+        {
+            if self.texture_handle.size()[0] != size.x as usize
+                || self.texture_handle.size()[1] != size.y as usize
+                || reset
+            {
+                self.texture_handle.set(
+                    ImageData::Color(ColorImage::new(
+                        [size.x as usize, size.y as usize],
+                        EMPTY_TEXTURE_COLOR,
+                    )),
+                    TextureFilter::Nearest,
+                );
+            }
+        }
+
+        if self.rendering {
+            self.texture_handle.set(
+                ImageData::Color(ColorImage::from_rgba_unmultiplied(
+                    [size.x as usize, size.y as usize],
+                    &self
+                        .state
+                        .borrow_mut()
+                        .context
+                        .render_sample()
+                        .iter()
+                        .map(|c| c.to_le_bytes())
+                        .flatten()
+                        .collect::<Vec<_>>(),
+                )),
+                TextureFilter::Linear,
+            );
+        }
+
+        ui.centered_and_justified(|ui| {
+            Plot::new("preview")
                 .legend(Legend::default())
                 .show_x(false)
                 .show_y(false)
@@ -214,19 +464,18 @@ struct HeliochromeDriver {
 
 impl HeliochromeDriver {
     fn new(cc: &CreationContext) -> Self {
-        let state = Rc::new(RefCell::new(StateData {
-            context: make_context(),
-        }));
-        let mut tree =
-            DynamicTree::new(vec![Box::new(PreviewTab::new(&cc.egui_ctx, state.clone()))]);
+        let state = Rc::new(RefCell::new(StateData::new(make_context())));
+        let mut tree = DynamicTree::new(vec![
+            Box::new(RenderTab::new(&cc.egui_ctx, state.clone())),
+            Box::new(PreviewTab::new(&cc.egui_ctx, state.clone())),
+        ]);
 
         let [a, b] = tree.split_left(
             NodeIndex::root(),
             0.2,
-            vec![Box::new(ConfigTab::new(state.clone()))],
+            vec![Box::new(SceneTab::new(state.clone()))],
         );
-        // let [_, _] = tree.split_below(a, 0.7, vec!["tab4".to_owned()]);
-        // let [_, _] = tree.split_below(b, 0.5, vec!["tab5".to_owned()]);
+        let [_, _] = tree.split_below(b, 0.7, vec![Box::new(ConfigTab::new(state.clone()))]);
 
         Self { tree, state }
     }

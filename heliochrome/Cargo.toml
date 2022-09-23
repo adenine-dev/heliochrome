@@ -20,4 +20,5 @@ instant = "0.1.12"
 impl_ops = "0.1.1"
 tobj = "3.2.3"
 spmc = "0.3.0"
+indicatif = {version = "0.17.0", features = ["rayon"]}
 

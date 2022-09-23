@@ -7,10 +7,19 @@ pub struct Camera {
     pub vfov: f32,
     pub aspect_ratio: f32,
     pub aperture: f32,
+    pub focus_dist: Option<f32>,
 }
 
 impl Camera {
-    pub fn new(eye: vec3, at: vec3, up: vec3, vfov: f32, aspect_ratio: f32, aperture: f32) -> Self {
+    pub fn new(
+        eye: vec3,
+        at: vec3,
+        up: vec3,
+        vfov: f32,
+        aspect_ratio: f32,
+        aperture: f32,
+        focus_dist: Option<f32>,
+    ) -> Self {
         Self {
             eye,
             at,
@@ -18,7 +27,12 @@ impl Camera {
             vfov,
             aspect_ratio,
             aperture,
+            focus_dist,
         }
+    }
+
+    pub fn get_default_focus_dist(&self) -> f32 {
+        (self.eye - self.at).mag()
     }
 
     pub fn get_ray(&self, uv: &vec2) -> Ray {
@@ -30,7 +44,9 @@ impl Camera {
         let u = self.up.cross(w).normalize();
         let v = w.cross(u);
 
-        let focus_dist = (self.eye - self.at).mag();
+        let focus_dist = self
+            .focus_dist
+            .unwrap_or_else(|| self.get_default_focus_dist());
 
         let horizontal = focus_dist * viewport_w * u;
         let vertical = focus_dist * viewport_h * v;
