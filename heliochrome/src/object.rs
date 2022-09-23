@@ -1,3 +1,5 @@
+use crate::color::Color;
+
 use super::{
     hittables::{Hit, Hittable, HittableObject, AABB},
     materials::{Material, Scatter, Scatterable},
@@ -26,6 +28,10 @@ impl Object {
 
     pub fn get_scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter> {
         self.material.scatter(&ray, hit)
+    }
+
+    pub fn get_emitted(&self) -> Color {
+        self.material.emitted()
     }
 }
 

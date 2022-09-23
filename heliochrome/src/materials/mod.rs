@@ -12,6 +12,10 @@ pub use metal::*;
 mod dielectric;
 pub use dielectric::*;
 
+mod diffuse_light;
+pub use diffuse_light::*;
+
+use super::color::Color;
 use super::hittables::Hit;
 use super::maths::Ray;
 
@@ -20,4 +24,5 @@ pub enum Material {
     Lambertian,
     Metal,
     Dielectric,
+    DiffuseLight,
 }

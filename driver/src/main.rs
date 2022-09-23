@@ -466,8 +466,8 @@ impl HeliochromeDriver {
     fn new(cc: &CreationContext) -> Self {
         let state = Rc::new(RefCell::new(StateData::new(make_context())));
         let mut tree = DynamicTree::new(vec![
-            Box::new(RenderTab::new(&cc.egui_ctx, state.clone())),
             Box::new(PreviewTab::new(&cc.egui_ctx, state.clone())),
+            Box::new(RenderTab::new(&cc.egui_ctx, state.clone())),
         ]);
 
         let [a, b] = tree.split_left(

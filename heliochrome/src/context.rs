@@ -101,21 +101,28 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             // let n = 0.5 * (hit.normal.normalized() + vec3::splat(1.0));
             // color = Color::new(n.x, n.y, n.z);
             // break;
+            let emitted = object.unwrap().get_emitted();
+
             if let Some(scatter) = object.unwrap().get_scatter(&ray, &hit) {
+                color += emitted;
                 color *= scatter.attenuation;
                 ray = scatter.outgoing;
+            } else {
+                color *= emitted;
+                break;
             }
         } else {
-            if let Some(skybox) = &scene.skybox {
-                let uv = vec2::new(
-                    0.5 + ray.direction.z.atan2(ray.direction.x) / std::f32::consts::TAU,
-                    0.5 + ray.direction.y.asin() / std::f32::consts::PI,
-                );
-                color *= skybox.sample_uv(&uv);
-            } else {
-                let t = (ray.direction.y + 1.0) / 2.0;
-                color *= (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
-            }
+            color *= scene.skybox.sample(ray.direction);
+            // if let Some(skybox) = &scene.skybox {
+            //     let uv = vec2::new(
+            //         0.5 + ray.direction.z.atan2(ray.direction.x) / std::f32::consts::TAU,
+            //         0.5 + ray.direction.y.asin() / std::f32::consts::PI,
+            //     );
+            //     color *= skybox.sample_uv(&uv);
+            // } else {
+            //     let t = (ray.direction.y + 1.0) / 2.0;
+            //     color *= (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
+            // }
             break;
         }
     }

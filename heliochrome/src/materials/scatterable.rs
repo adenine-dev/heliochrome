@@ -10,4 +10,8 @@ pub struct Scatter {
 #[enum_dispatch]
 pub trait Scatterable {
     fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter>;
+
+    fn emitted(&self) -> Color {
+        Color::splat(0.0)
+    }
 }

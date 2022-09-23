@@ -1,11 +1,22 @@
-const WIDTH: f32 = 1280.0;
-const HEIGHT: f32 = 720.0;
+// const WIDTH: f32 = 1280.0;
+// const HEIGHT: f32 = 720.0;
+const WIDTH: f32 = 800.0;
+const HEIGHT: f32 = 345.0;
 
 use std::path::Path;
 
 use heliochrome::{
-    color::Color, context::Context, hittables, image::Image, load_obj::load_obj, materials::*,
-    maths::*, object::Object, scene::Scene, transform::Transform, *,
+    color::Color,
+    context::Context,
+    hittables,
+    image::Image,
+    load_obj::load_obj,
+    materials::*,
+    maths::*,
+    object::Object,
+    scene::{Scene, SkyBox},
+    transform::Transform,
+    *,
 };
 
 pub fn make_context() -> Context {
@@ -20,9 +31,11 @@ pub fn make_context() -> Context {
             None,
         )
         .into(),
+        SkyBox::Color(Color::new(0.0, 0.0, 0.0)),
+        // SkyBox::Equirectangular(
+        //     Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
+        // ),
     );
-    scene.skybox =
-        Some(Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap());
 
     scene.add_object(Object::new(
         hittables::InfinitePlane::new(
@@ -49,6 +62,12 @@ pub fn make_context() -> Context {
     //         -35.0f32.to_radians(),
     //     )))),
     // ));
+
+    scene.add_object(Object::new(
+        hittables::Sphere::new(vec3::new(0.0, 3.0, 0.0), 0.4).into(),
+        DiffuseLight::new(Color::splat(1.0), 4.0).into(),
+        None,
+    ));
 
     scene.add_object(Object::new(
         hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95).into(),
