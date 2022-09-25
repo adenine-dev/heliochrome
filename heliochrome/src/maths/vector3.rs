@@ -145,6 +145,14 @@ macro_rules! vec3_impl {
             pub fn max(&self, other: &$n) -> $n {
                 Self::new(self.$x.max(other.$x), self.$y.max(other.$y), self.$z.max(other.$z))
             }
+
+            pub fn clamp(&self, min: $t, max: $t) -> $n {
+                Self::new(self.$x.clamp(min, max), self.$y.clamp(min, max), self.$z.clamp(min, max))
+            }
+
+            pub fn exp(&self) -> $n {
+                Self::new(self.$x.exp(), self.$y.exp(), self.$z.exp())
+            }
         }
 
         impl Index<usize> for $n {

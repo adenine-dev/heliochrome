@@ -14,7 +14,7 @@ use eframe::{
     egui::{
         self,
         plot::{Legend, Plot, PlotImage, PlotPoint},
-        CollapsingHeader, Direction, Key, Layout, TextureFilter, Ui, WidgetText,
+        CollapsingHeader, ComboBox, Direction, Key, Layout, TextureFilter, Ui, WidgetText,
     },
     emath::Align,
     epaint::{Color32, ColorImage, ImageData, TextureHandle, Vec2},
@@ -22,10 +22,11 @@ use eframe::{
 };
 
 use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
-use heliochrome::{context::Context, maths::vec2, scene::Scene};
+use heliochrome::{context::Context, maths::vec2, scene::Scene, tonemap::ToneMap};
 
 struct StateData {
     pub changed: bool,
+    pub gamma: f32,
     pub context: Context,
 }
 
@@ -33,6 +34,7 @@ impl StateData {
     pub fn new(context: Context) -> Self {
         Self {
             changed: false,
+            gamma: 1.0,
             context,
         }
     }
@@ -64,20 +66,6 @@ impl ConfigTab {
 
 impl Tab for ConfigTab {
     fn ui(&mut self, ui: &mut Ui) {
-        egui::Grid::new("bounces/samples").show(ui, |ui| {
-            ui.label("bounces: ");
-            ui.add(egui::DragValue::new(
-                &mut self.state.borrow_mut().context.quality.bounces,
-            ));
-            ui.end_row();
-
-            ui.label("samples: ");
-            ui.add(egui::DragValue::new(
-                &mut self.state.borrow_mut().context.quality.samples,
-            ));
-            ui.end_row();
-        });
-
         ui.label("image size: ");
         egui::Grid::new("size").show(ui, |ui| {
             ui.label("width:");
@@ -91,6 +79,72 @@ impl Tab for ConfigTab {
                 state
                     .context
                     .resize(vec2::new(self.width as f32, self.height as f32));
+            }
+        });
+
+        egui::Grid::new("settings").show(ui, |ui| {
+            ui.label("bounces: ");
+            ui.add(
+                egui::DragValue::new(&mut self.state.borrow_mut().context.quality.bounces)
+                    .clamp_range(0..=u16::MAX),
+            );
+            ui.end_row();
+
+            ui.label("samples: ");
+            ui.add(
+                egui::DragValue::new(&mut self.state.borrow_mut().context.quality.samples)
+                    .clamp_range(0..=u16::MAX),
+            );
+            ui.end_row();
+            ui.label("gamma: ");
+            ui.add(
+                egui::DragValue::new(&mut self.state.borrow_mut().gamma)
+                    .clamp_range(0.0..=f32::INFINITY)
+                    .speed(0.01),
+            );
+            ui.end_row();
+
+            ui.label("Tone map mode: ");
+            let mode = &mut self.state.borrow_mut().context.tone_map;
+            ComboBox::from_label("")
+                .selected_text(mode.to_string())
+                .show_ui(ui, |ui| {
+                    for m in &[
+                        ToneMap::Clamp,
+                        if matches!(mode, ToneMap::Simple(_)) {
+                            *mode
+                        } else {
+                            ToneMap::Simple(1.0)
+                        },
+                        if matches!(mode, ToneMap::Reinhard(_)) {
+                            *mode
+                        } else {
+                            ToneMap::Reinhard(1.0)
+                        },
+                        ToneMap::HejlRichard,
+                        ToneMap::ACES,
+                    ] {
+                        ui.selectable_value(mode, *m, m.to_string());
+                    }
+                });
+            ui.end_row();
+            match mode {
+                ToneMap::Reinhard(white_point) => {
+                    ui.label("white point: ");
+                    ui.add(egui::DragValue::new(white_point).clamp_range(0.0..=f32::INFINITY));
+                    ui.end_row();
+                }
+                ToneMap::Simple(exposure) => {
+                    ui.label("exposure: ");
+                    ui.add(
+                        egui::DragValue::new(exposure)
+                            .clamp_range(0.0..=f32::INFINITY)
+                            .speed(0.01),
+                    );
+                    ui.end_row();
+                }
+
+                _ => {}
             }
         });
     }
@@ -120,34 +174,41 @@ impl Tab for SceneTab {
                     ui.label("field of view: ");
                     changed = changed
                         || ui
-                            .add(egui::DragValue::new(
-                                &mut self
-                                    .state
-                                    .borrow_mut()
-                                    .context
-                                    .scene
-                                    .write()
-                                    .unwrap()
-                                    .camera
-                                    .vfov,
-                            ))
+                            .add(
+                                egui::DragValue::new(
+                                    &mut self
+                                        .state
+                                        .borrow_mut()
+                                        .context
+                                        .scene
+                                        .write()
+                                        .unwrap()
+                                        .camera
+                                        .vfov,
+                                )
+                                .clamp_range(0..=180),
+                            )
                             .changed();
                     ui.end_row();
 
                     ui.label("aperture diameter: ");
                     changed = changed
                         || ui
-                            .add(egui::DragValue::new(
-                                &mut self
-                                    .state
-                                    .borrow_mut()
-                                    .context
-                                    .scene
-                                    .write()
-                                    .unwrap()
-                                    .camera
-                                    .aperture,
-                            ))
+                            .add(
+                                egui::DragValue::new(
+                                    &mut self
+                                        .state
+                                        .borrow_mut()
+                                        .context
+                                        .scene
+                                        .write()
+                                        .unwrap()
+                                        .camera
+                                        .aperture,
+                                )
+                                .clamp_range(0.0..=f32::INFINITY)
+                                .speed(0.01),
+                            )
                             .changed();
                     ui.end_row();
 
@@ -414,6 +475,7 @@ impl Tab for PreviewTab {
         }
 
         if self.rendering {
+            let gamma = self.state.borrow().gamma;
             self.texture_handle.set(
                 ImageData::Color(ColorImage::from_rgba_unmultiplied(
                     [size.x as usize, size.y as usize],
@@ -422,10 +484,7 @@ impl Tab for PreviewTab {
                         .borrow_mut()
                         .context
                         .render_sample()
-                        .iter()
-                        .map(|c| c.to_le_bytes())
-                        .flatten()
-                        .collect::<Vec<_>>(),
+                        .to_gamma_corrected_rgba8(gamma),
                 )),
                 TextureFilter::Linear,
             );

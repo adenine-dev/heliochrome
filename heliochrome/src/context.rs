@@ -11,6 +11,7 @@ use crate::camera::Camera;
 use crate::color::Color;
 use crate::image::Image;
 use crate::maths::*;
+use crate::tonemap::ToneMap;
 
 #[cfg(feature = "multithread")]
 use rayon::prelude::*;
@@ -52,8 +53,9 @@ pub struct Context {
     size: vec2,
     pub samples: u16,
     accumulated_image: Image,
+    out_image: Image,
 
-    pixel_buffer: Vec<u32>,
+    pub tone_map: ToneMap,
 
     // render things
     pixel_sender: Sender<([u8; 4], vec2)>,
@@ -131,7 +133,7 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
 }
 
 impl Context {
-    pub fn new(size: vec2, scene: Scene) -> Self {
+    pub fn new(size: vec2, scene: Scene, tone_map: ToneMap) -> Self {
         let thread_pool = ThreadPoolBuilder::new().build().unwrap();
         let (pixel_sender, pixel_receiver) = mpsc::channel::<([u8; 4], vec2)>();
 
@@ -141,7 +143,8 @@ impl Context {
             size,
             samples: 0,
             accumulated_image: Image::new(size),
-            pixel_buffer: vec![0; size.x as usize * size.y as usize],
+            out_image: Image::new(size),
+            tone_map,
             thread_pool,
             pixel_sender,
             pixel_receiver,
@@ -154,25 +157,21 @@ impl Context {
         self.accumulated_image.size
     }
 
-    pub fn get_pixel_buffer(&self) -> &[u32] {
-        &self.pixel_buffer
-    }
-
     pub fn reset_samples(&mut self) {
         self.samples = 0;
-        self.pixel_buffer = vec![0; self.size.x as usize * self.size.y as usize];
         self.accumulated_image = Image::new(self.size);
+        self.out_image = Image::new(self.size);
     }
 
     pub fn resize(&mut self, size: vec2) {
         self.size = size;
         self.accumulated_image = Image::new(size);
+        self.out_image = Image::new(size);
         self.samples = 0;
-        self.pixel_buffer = vec![0; size.x as usize * size.y as usize];
         self.scene.write().unwrap().camera.aspect_ratio = size.x / size.y;
     }
 
-    pub fn render_sample(&mut self) -> &Vec<u32> {
+    pub fn render_sample(&mut self) -> &Image {
         let per_pixel = |(i, color): (usize, &Color)| {
             let u = (i % self.size.x as usize) as f32 + rand::random::<f32>();
             let v = (i / self.size.x as usize) as f32 + rand::random::<f32>();
@@ -212,21 +211,29 @@ impl Context {
         }
 
         self.samples += 1;
-
-        self.pixel_buffer
+        self.out_image
+            .buffer
             .iter_mut()
             .enumerate()
             .for_each(|(i, color)| {
-                let out_color =
-                    gamma_correct(self.accumulated_image.buffer[i] / self.samples as f32, 2.0);
-                let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u32;
-                let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u32;
-                let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u32;
-
-                *color = red | (green << 8) | (blue << 16) | (0xFF << 24)
+                *color = self.accumulated_image.buffer[i] / self.samples as f32;
             });
+        self.tone_map.map(&mut self.out_image);
 
-        &self.pixel_buffer
+        // self.pixel_buffer
+        //     .iter_mut()
+        //     .enumerate()
+        //     .for_each(|(i, color)| {
+        //         let out_color =
+        //             gamma_correct(self.accumulated_image.buffer[i] / self.samples as f32, 2.0);
+        //         let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u32;
+        //         let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u32;
+        //         let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u32;
+
+        //         *color = red | (green << 8) | (blue << 16) | (0xFF << 24)
+        //     });
+
+        &self.out_image
     }
 
     pub fn stop_full_render(&mut self) {

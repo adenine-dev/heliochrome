@@ -15,6 +15,7 @@ use heliochrome::{
     maths::*,
     object::Object,
     scene::{Scene, SkyBox},
+    tonemap::ToneMap,
     transform::Transform,
     *,
 };
@@ -27,14 +28,14 @@ pub fn make_context() -> Context {
             vec3::unit_y(),
             20.0,
             WIDTH as f32 / HEIGHT as f32,
-            0.1,
+            0.0,
             None,
         )
         .into(),
-        SkyBox::Color(Color::new(0.0, 0.0, 0.0)),
-        // SkyBox::Equirectangular(
-        //     Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
-        // ),
+        // SkyBox::Color(Color::new(0.0, 0.0, 0.0)),
+        SkyBox::Equirectangular(
+            Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
+        ),
     );
 
     scene.add_object(Object::new(
@@ -98,7 +99,7 @@ pub fn make_context() -> Context {
         None,
     ));
 
-    Context::new(maths::vec2::new(WIDTH, HEIGHT), scene)
+    Context::new(maths::vec2::new(WIDTH, HEIGHT), scene, ToneMap::HejlRichard)
 
     // let mut objects = vec![];
     // for x in 0..5 {
