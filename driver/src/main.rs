@@ -433,7 +433,7 @@ impl Tab for PreviewTab {
             let camera = &mut state.context.scene.write().unwrap().camera;
             let input = ui.input();
             let mut should_update = true;
-            let camera_speed = 0.1;
+            let camera_speed = 0.5;
             if input.key_down(Key::A) {
                 camera.eye -= (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
             } else if input.key_down(Key::D) {
