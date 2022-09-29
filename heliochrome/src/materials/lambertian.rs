@@ -7,6 +7,7 @@ use crate::{
 
 use super::Scatter;
 
+#[derive(Clone)]
 pub struct Lambertian {
     albedo: Color,
 }

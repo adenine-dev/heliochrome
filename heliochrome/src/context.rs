@@ -80,32 +80,33 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             return Color::splat(0.0);
         }
 
-        let (hit, object) = {
-            let mut t_max = f32::INFINITY;
-            let t_min = 0.001;
+        // let x = scene.objects.hit(&ray, f32::INFINITY, 0.001);
+        // let (hit, object) = {
+        //     let mut t_max = f32::INFINITY;
+        //     let t_min = 0.001;
 
-            let mut hit: Option<Hit> = None;
-            let mut obj = None;
-            for object in scene.objects.iter() {
-                let new_hit = object.hit(&ray, t_min, t_max);
-                if new_hit.is_some() {
-                    hit = new_hit;
-                    obj = Some(object);
-                    t_max = hit.as_ref().unwrap().t;
-                }
-            }
+        //     let mut hit: Option<Hit> = None;
+        //     let mut obj = None;
+        //     for object in scene.objects.iter() {
+        //         let new_hit = object.hit(&ray, t_min, t_max);
+        //         if new_hit.is_some() {
+        //             hit = new_hit;
+        //             obj = Some(object);
+        //             t_max = hit.as_ref().unwrap().t;
+        //         }
+        //     }
 
-            (hit, obj)
-        };
+        //     (hit, obj)
+        // };
 
-        if let Some(hit) = hit {
+        if let Some((hit, object)) = scene.objects.hit(&ray, 0.001, f32::INFINITY) {
             // normals
             // let n = 0.5 * (hit.normal.normalized() + vec3::splat(1.0));
             // color = Color::new(n.x, n.y, n.z);
             // break;
-            let emitted = object.unwrap().get_emitted();
+            let emitted = object.get_emitted();
 
-            if let Some(scatter) = object.unwrap().get_scatter(&ray, &hit) {
+            if let Some(scatter) = object.get_scatter(&ray, &hit) {
                 color += emitted;
                 color *= scatter.attenuation;
                 ray = scatter.outgoing;

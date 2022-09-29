@@ -1,3 +1,5 @@
+use rayon::vec;
+
 use super::{
     hittables::{Hit, Hittable, AABB},
     maths::Ray,
@@ -5,6 +7,7 @@ use super::{
 
 const INVALID_IDX: usize = usize::MAX;
 
+#[derive(Clone)]
 struct BVHNode {
     bounds: AABB,
     idx: usize,
@@ -19,13 +22,16 @@ impl BVHNode {
         ray: &Ray,
         t_min: f32,
         mut t_max: f32,
-    ) -> Option<Hit> {
+    ) -> Option<(Hit, usize)> {
         if !self.bounds.hits(ray, t_min, t_max) {
             return None;
         }
 
         if self.idx != INVALID_IDX {
-            return hittables[self.idx].hit(ray, t_min, t_max);
+            if let Some(hit) = hittables[self.idx].hit(ray, t_min, t_max) {
+                return Some((hit, self.idx));
+            }
+            return None;
         }
 
         let mut hit = None;
@@ -33,7 +39,7 @@ impl BVHNode {
             let h = nodes[child].hit(nodes, hittables, ray, t_min, t_max);
             if h.is_some() {
                 hit = h;
-                t_max = hit.as_ref().unwrap().t;
+                t_max = hit.as_ref().unwrap().0.t;
             }
         }
 
@@ -41,16 +47,23 @@ impl BVHNode {
     }
 }
 
+#[derive(Clone)]
 pub struct BVH<T: Hittable> {
-    hittables: Vec<T>,
+    pub hittables: Vec<T>,
     nodes: Vec<BVHNode>,
 }
 
 impl<T: Hittable> Hittable for BVH<T> {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        self.nodes
-            .last()?
-            .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
+        if let Some((hit, _)) =
+            self.nodes
+                .last()?
+                .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
+        {
+            return Some(hit);
+        }
+
+        None
     }
 
     fn make_bounding_box(&self) -> Option<AABB> {
@@ -59,17 +72,49 @@ impl<T: Hittable> Hittable for BVH<T> {
 }
 
 impl<T: Hittable> BVH<T> {
-    pub fn new(hittables: Vec<T>) -> Self {
+    pub fn new(mut hittables: Vec<T>) -> (Self, Vec<T>) {
+        if hittables.len() == 0 {
+            return (
+                BVH {
+                    hittables,
+                    nodes: vec![],
+                },
+                vec![],
+            );
+        }
+
         let mut nodes = Vec::with_capacity(hittables.len() * 2 - 1);
         let mut available = vec![false; hittables.len() * 2 - 1];
-
+        let mut unboundable_indices = vec![];
+        let mut removed_count = 0;
         for i in 0..hittables.len() {
-            nodes.push(BVHNode {
-                bounds: hittables[i].make_bounding_box().unwrap(),
-                idx: i,
-                children: [INVALID_IDX; 2],
-            });
-            available[i] = true;
+            let bounds = hittables[i].make_bounding_box();
+            if let Some(bounds) = bounds {
+                nodes.push(BVHNode {
+                    bounds,
+                    idx: i - removed_count,
+                    children: [INVALID_IDX; 2],
+                });
+                available[i - removed_count] = true;
+            } else {
+                removed_count += 1;
+                unboundable_indices.push(i);
+            }
+        }
+
+        let mut unboundables = Vec::with_capacity(unboundable_indices.len());
+        for idx in unboundable_indices {
+            unboundables.push(hittables.remove(idx));
+        }
+
+        if hittables.len() == 0 {
+            return (
+                BVH {
+                    hittables,
+                    nodes: vec![],
+                },
+                unboundables,
+            );
         }
 
         while nodes.len() < hittables.len() * 2 - 1 {
@@ -105,6 +150,18 @@ impl<T: Hittable> BVH<T> {
             available[nodes.len() - 1] = true;
         }
 
-        Self { hittables, nodes }
+        (Self { hittables, nodes }, unboundables)
+    }
+
+    pub fn hit_obj(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Hit, &T)> {
+        if let Some((hit, idx)) =
+            self.nodes
+                .last()?
+                .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
+        {
+            return Some((hit, &self.hittables[idx]));
+        }
+
+        None
     }
 }

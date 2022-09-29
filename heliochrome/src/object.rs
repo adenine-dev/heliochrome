@@ -1,4 +1,4 @@
-use crate::color::Color;
+use crate::{color::Color, maths::vec3};
 
 use super::{
     hittables::{Hit, Hittable, HittableObject, AABB},
@@ -7,6 +7,7 @@ use super::{
     transform::Transform,
 };
 
+#[derive(Clone)]
 pub struct Object {
     hittable: HittableObject,
     material: Material,
@@ -60,10 +61,20 @@ impl Hittable for Object {
     fn make_bounding_box(&self) -> Option<AABB> {
         let aabb = self.hittable.make_bounding_box()?;
         if let Some(transform) = &self.transform {
-            let mut min = transform.matrix * aabb.min;
-            let mut max = transform.matrix * aabb.max;
-            min = min.min(&max);
-            max = max.max(&min);
+            let mut min = vec3::splat(f32::INFINITY);
+            let mut max = vec3::splat(-f32::INFINITY);
+            for i in 0..=1 {
+                for j in 0..=1 {
+                    for k in 0..=1 {
+                        let p = transform.matrix
+                            * (aabb.min
+                                * vec3::new((1 - i) as f32, (1 - j) as f32, (1 - k) as f32)
+                                + aabb.max * vec3::new(i as f32, j as f32, k as f32));
+                        min = min.min(&p);
+                        max = max.max(&p);
+                    }
+                }
+            }
 
             return Some(AABB::new(min, max));
         }

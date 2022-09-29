@@ -2,6 +2,7 @@ use crate::maths::{vec3, Ray};
 
 use super::{Hit, Hittable, AABB};
 
+#[derive(Clone)]
 pub struct Rect {
     origin: vec3,
     sx: vec3,

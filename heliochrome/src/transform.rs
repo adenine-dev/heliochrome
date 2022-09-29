@@ -1,6 +1,6 @@
 use super::maths::mat3;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Transform {
     pub matrix: mat3,
     pub inverse: mat3,

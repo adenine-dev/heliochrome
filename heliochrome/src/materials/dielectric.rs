@@ -7,6 +7,7 @@ use crate::{
     maths::Ray,
 };
 
+#[derive(Clone)]
 pub struct Dielectric {
     pub ir: f32,
     pub color: Color,

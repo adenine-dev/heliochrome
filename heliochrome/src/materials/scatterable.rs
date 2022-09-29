@@ -8,7 +8,7 @@ pub struct Scatter {
 }
 
 #[enum_dispatch]
-pub trait Scatterable {
+pub trait Scatterable: Clone {
     fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter>;
 
     fn emitted(&self) -> Color {

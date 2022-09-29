@@ -5,6 +5,7 @@ use crate::{
 
 use super::AABB;
 
+#[derive(Clone)]
 pub struct Sphere {
     pub center: vec3,
     pub radius: f32,

@@ -34,7 +34,7 @@ impl Hit {
 }
 
 #[enum_dispatch]
-pub trait Hittable: Send + Sync {
+pub trait Hittable: Send + Sync + Clone {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit>;
 
     fn make_bounding_box(&self) -> Option<AABB>;

@@ -20,6 +20,7 @@ use super::hittables::Hit;
 use super::maths::Ray;
 
 #[enum_dispatch(Scatterable)]
+#[derive(Clone)]
 pub enum Material {
     Lambertian,
     Metal,

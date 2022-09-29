@@ -24,6 +24,7 @@ pub use aabb::*;
 use crate::maths::Ray;
 
 #[enum_dispatch(Hittable)]
+#[derive(Clone)]
 pub enum HittableObject {
     Sphere,
     InfinitePlane,

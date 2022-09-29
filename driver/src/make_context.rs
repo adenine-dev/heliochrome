@@ -21,10 +21,110 @@ use heliochrome::{
 };
 
 pub fn make_context() -> Context {
-    let mut scene = Scene::new(
-        camera::Camera::new(
-            maths::vec3::splat(5.0),
+    let mut objects = vec![];
+    objects.push(Object::new(
+        hittables::InfinitePlane::new(
             vec3::new(0.0, 0.0, 0.0),
+            vec3::new(0.0, 1.0, 0.0).normalized(),
+        )
+        .into(),
+        Lambertian::new(Color::splat(0.3)).into(),
+        None,
+    ));
+
+    let (mut positions, indices) = load_obj("assets/suzanne.obj").unwrap();
+    positions.iter_mut().for_each(|p| {
+        *p -= vec3::new(0.0, -0.55, 0.0);
+    });
+    objects.push(Object::new(
+        hittables::Mesh::new(&positions, &indices).into(),
+        Metal::new(Color::new(1.0, 0.9, 1.0), 0.7).into(),
+        // None,
+        Some(Transform::new(mat3::rotate(vec3::new(
+            0.0,
+            0.0,
+            -35.0f32.to_radians(),
+        )))),
+    ));
+
+    // objects.push(Object::new(
+    //     // hittables::AABB::new(vec3::new(1.0, -1.0, -1.0), vec3::new(3.0, 1.0, 1.0)).into(),
+    //     hittables::AABB::new(vec3::splat(-1.0), vec3::splat(1.0)).into(),
+    //     Dielectric::new(1.5, Color::new(0.9, 1.0, 1.0)).into(),
+    //     // None,
+    //     Some(Transform::new(
+    //         mat3::rotate(vec3::splat(std::f32::consts::TAU / 8.0)) * mat3::scale(vec3::splat(0.3)),
+    //     )),
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::new(0.0, 3.0, 0.0), 0.4).into(),
+    //     DiffuseLight::new(Color::splat(1.0), 4.0).into(),
+    //     None,
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95).into(),
+    //     Metal::new(Color::new(0.8, 0.8, 0.8), 0.0).into(),
+    //     None,
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95).into(),
+    //     Lambertian::new(Color::new(0.1, 0.1, 0.1)).into(),
+    //     None,
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95).into(),
+    //     Metal::new(Color::new(0.3, 0.3, 0.3), 0.7).into(),
+    //     None,
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95).into(),
+    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
+    //     None,
+    // ));
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85).into(),
+    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
+    //     None,
+    // ));
+    // let n = 5;
+    // for x in 0..n {
+    //     for y in 0..n {
+    //         for z in 0..n {
+    //             let p = vec3::new(
+    //                 x as f32 - n as f32 / 2.0,
+    //                 y as f32 - n as f32 / 2.0,
+    //                 z as f32 - n as f32 / 2.0,
+    //             );
+    //             objects.push(Object::new(
+    //                 hittables::AABB::new(vec3::splat(-0.35) + p, vec3::splat(0.35) + p).into(),
+    //                 Lambertian::new(
+    //                     Color::new(
+    //                         x as f32 / n as f32,
+    //                         y as f32 / n as f32,
+    //                         z as f32 / n as f32,
+    //                     ) * 0.8
+    //                         + Color::splat(0.1),
+    //                     // 0.1,
+    //                 )
+    //                 .into(),
+    //                 // None,
+    //                 Some(Transform::new(mat3::rotate(vec3::splat(
+    //                     std::f32::consts::TAU / 8.0,
+    //                 )))),
+    //             ));
+    //         }
+    //     }
+    // }
+
+    let scene = Scene::new(
+        camera::Camera::new(
+            maths::vec3::new(0.0, 0.0, 5.0),
+            vec3::new(0.0, 1.0, 0.0),
             vec3::unit_y(),
             20.0,
             WIDTH as f32 / HEIGHT as f32,
@@ -36,95 +136,9 @@ pub fn make_context() -> Context {
         SkyBox::Equirectangular(
             Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
         ),
+        objects,
     );
 
-    // scene.add_object(Object::new(
-    //     hittables::InfinitePlane::new(
-    //         vec3::new(0.0, -1.2, 0.0),
-    //         vec3::new(0.0, 1.0, 0.0).normalized(),
-    //     )
-    //     .into(),
-    //     Lambertian::new(Color::splat(0.3)).into(),
-    //     None,
-    // ));
-
-    // let (mut positions, indices) = load_obj("assets/cube.obj").unwrap();
-    // positions.iter_mut().for_each(|p| {
-    //     *p -= vec3::new(2.0, 0.0, 0.0);
-    // });
-    // scene.add_object(Object::new(
-    //     hittables::Mesh::new(&positions, &indices).into(),
-    //     Dielectric::new(1.5, Color::new(1.0, 0.9, 1.0)).into(),
-    //     None,
-    //     // Some(Transform::new(mat3::rotate(vec3::new(
-    //     //     0.0,
-    //     //     0.0,
-    //     //     -35.0f32.to_radians(),
-    //     // )))),
-    // ));
-
-    scene.add_object(Object::new(
-        // hittables::AABB::new(vec3::new(1.0, -1.0, -1.0), vec3::new(3.0, 1.0, 1.0)).into(),
-        hittables::AABB::new(vec3::splat(-1.0), vec3::splat(1.0)).into(),
-        Dielectric::new(1.5, Color::new(0.9, 1.0, 1.0)).into(),
-        // None,
-        Some(Transform::new(
-            mat3::rotate(vec3::splat(std::f32::consts::TAU / 8.0)) * mat3::scale(vec3::splat(0.3)),
-        )),
-    ));
-
-    // scene.add_object(Object::new(
-    //     hittables::Sphere::new(vec3::new(0.0, 3.0, 0.0), 0.4).into(),
-    //     DiffuseLight::new(Color::splat(1.0), 4.0).into(),
-    //     None,
-    // ));
-
-    // scene.add_object(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95).into(),
-    //     Metal::new(Color::new(0.8, 0.8, 0.8), 0.0).into(),
-    //     None,
-    // ));
-
-    // scene.add_object(Object::new(
-    //     hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95).into(),
-    //     Lambertian::new(Color::new(0.1, 0.1, 0.1)).into(),
-    //     None,
-    // ));
-
-    // scene.add_object(Object::new(
-    //     hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95).into(),
-    //     Metal::new(Color::new(0.3, 0.3, 0.3), 0.7).into(),
-    //     None,
-    // ));
-
-    // scene.add_object(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95).into(),
-    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
-    //     None,
-    // ));
-    // scene.add_object(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85).into(),
-    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
-    //     None,
-    // ));
-
-    // for x in 0..5 {
-    //     for y in 0..5 {
-    //         for z in 0..5 {
-    //             let p = vec3::new(x as f32 - 2.0, y as f32 - 2.0, z as f32 - 2.0);
-    //             scene.add_object(Object::new(
-    //                 hittables::AABB::new(vec3::splat(-0.35) + p, vec3::splat(0.35) + p).into(),
-    //                 Lambertian::new(
-    //                     Color::new(x as f32 / 5.0, y as f32 / 5.0, z as f32 / 5.0) * 0.8
-    //                         + Color::splat(0.1),
-    //                     // 0.1,
-    //                 )
-    //                 .into(),
-    //                 None,
-    //             ));
-    //         }
-    //     }
-    // }
     Context::new(maths::vec2::new(WIDTH, HEIGHT), scene, ToneMap::HejlRichard)
 
     // positions.iter_mut().for_each(|p| {

@@ -2,6 +2,7 @@ use crate::{color::Color, hittables::Hit, materials::Scatterable, maths::Ray};
 
 use super::Scatter;
 
+#[derive(Clone)]
 pub struct DiffuseLight {
     color: Color,
 }

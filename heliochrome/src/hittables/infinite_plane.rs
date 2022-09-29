@@ -2,6 +2,7 @@ use crate::maths::{vec3, Ray};
 
 use super::{Hit, Hittable, AABB};
 
+#[derive(Clone)]
 pub struct InfinitePlane {
     pub origin: vec3,
     pub normal: vec3,

@@ -5,6 +5,7 @@ use crate::{
     maths::{vec3, Ray},
 };
 
+#[derive(Clone)]
 pub struct Metal {
     albedo: Color,
     fuzz: f32,
