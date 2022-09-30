@@ -1,11 +1,10 @@
-use crate::{color::Color, maths::vec3};
-
 use super::{
     hittables::{Hit, Hittable, HittableObject, AABB},
     materials::{Material, Scatter, Scatterable},
     maths::Ray,
     transform::Transform,
 };
+use crate::{color::Color, maths::vec3};
 
 #[derive(Clone)]
 pub struct Object {
@@ -28,7 +27,7 @@ impl Object {
     }
 
     pub fn get_scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter> {
-        self.material.scatter(&ray, hit)
+        self.material.scatter(ray, hit)
     }
 
     pub fn get_emitted(&self) -> Color {
@@ -51,7 +50,7 @@ impl Hittable for Object {
         if let Some(hit) = &mut hit {
             if let Some(transform) = &self.transform {
                 hit.p = ray.at(hit.t);
-                hit.set_normal(&ray, (transform.normal_matrix * hit.normal).normalize());
+                hit.set_normal(ray, (transform.normal_matrix * hit.normal).normalize());
             }
         }
 

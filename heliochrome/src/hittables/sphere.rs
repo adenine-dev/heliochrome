@@ -1,9 +1,8 @@
+use super::AABB;
 use crate::{
     hittables::{Hit, Hittable},
     maths::*,
 };
-
-use super::AABB;
 
 #[derive(Clone)]
 pub struct Sphere {

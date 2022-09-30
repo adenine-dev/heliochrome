@@ -1,8 +1,10 @@
-use crate::maths::misc::*;
-use impl_ops::*;
-use rand::distributions::{Distribution, Uniform};
 use std::ops;
 use std::ops::*;
+
+use impl_ops::*;
+use rand::distributions::{Distribution, Uniform};
+
+use crate::maths::misc::*;
 
 macro_rules! vec3_impl {
     ($n:ident, $t:ident, $x:ident, $y:ident, $z:ident) => {

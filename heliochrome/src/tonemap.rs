@@ -34,7 +34,7 @@ impl ToneMap {
                 let d = Color::splat(0.20);
                 let e = Color::splat(0.02);
                 let f = Color::splat(0.30);
-                return ((x * (a * x + c * b) + d * e) / (x * (a * x + b) + d * f)) - e / f;
+                ((x * (a * x + c * b) + d * e) / (x * (a * x + b) + d * f)) - e / f
             };
             let exposure_bias = 2.0;
             let curr = f(*c * exposure_bias);
@@ -61,8 +61,7 @@ impl ToneMap {
 
         let rtt_and_odt_fit = |c| {
             let a = c * (c + vec3::splat(0.0245786)) - vec3::splat(0.000090537);
-            let b =
-                c * (vec3::splat(0.983729) * c + vec3::splat(0.4329510)) + vec3::splat(0.238081);
+            let b = c * (vec3::splat(0.983729) * c + vec3::splat(0.432951)) + vec3::splat(0.238081);
             a / b
         };
 

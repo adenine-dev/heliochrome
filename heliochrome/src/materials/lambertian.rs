@@ -1,11 +1,10 @@
+use super::Scatter;
 use crate::{
     color::Color,
     hittables::Hit,
     materials::Scatterable,
     maths::{vec3, Ray},
 };
-
-use super::Scatter;
 
 #[derive(Clone)]
 pub struct Lambertian {

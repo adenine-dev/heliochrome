@@ -1,11 +1,10 @@
 use std::error::Error;
 use std::path::Path;
 
-use crate::color::Color;
+use image;
 
 use super::maths::vec2;
-
-use image;
+use crate::color::Color;
 
 pub struct Image {
     pub size: vec2,

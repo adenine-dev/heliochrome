@@ -1,28 +1,21 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-mod make_context;
-use env_logger::{filter::Filter, fmt::Color};
-use make_context::make_context;
-
-use std::{
-    cell::{Cell, RefCell},
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{cell::RefCell, rc::Rc};
 
 use eframe::{
     egui::{
         self,
         plot::{Legend, Plot, PlotImage, PlotPoint},
-        CollapsingHeader, ComboBox, Direction, Key, Layout, TextureFilter, Ui, WidgetText,
+        *,
     },
-    emath::Align,
     epaint::{Color32, ColorImage, ImageData, TextureHandle, Vec2},
     CreationContext, NativeOptions,
 };
-
 use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
-use heliochrome::{context::Context, maths::vec2, scene::Scene, tonemap::ToneMap};
+use heliochrome::{context::Context, maths::vec2, tonemap::ToneMap};
+
+mod make_context;
+use make_context::make_context;
 
 struct StateData {
     pub changed: bool,
@@ -43,8 +36,6 @@ impl StateData {
 type State = Rc<RefCell<StateData>>;
 
 struct ConfigTab {
-    bounces: u32,
-    samples: u32,
     width: u16,
     height: u16,
 
@@ -55,8 +46,6 @@ impl ConfigTab {
     fn new(state: State) -> Self {
         let size = state.borrow().context.get_size();
         Self {
-            bounces: 50,
-            samples: 100,
             width: size.x as u16,
             height: size.y as u16,
             state,
@@ -550,7 +539,7 @@ impl eframe::App for HeliochromeDriver {
 }
 
 fn main() {
-    let mut options = NativeOptions {
+    let options = NativeOptions {
         maximized: true,
         ..NativeOptions::default()
     };

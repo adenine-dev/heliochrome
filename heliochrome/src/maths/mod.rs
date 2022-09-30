@@ -1,10 +1,10 @@
 mod misc;
-pub use misc::*;
+pub use std::ops;
+pub use std::ops::*;
 
 pub use impl_ops::*;
-pub use rand::distributions::{Distribution, Uniform};
-pub use std::ops;
-pub use std::ops::*; // to make the impl macros work
+pub use misc::*;
+pub use rand::distributions::{Distribution, Uniform}; // to make the impl macros work
 
 mod vector2;
 pub use vector2::*;

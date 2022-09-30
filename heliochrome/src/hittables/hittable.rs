@@ -1,8 +1,7 @@
 use enum_dispatch::enum_dispatch;
 
-use crate::{maths::vec3, maths::Ray};
-
 use super::AABB;
+use crate::{maths::vec3, maths::Ray};
 
 pub struct Hit {
     pub t: f32,

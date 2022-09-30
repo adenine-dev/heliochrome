@@ -1,6 +1,5 @@
-use crate::{color::Color, hittables::Hit, materials::Scatterable, maths::Ray};
-
 use super::Scatter;
+use crate::{color::Color, hittables::Hit, materials::Scatterable, maths::Ray};
 
 #[derive(Clone)]
 pub struct DiffuseLight {

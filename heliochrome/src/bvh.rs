@@ -1,5 +1,3 @@
-use rayon::vec;
-
 use super::{
     hittables::{Hit, Hittable, AABB},
     maths::Ray,
@@ -73,7 +71,7 @@ impl<T: Hittable> Hittable for BVH<T> {
 
 impl<T: Hittable> BVH<T> {
     pub fn new(mut hittables: Vec<T>) -> (Self, Vec<T>) {
-        if hittables.len() == 0 {
+        if hittables.is_empty() {
             return (
                 BVH {
                     hittables,
@@ -107,7 +105,7 @@ impl<T: Hittable> BVH<T> {
             unboundables.push(hittables.remove(idx));
         }
 
-        if hittables.len() == 0 {
+        if hittables.is_empty() {
             return (
                 BVH {
                     hittables,

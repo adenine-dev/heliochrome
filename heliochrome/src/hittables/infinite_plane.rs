@@ -1,6 +1,5 @@
-use crate::maths::{vec3, Ray};
-
 use super::{Hit, Hittable, AABB};
+use crate::maths::{vec3, Ray};
 
 #[derive(Clone)]
 pub struct InfinitePlane {

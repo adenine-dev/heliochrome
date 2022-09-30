@@ -1,9 +1,8 @@
+use super::{Hit, Hittable, Triangle, AABB};
 use crate::{
     bvh::BVH,
     maths::{vec3, Ray},
 };
-
-use super::{ray_triangle_intersection, Hit, Hittable, Triangle, AABB};
 
 #[derive(Clone)]
 pub struct Mesh {
@@ -11,11 +10,11 @@ pub struct Mesh {
 }
 
 impl Mesh {
-    pub fn new(positions: &Vec<vec3>, indices: &Vec<u32>) -> Self {
+    pub fn new(positions: &[vec3], indices: &Vec<u32>) -> Self {
         let mut tris = vec![Triangle::default(); indices.len() / 3];
         for i in 0..indices.len() / 3 {
             tris[i] = Triangle::new([
-                positions[indices[i * 3 + 0] as usize],
+                positions[indices[i * 3] as usize],
                 positions[indices[i * 3 + 1] as usize],
                 positions[indices[i * 3 + 2] as usize],
             ]);

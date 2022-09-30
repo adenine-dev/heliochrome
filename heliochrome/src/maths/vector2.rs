@@ -1,6 +1,8 @@
-use crate::maths::misc::*;
 use core::ops::*;
+
 use rand::prelude::*;
+
+use crate::maths::misc::*;
 
 macro_rules! vec2_impl {
     ($n:ident, $t:ident, $x:ident, $y:ident) => {

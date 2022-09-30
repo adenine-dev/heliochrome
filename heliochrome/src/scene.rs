@@ -27,7 +27,7 @@ impl ObjectStore {
         let mut res: Option<(Hit, &Object)> = None;
 
         for object in self.unbounded_objects.iter() {
-            let hit = object.hit(&ray, t_min, t_max);
+            let hit = object.hit(ray, t_min, t_max);
             if let Some(hit) = hit {
                 t_max = hit.t;
                 res = Some((hit, object));

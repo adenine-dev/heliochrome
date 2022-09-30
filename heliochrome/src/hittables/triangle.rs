@@ -1,6 +1,5 @@
-use crate::maths::{vec3, Ray};
-
 use super::{Hit, Hittable, AABB};
+use crate::maths::{vec3, Ray};
 
 #[derive(Clone, Default)]
 pub struct Triangle {
@@ -29,7 +28,7 @@ pub(crate) fn ray_triangle_intersection(
     let f = 1.0 / a;
     let s = ray.origin - vertices[0];
     let u = f * s.dot(h);
-    if u < 0.0 || u > 1.0 {
+    if !(0.0..=1.0).contains(&u) {
         return None;
     }
     let q = s.cross(edge1);

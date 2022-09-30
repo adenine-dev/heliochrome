@@ -1,8 +1,5 @@
-use rayon::vec;
-
-use crate::maths::{vec3, Ray};
-
 use super::{Hit, Hittable};
+use crate::maths::{vec3, Ray};
 
 #[derive(Clone, Copy, Default)]
 pub struct AABB {
@@ -44,13 +41,13 @@ impl AABB {
 }
 
 impl Hittable for AABB {
-    fn hit(&self, ray: &Ray, mut t_min: f32, mut t_max: f32) -> Option<Hit> {
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
         let normals = [vec3::unit_x(), vec3::unit_y(), vec3::unit_z()];
         let mut entrance = t_min - f32::EPSILON;
         let mut exit = t_max;
         let mut n = vec3::splat(0.0);
 
-        for a in 0..3 {
+        for (a, normal) in normals.iter().enumerate() {
             let inv_d = 1.0 / ray.direction[a];
             let mut close = (self.min[a] - ray.origin[a]) * inv_d;
             let mut far = (self.max[a] - ray.origin[a]) * inv_d;
@@ -65,7 +62,7 @@ impl Hittable for AABB {
             exit = exit.min(far);
             if close > entrance {
                 entrance = close;
-                n = ray.direction[a].signum() * normals[a];
+                n = ray.direction[a].signum() * normal;
             }
         }
 
@@ -77,6 +74,6 @@ impl Hittable for AABB {
     }
 
     fn make_bounding_box(&self) -> Option<AABB> {
-        return Some(*self);
+        Some(*self)
     }
 }

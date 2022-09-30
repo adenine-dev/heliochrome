@@ -16,7 +16,7 @@ impl Color {
     }
 
     pub fn change_luminance(&self, nl: f32) -> Color {
-        return self * (nl / self.luminance());
+        self * (nl / self.luminance())
     }
 }
 
@@ -26,8 +26,8 @@ impl From<vec3> for Color {
     }
 }
 
-impl Into<vec3> for Color {
-    fn into(self) -> vec3 {
-        vec3::new(self.r, self.g, self.b)
+impl From<Color> for vec3 {
+    fn from(color: Color) -> Self {
+        vec3::new(color.r, color.g, color.b)
     }
 }

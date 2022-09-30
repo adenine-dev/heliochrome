@@ -1,31 +1,20 @@
-use std::collections::{HashSet, VecDeque};
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU8, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::{Arc, Mutex, RwLock};
-use std::thread::{self, Thread};
-
-use spmc;
-// use threadpool::ThreadPool;
-
-use crate::camera::Camera;
-use crate::color::Color;
-use crate::image::Image;
-use crate::maths::*;
-use crate::tonemap::ToneMap;
-
-#[cfg(feature = "multithread")]
-use rayon::prelude::*;
-
-use rayon::{ThreadPool, ThreadPoolBuilder};
-
-use super::hittables::{Hit, Hittable};
-use super::object::Object;
-
-use crate::scene::{self, Scene};
+use std::sync::{Arc, RwLock};
 
 use indicatif;
 use indicatif::ParallelProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+#[cfg(feature = "multithread")]
+use rayon::prelude::*;
+use rayon::{ThreadPool, ThreadPoolBuilder};
+use spmc;
+
+use crate::color::Color;
+use crate::image::Image;
+use crate::maths::*;
+use crate::scene::Scene;
+use crate::tonemap::ToneMap;
 
 #[derive(Clone, Copy)]
 pub struct QualitySettings {
@@ -173,7 +162,7 @@ impl Context {
     }
 
     pub fn render_sample(&mut self) -> &Image {
-        let per_pixel = |(i, color): (usize, &Color)| {
+        let per_pixel = |(i, _color): (usize, &Color)| {
             let u = (i % self.size.x as usize) as f32 + rand::random::<f32>();
             let v = (i / self.size.x as usize) as f32 + rand::random::<f32>();
             let uv = vec2::new(

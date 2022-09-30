@@ -22,22 +22,23 @@ use heliochrome::{
 
 pub fn make_context() -> Context {
     let mut objects = vec![];
-    objects.push(Object::new(
-        hittables::InfinitePlane::new(
-            vec3::new(0.0, 0.0, 0.0),
-            vec3::new(0.0, 1.0, 0.0).normalized(),
-        )
-        .into(),
-        Lambertian::new(Color::splat(0.3)).into(),
-        None,
-    ));
+    // objects.push(Object::new(
+    //     hittables::InfinitePlane::new(
+    //         vec3::new(0.0, 0.0, 0.0),
+    //         vec3::new(0.0, 1.0, 0.0).normalized(),
+    //     )
+    //     .into(),
+    //     Lambertian::new(Color::splat(0.3)).into(),
+    //     None,
+    // ));
 
-    let (mut positions, indices) = load_obj("assets/suzanne.obj").unwrap();
-    positions.iter_mut().for_each(|p| {
+    let mut meshes = load_obj("assets/suzanne.obj").unwrap();
+    let mesh = meshes.first_mut().unwrap();
+    mesh.vertices.iter_mut().for_each(|p| {
         *p -= vec3::new(0.0, -0.55, 0.0);
     });
     objects.push(Object::new(
-        hittables::Mesh::new(&positions, &indices).into(),
+        hittables::Mesh::new(&mesh.vertices, &mesh.indices).into(),
         Metal::new(Color::new(1.0, 0.9, 1.0), 0.7).into(),
         // None,
         Some(Transform::new(mat3::rotate(vec3::new(
@@ -91,6 +92,7 @@ pub fn make_context() -> Context {
     //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
     //     None,
     // ));
+
     // let n = 5;
     // for x in 0..n {
     //     for y in 0..n {
@@ -124,14 +126,13 @@ pub fn make_context() -> Context {
     let scene = Scene::new(
         camera::Camera::new(
             maths::vec3::new(0.0, 0.0, 5.0),
-            vec3::new(0.0, 1.0, 0.0),
+            vec3::new(0.0, 0.0, 0.0),
             vec3::unit_y(),
             20.0,
             WIDTH as f32 / HEIGHT as f32,
             0.0,
             None,
-        )
-        .into(),
+        ),
         // SkyBox::Color(Color::new(0.0, 0.0, 0.0)),
         SkyBox::Equirectangular(
             Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),

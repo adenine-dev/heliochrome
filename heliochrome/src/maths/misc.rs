@@ -1,3 +1,4 @@
+#[const_trait]
 pub trait Splat<T> {
     fn splat(val: T) -> Self;
 }
