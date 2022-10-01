@@ -196,6 +196,10 @@ macro_rules! vec3_impl {
             $n::new(lhs.$x / rhs.$x, lhs.$y / rhs.$y, lhs.$z / rhs.$z)
         });
 
+        impl_op_ex!(% |lhs: &$n, rhs: &$n| -> $n {
+            $n::new(lhs.$x % rhs.$x, lhs.$y % rhs.$y, lhs.$z % rhs.$z)
+        });
+
         impl_op_ex_commutative!(* |lhs: &$n, rhs: &$t| -> $n {
             $n::new(lhs.$x * rhs, lhs.$y * rhs, lhs.$z * rhs)
         });
@@ -203,6 +207,11 @@ macro_rules! vec3_impl {
         impl_op_ex_commutative!(/ |lhs: &$n, rhs: &$t| -> $n {
             $n::new(lhs.$x / rhs, lhs.$y / rhs, lhs.$z / rhs)
         });
+
+        impl_op_ex_commutative!(% |lhs: &$n, rhs: &$t| -> $n {
+            $n::new(lhs.$x % rhs, lhs.$y % rhs, lhs.$z % rhs)
+        });
+
 
         impl_op_ex!(+= |lhs: &mut $n, rhs: &$n| {
             lhs.$x += rhs.$x;

@@ -101,8 +101,8 @@ impl<T: Hittable> BVH<T> {
         }
 
         let mut unboundables = Vec::with_capacity(unboundable_indices.len());
-        for idx in unboundable_indices {
-            unboundables.push(hittables.remove(idx));
+        for idx in unboundable_indices.iter().rev() {
+            unboundables.push(hittables.remove(*idx));
         }
 
         if hittables.is_empty() {

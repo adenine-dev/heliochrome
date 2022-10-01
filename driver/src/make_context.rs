@@ -20,6 +20,7 @@ use heliochrome::{
     *,
 };
 
+#[allow(clippy::vec_init_then_push)]
 pub fn make_context() -> Context {
     let mut objects = vec![];
     // objects.push(Object::new(
@@ -32,21 +33,21 @@ pub fn make_context() -> Context {
     //     None,
     // ));
 
-    let mut meshes = load_obj("assets/suzanne.obj").unwrap();
-    let mesh = meshes.first_mut().unwrap();
-    mesh.vertices.iter_mut().for_each(|p| {
-        *p -= vec3::new(0.0, -0.55, 0.0);
-    });
-    objects.push(Object::new(
-        hittables::Mesh::new(&mesh.vertices, &mesh.indices).into(),
-        Metal::new(Color::new(1.0, 0.9, 1.0), 0.7).into(),
-        // None,
-        Some(Transform::new(mat3::rotate(vec3::new(
-            0.0,
-            0.0,
-            -35.0f32.to_radians(),
-        )))),
-    ));
+    // let mut meshes = load_obj("assets/suzanne.obj").unwrap();
+    // let mesh = meshes.first_mut().unwrap();
+    // mesh.vertices.iter_mut().for_each(|p| {
+    //     *p -= vec3::new(0.0, -0.55, 0.0);
+    // });
+    // objects.push(Object::new(
+    //     hittables::Mesh::new(&mesh.vertices, &mesh.indices).into(),
+    //     Metal::new(Color::new(1.0, 0.9, 1.0), 0.7).into(),
+    //     // None,
+    //     Some(Transform::new(mat3::rotate(vec3::new(
+    //         0.0,
+    //         0.0,
+    //         -35.0f32.to_radians(),
+    //     )))),
+    // ));
 
     // objects.push(Object::new(
     //     // hittables::AABB::new(vec3::new(1.0, -1.0, -1.0), vec3::new(3.0, 1.0, 1.0)).into(),
@@ -122,6 +123,16 @@ pub fn make_context() -> Context {
     //         }
     //     }
     // }
+
+    objects.push(Object::new(
+        hittables::SDF::new(hittables::SphereSDF {
+            r: 0.2,
+            c: vec3::splat(0.0),
+        })
+        .into(),
+        Lambertian::new(Color::new(0.3, 0.6, 0.9)).into(),
+        None,
+    ));
 
     let scene = Scene::new(
         camera::Camera::new(

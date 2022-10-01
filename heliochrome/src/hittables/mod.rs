@@ -21,6 +21,9 @@ pub use mesh::*;
 mod aabb;
 pub use aabb::*;
 
+mod sdf;
+pub use sdf::*;
+
 use crate::maths::Ray;
 
 #[enum_dispatch(Hittable)]
@@ -32,4 +35,5 @@ pub enum HittableObject {
     Triangle,
     Mesh,
     AABB,
+    SDF,
 }
