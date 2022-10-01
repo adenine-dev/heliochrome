@@ -3,7 +3,9 @@ use std::sync::Arc;
 use super::{Hit, Hittable, AABB};
 use crate::maths::{vec3, Ray};
 
-const NORMAL_H: f32 = 0.00001;
+const NORMAL_H: f32 = 0.000001;
+const MIN_DIST: f32 = 0.000001;
+const MAX_MARCHES: u16 = 100;
 
 pub trait DistEstimator: Send + Sync {
     fn dist(&self, p: vec3) -> f32;
@@ -35,16 +37,14 @@ impl Hittable for SDF {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
         let mut t = t_min;
         let mut p = ray.at(t);
-        let max_iterations = 100;
-        let min_dist = 0.001;
-        for _ in 0..max_iterations {
+        for _ in 0..MAX_MARCHES {
             let d = self.dist_estimator.dist(p);
             t += d;
             if t > t_max {
                 break;
             }
             p = ray.at(t);
-            if d < min_dist {
+            if d < MIN_DIST {
                 return Some(Hit::new(ray, t, self.dist_estimator.normal_at(&p)));
             }
         }

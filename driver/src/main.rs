@@ -15,6 +15,7 @@ use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
 use heliochrome::{context::Context, maths::vec2, tonemap::ToneMap};
 
 mod make_context;
+use instant::Instant;
 use make_context::make_context;
 
 struct StateData {
@@ -275,6 +276,8 @@ struct RenderTab {
     state: State,
     rendering: bool,
     paused: bool,
+    start_time: Instant,
+    last_time: Instant,
 }
 
 const EMPTY_TEXTURE_COLOR: Color32 = Color32::BLACK;
@@ -297,6 +300,8 @@ impl RenderTab {
             state,
             rendering: false,
             paused: false,
+            start_time: Instant::now(),
+            last_time: Instant::now(),
         }
     }
 }
@@ -316,6 +321,7 @@ impl Tab for RenderTab {
                     if ui.button(if self.paused { "▶" } else { "⏸" }).clicked() {
                         self.state.borrow().context.toggle_pause_full_render();
                         self.paused = !self.paused;
+                        self.start_time = Instant::now();
                     }
                     if ui.button("⏹").clicked() {
                         self.state.borrow_mut().context.stop_full_render();
@@ -325,6 +331,15 @@ impl Tab for RenderTab {
                 ui.end_row();
             });
         });
+
+        if self.rendering {
+            let duration = Instant::now().duration_since(self.start_time);
+            let seconds = duration.as_secs() % 60;
+            let minutes = (duration.as_secs() / 60) % 60;
+            let hours = (duration.as_secs() / 60) / 60;
+
+            ui.label(format!("Render Time {}:{}:{}", hours, minutes, seconds));
+        }
 
         {
             let size = self.state.borrow().context.get_size();
@@ -412,11 +427,6 @@ impl Tab for PreviewTab {
     fn ui(&mut self, ui: &mut Ui) {
         let size = self.state.borrow().context.get_size();
         let samples = self.state.borrow().context.samples;
-
-        if ui.button(format!("📷 {}", samples)).clicked() {
-            self.rendering = !self.rendering;
-        }
-
         let reset = {
             let state = self.state.borrow(); //
             let camera = &mut state.context.scene.write().unwrap().camera;
@@ -462,22 +472,34 @@ impl Tab for PreviewTab {
                 );
             }
         }
+        let start_time = Instant::now();
 
-        if self.rendering {
-            let gamma = self.state.borrow().gamma;
-            self.texture_handle.set(
-                ImageData::Color(ColorImage::from_rgba_unmultiplied(
-                    [size.x as usize, size.y as usize],
-                    &self
-                        .state
-                        .borrow_mut()
-                        .context
-                        .render_sample()
-                        .to_gamma_corrected_rgba8(gamma),
-                )),
-                TextureFilter::Linear,
-            );
-        }
+        egui::Grid::new("size").show(ui, |ui| {
+            if ui.button("📷").clicked() {
+                self.rendering = !self.rendering;
+            }
+            ui.label(format!("samples: {}", samples));
+
+            if self.rendering {
+                let gamma = self.state.borrow().gamma;
+                self.texture_handle.set(
+                    ImageData::Color(ColorImage::from_rgba_unmultiplied(
+                        [size.x as usize, size.y as usize],
+                        &self
+                            .state
+                            .borrow_mut()
+                            .context
+                            .render_sample()
+                            .to_gamma_corrected_rgba8(gamma),
+                    )),
+                    TextureFilter::Linear,
+                );
+            }
+        });
+        ui.label(format!(
+            "last render time: {:?}",
+            Instant::now().duration_since(start_time)
+        ));
 
         ui.centered_and_justified(|ui| {
             Plot::new("preview")
