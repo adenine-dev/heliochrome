@@ -125,26 +125,36 @@ pub fn make_context() -> Context {
     //     }
     // }
 
-    objects.push(Object::new(
-        hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(-0.25, -0.25, 0.25))).into(),
-        Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
-        None,
-    ));
+    // objects.push(Object::new(
+    //     hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(-0.25, -0.25, 0.25))).into(),
+    //     Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
+    //     None,
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(0.25, 0.25, -0.25))).into(),
+    //     Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
+    //     None,
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::HittableSDF::new(
+    //         sdf::Sphere::new(0.2, vec3::splat(0.25))
+    //             .smooth_union(1.0, sdf::Sphere::new(0.2, vec3::splat(-0.25))),
+    //     )
+    //     .into(),
+    //     Metal::new(Color::new(0.3, 0.9, 0.6), 0.1).into(),
+    //     None,
+    // ));
 
     objects.push(Object::new(
-        hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(0.25, 0.25, -0.25))).into(),
-        Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
-        None,
-    ));
-
-    objects.push(Object::new(
-        hittables::HittableSDF::new(
-            sdf::Sphere::new(0.2, vec3::splat(0.25))
-                .smooth_union(1.0, sdf::Sphere::new(0.2, vec3::splat(-0.25))),
-        )
-        .into(),
-        Metal::new(Color::new(0.3, 0.9, 0.6), 0.1).into(),
-        None,
+        hittables::HittableSDF::new(sdf::Torus::new(vec3::splat(0.0), 1.0, 0.5).twist(2.0)).into(),
+        Metal::new(Color::splat(0.4), 0.3).into(),
+        None, // Some(Transform::new(mat3::rotate(vec3::new(
+              //     0.0,
+              //     0.0,
+              //     std::f32::consts::TAU / 4.0,
+              // )))),
     ));
 
     let scene = Scene::new(
@@ -154,7 +164,7 @@ pub fn make_context() -> Context {
             vec3::unit_y(),
             60.0,
             WIDTH as f32 / HEIGHT as f32,
-            0.03,
+            0.0,
             None,
         ),
         // SkyBox::Color(Color::new(0.0, 0.0, 0.0)),

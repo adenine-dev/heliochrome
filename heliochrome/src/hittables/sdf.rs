@@ -3,7 +3,7 @@ use std::sync::Arc;
 use super::{Hit, Hittable, AABB};
 use crate::{maths::Ray, sdf::SDF};
 
-const MIN_DIST: f32 = 0.000001;
+const MIN_DIST: f32 = 0.0001;
 const MAX_MARCHES: u16 = 500;
 const MARCH_T_MAX: f32 = 10000.0;
 
@@ -29,7 +29,7 @@ impl Hittable for HittableSDF {
                 break;
             }
             p = ray.at(t_min);
-            if d < MIN_DIST {
+            if d.abs() < MIN_DIST {
                 return Some(Hit::new(ray, t_min, self.sdf.normal_at(&p)));
             }
         }

@@ -12,7 +12,13 @@ use eframe::{
     CreationContext, NativeOptions,
 };
 use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
-use heliochrome::{context::Context, maths::vec2, tonemap::ToneMap};
+use heliochrome::{
+    context::Context,
+    hittables::{Hittable, HittableObject},
+    maths::vec2,
+    sdf::Twist,
+    tonemap::ToneMap,
+};
 
 mod make_context;
 use instant::Instant;
@@ -146,11 +152,12 @@ impl Tab for ConfigTab {
 
 struct SceneTab {
     state: State,
+    k: u16,
 }
 
 impl SceneTab {
     fn new(state: State) -> Self {
-        Self { state }
+        Self { state, k: 10 }
     }
 }
 
@@ -429,7 +436,7 @@ impl Tab for PreviewTab {
         let size = self.state.borrow().context.get_size();
         let samples = self.state.borrow().context.samples;
         let reset = {
-            let state = self.state.borrow(); //
+            let state = self.state.borrow();
             let camera = &mut state.context.scene.write().unwrap().camera;
             let input = ui.input();
             let mut should_update = true;

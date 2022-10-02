@@ -1,6 +1,8 @@
+use std::sync::atomic::AtomicU16;
+
 use crate::{hittables::AABB, maths::vec3};
 
-const NORMAL_H: f32 = 0.000001;
+const NORMAL_H: f32 = f32::EPSILON;
 
 pub trait SDF: Send + Sync {
     fn dist(&self, p: vec3) -> f32;
@@ -27,6 +29,13 @@ pub trait SDF: Send + Sync {
             a: self,
             b: other,
         }
+    }
+
+    fn twist(self, k: f32) -> Twist<Self>
+    where
+        Self: Sized,
+    {
+        Twist { k, primitive: self }
     }
 }
 
