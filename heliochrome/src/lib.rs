@@ -36,6 +36,7 @@ pub mod materials;
 pub mod maths;
 pub mod object;
 pub mod scene;
+pub mod sdf;
 pub mod tonemap;
 pub mod transform;
 

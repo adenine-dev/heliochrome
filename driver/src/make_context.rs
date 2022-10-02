@@ -8,13 +8,14 @@ use std::path::Path;
 use heliochrome::{
     color::Color,
     context::Context,
-    hittables::{self, SDF},
+    hittables::{self},
     image::Image,
     load_obj::load_obj,
     materials::*,
     maths::*,
     object::Object,
     scene::{Scene, SkyBox},
+    sdf::SDF,
     tonemap::ToneMap,
     transform::Transform,
     *,
@@ -125,29 +126,24 @@ pub fn make_context() -> Context {
     // }
 
     objects.push(Object::new(
-        hittables::HittableSDF::new(hittables::SphereSDF::new(
-            0.2,
-            vec3::new(-0.25, -0.25, 0.25),
-        ))
-        .into(),
+        hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(-0.25, -0.25, 0.25))).into(),
         Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
         None,
     ));
 
     objects.push(Object::new(
-        hittables::HittableSDF::new(hittables::SphereSDF::new(0.2, vec3::new(0.25, 0.25, -0.25)))
-            .into(),
+        hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(0.25, 0.25, -0.25))).into(),
         Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
         None,
     ));
 
     objects.push(Object::new(
         hittables::HittableSDF::new(
-            hittables::SphereSDF::new(0.2, vec3::splat(0.25))
-                .smooth_union(1.0, hittables::SphereSDF::new(0.2, vec3::splat(-0.25))),
+            sdf::Sphere::new(0.2, vec3::splat(0.25))
+                .smooth_union(1.0, sdf::Sphere::new(0.2, vec3::splat(-0.25))),
         )
         .into(),
-        Lambertian::new(Color::new(0.3, 0.9, 0.6)).into(),
+        Metal::new(Color::new(0.3, 0.9, 0.6), 0.1).into(),
         None,
     ));
 
