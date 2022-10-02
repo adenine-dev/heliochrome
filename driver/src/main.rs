@@ -277,7 +277,6 @@ struct RenderTab {
     rendering: bool,
     paused: bool,
     start_time: Instant,
-    last_time: Instant,
 }
 
 const EMPTY_TEXTURE_COLOR: Color32 = Color32::BLACK;
@@ -301,7 +300,6 @@ impl RenderTab {
             rendering: false,
             paused: false,
             start_time: Instant::now(),
-            last_time: Instant::now(),
         }
     }
 }
@@ -338,7 +336,10 @@ impl Tab for RenderTab {
             let minutes = (duration.as_secs() / 60) % 60;
             let hours = (duration.as_secs() / 60) / 60;
 
-            ui.label(format!("Render Time {}:{}:{}", hours, minutes, seconds));
+            ui.label(format!(
+                "Elapsed Time {:0>2}:{:0>2}:{:0>2}",
+                hours, minutes, seconds
+            ));
         }
 
         {

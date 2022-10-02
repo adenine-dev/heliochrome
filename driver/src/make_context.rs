@@ -8,7 +8,7 @@ use std::path::Path;
 use heliochrome::{
     color::Color,
     context::Context,
-    hittables,
+    hittables::{self, SDF},
     image::Image,
     load_obj::load_obj,
     materials::*,
@@ -125,12 +125,12 @@ pub fn make_context() -> Context {
     // }
 
     objects.push(Object::new(
-        hittables::SDF::new(hittables::SphereSDF {
-            r: 0.2,
-            c: vec3::splat(0.0),
-        })
+        hittables::HittableSDF::new(
+            hittables::SphereSDF::new(0.2, vec3::splat(0.25))
+                .smooth_union(hittables::SphereSDF::new(0.2, vec3::splat(-0.25))),
+        )
         .into(),
-        Lambertian::new(Color::new(0.3, 0.6, 0.9)).into(),
+        Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
         None,
     ));
 

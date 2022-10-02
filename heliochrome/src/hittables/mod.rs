@@ -35,5 +35,5 @@ pub enum HittableObject {
     Triangle,
     Mesh,
     AABB,
-    SDF,
+    HittableSDF,
 }
