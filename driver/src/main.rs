@@ -476,7 +476,7 @@ impl Tab for PreviewTab {
         let start_time = Instant::now();
 
         egui::Grid::new("size").show(ui, |ui| {
-            if ui.button("📷").clicked() {
+            if ui.button("📷").clicked() || ui.input().key_down(Key::Space) {
                 self.rendering = !self.rendering;
             }
             ui.label(format!("samples: {}", samples));

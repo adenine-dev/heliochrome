@@ -6,6 +6,7 @@ use crate::maths::{lerp, vec3, Ray};
 const NORMAL_H: f32 = 0.000001;
 const MIN_DIST: f32 = 0.000001;
 const MAX_MARCHES: u16 = 500;
+const MARCH_T_MAX: f32 = 10000.0;
 
 pub trait SDF: Send + Sync {
     fn dist(&self, p: vec3) -> f32;
@@ -23,11 +24,15 @@ pub trait SDF: Send + Sync {
         None
     }
 
-    fn smooth_union<T: SDF>(self, other: T) -> SmoothUnion<Self, T>
+    fn smooth_union<T: SDF>(self, k: f32, other: T) -> SmoothUnion<Self, T>
     where
         Self: Sized,
     {
-        SmoothUnion { a: self, b: other }
+        SmoothUnion {
+            k,
+            a: self,
+            b: other,
+        }
     }
 }
 
@@ -43,18 +48,18 @@ impl HittableSDF {
 }
 
 impl Hittable for HittableSDF {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let mut t = t_min;
-        let mut p = ray.at(t);
+    fn hit(&self, ray: &Ray, mut t_min: f32, t_max: f32) -> Option<Hit> {
+        let mut p = ray.at(t_min);
+
         for _ in 0..MAX_MARCHES {
             let d = self.sdf.dist(p);
-            t += d;
-            if t > t_max {
+            t_min += d;
+            if t_min > t_max || t_min > MARCH_T_MAX {
                 break;
             }
-            p = ray.at(t);
+            p = ray.at(t_min);
             if d < MIN_DIST {
-                return Some(Hit::new(ray, t, self.sdf.normal_at(&p)));
+                return Some(Hit::new(ray, t_min, self.sdf.normal_at(&p)));
             }
         }
 
@@ -67,23 +72,29 @@ impl Hittable for HittableSDF {
 }
 
 pub struct SmoothUnion<A: SDF, B: SDF> {
+    pub k: f32,
     pub a: A,
     pub b: B,
 }
 
 impl<A: SDF, B: SDF> SDF for SmoothUnion<A, B> {
     fn dist(&self, p: vec3) -> f32 {
-        let k = 1.0;
         let d1 = self.a.dist(p);
         let d2 = self.b.dist(p);
-        let h = (0.5 + 0.5 * (d2 - d1) / k).clamp(0.0, 1.0);
-        lerp(d2, d1, h) - k * h * (1.0 - h)
+        // let h = (0.5 + 0.5 * (d2 - d1) / self.k).clamp(0.0, 1.0);
+        // lerp(d2, d1, h) - self.k * h * (1.0 - h)
+
+        let h = (self.k - (d1 - d2).abs()).max(0.0) / self.k;
+        d1.min(d2) - h * h * self.k * (1.0 / 4.0)
     }
 
     fn make_bounding_box(&self) -> Option<AABB> {
-        if let Some(bba) = self.a.make_bounding_box() {
-            if let Some(bbb) = self.b.make_bounding_box() {
-                return Some(AABB::surrounding(&bba, &bbb));
+        if let Some(a) = self.a.make_bounding_box() {
+            if let Some(b) = self.b.make_bounding_box() {
+                return Some(AABB::new(
+                    a.min.min(&b.min) - vec3::splat(self.k - 1.0),
+                    a.max.max(&b.max) + vec3::splat(self.k - 1.0),
+                ));
             }
         }
 

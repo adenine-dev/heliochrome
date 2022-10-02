@@ -125,23 +125,40 @@ pub fn make_context() -> Context {
     // }
 
     objects.push(Object::new(
-        hittables::HittableSDF::new(
-            hittables::SphereSDF::new(0.2, vec3::splat(0.25))
-                .smooth_union(hittables::SphereSDF::new(0.2, vec3::splat(-0.25))),
-        )
+        hittables::HittableSDF::new(hittables::SphereSDF::new(
+            0.2,
+            vec3::new(-0.25, -0.25, 0.25),
+        ))
         .into(),
         Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
         None,
     ));
 
+    objects.push(Object::new(
+        hittables::HittableSDF::new(hittables::SphereSDF::new(0.2, vec3::new(0.25, 0.25, -0.25)))
+            .into(),
+        Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
+        None,
+    ));
+
+    objects.push(Object::new(
+        hittables::HittableSDF::new(
+            hittables::SphereSDF::new(0.2, vec3::splat(0.25))
+                .smooth_union(1.0, hittables::SphereSDF::new(0.2, vec3::splat(-0.25))),
+        )
+        .into(),
+        Lambertian::new(Color::new(0.3, 0.9, 0.6)).into(),
+        None,
+    ));
+
     let scene = Scene::new(
         camera::Camera::new(
-            maths::vec3::new(0.0, 0.0, 5.0),
+            maths::vec3::new(0.0, 0.0, 4.0),
             vec3::new(0.0, 0.0, 0.0),
             vec3::unit_y(),
-            20.0,
+            60.0,
             WIDTH as f32 / HEIGHT as f32,
-            0.0,
+            0.03,
             None,
         ),
         // SkyBox::Color(Color::new(0.0, 0.0, 0.0)),
