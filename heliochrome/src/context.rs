@@ -89,8 +89,12 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
         // };
 
         if let Some((hit, object)) = scene.objects.hit(&ray, 0.001, f32::INFINITY) {
-            // normals
-            // let n = 0.5 * (hit.normal.normalized() + vec3::splat(1.0));
+            // color = if hit.front_face {
+            //     Color::new(0.0, 1.0, 0.0)
+            // } else {
+            //     Color::new(0.0, 0.0, 1.0)
+            // };
+            // let n = 0.5 * (hit.normal + vec3::splat(1.0));
             // color = Color::new(n.x, n.y, n.z);
             // break;
             let emitted = object.get_emitted();

@@ -1,13 +1,23 @@
-use std::sync::atomic::AtomicU16;
-
 use crate::{hittables::AABB, maths::vec3};
 
-const NORMAL_H: f32 = f32::EPSILON;
+const NORMAL_H: f32 = 0.0001;
 
 pub trait SDF: Send + Sync {
     fn dist(&self, p: vec3) -> f32;
 
     fn normal_at(&self, p: &vec3) -> vec3 {
+        // let ks = [
+        //     vec3::new(1.0, -1.0, -1.0),
+        //     vec3::new(-1.0, -1.0, 1.0),
+        //     vec3::new(-1.0, 1.0, -1.0),
+        //     vec3::splat(1.0),
+        // ];
+        // ks.into_iter()
+        //     .fold(vec3::splat(0.0), |a, c| {
+        //         a + (c * self.dist(p + c * NORMAL_H))
+        //     })
+        //     .normalize()
+
         (vec3::new(
             self.dist(p + vec3::unit_x() * NORMAL_H) - self.dist(p - vec3::unit_x() * NORMAL_H),
             self.dist(p + vec3::unit_y() * NORMAL_H) - self.dist(p - vec3::unit_y() * NORMAL_H),
@@ -32,6 +42,24 @@ pub trait SDF: Send + Sync {
         Self: Sized,
     {
         SmoothDifference {
+            k,
+            a: self,
+            b: other,
+        }
+    }
+
+    fn intersection<T: SDF>(self, other: T) -> Intersection<Self, T>
+    where
+        Self: Sized,
+    {
+        Intersection { a: self, b: other }
+    }
+
+    fn smooth_intersection<T: SDF>(self, k: f32, other: T) -> SmoothIntersection<Self, T>
+    where
+        Self: Sized,
+    {
+        SmoothIntersection {
             k,
             a: self,
             b: other,

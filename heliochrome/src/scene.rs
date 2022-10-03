@@ -46,6 +46,7 @@ impl ObjectStore {
 pub enum SkyBox {
     Color(Color),
     Equirectangular(Image),
+    Debug,
 }
 
 impl SkyBox {
@@ -59,6 +60,7 @@ impl SkyBox {
                 );
                 i.sample_uv(&uv)
             }
+            SkyBox::Debug => ((dir + vec3::splat(1.0)) / 2.0).into(),
         }
     }
 }

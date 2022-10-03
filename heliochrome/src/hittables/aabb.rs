@@ -16,6 +16,10 @@ impl AABB {
         Self::new(a.min.min(&b.min), a.max.max(&b.max))
     }
 
+    pub fn intersection(a: &AABB, b: &AABB) -> Self {
+        Self::new(a.min.max(&b.min), a.max.min(&b.max))
+    }
+
     pub fn surface_area(&self) -> f32 {
         let size = self.max - self.min;
         2.0 * (size.x) * (size.y) + (size.x) * (size.z) + (size.y) * (size.z)

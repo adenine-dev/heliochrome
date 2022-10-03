@@ -147,21 +147,30 @@ pub fn make_context() -> Context {
     //     None,
     // ));
 
+    // objects.push(Object::new(
+    //     hittables::HittableSDF::new(
+    //         sdf::Torus::new(1.0, 0.5)
+    //             .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_x()))
+    //             .smooth_difference(0.1, sdf::Sphere::new(0.5, vec3::unit_x()))
+    //             .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_z()))
+    //             .smooth_difference(0.1, sdf::Sphere::new(0.5, vec3::unit_z())),
+    //     )
+    //     .into(),
+    //     Metal::new(Color::splat(0.4), 0.3).into(),
+    //     None,
+    // ));
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::unit_x(), 0.75).into(),
+    //     Metal::new(Color::splat(0.4), 0.0).into(),
+    //     None,
+    // ));
     objects.push(Object::new(
         hittables::HittableSDF::new(
-            sdf::Torus::new(1.0, 0.5)
-                .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_x()))
-                .smooth_difference(0.1, sdf::Sphere::new(0.5, vec3::unit_x()))
-                .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_z()))
-                .smooth_difference(0.1, sdf::Sphere::new(0.5, vec3::unit_z())),
+            sdf::Torus::new(1.0, 0.5).intersection(sdf::Sphere::new(0.75, vec3::splat(0.0))),
         )
         .into(),
-        Metal::new(Color::splat(0.4), 0.3).into(),
-        None, // Some(Transform::new(mat3::rotate(vec3::new(
-              //     0.0,
-              //     0.0,
-              //     std::f32::consts::TAU / 4.0,
-              // )))),
+        Metal::new(Color::splat(0.4), 0.0).into(),
+        None,
     ));
 
     let scene = Scene::new(
@@ -175,6 +184,7 @@ pub fn make_context() -> Context {
             None,
         ),
         // SkyBox::Color(Color::new(0.0, 0.0, 0.0)),
+        // SkyBox::Debug,
         SkyBox::Equirectangular(
             Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
         ),
