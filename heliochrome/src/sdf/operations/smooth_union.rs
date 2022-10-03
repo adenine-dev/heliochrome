@@ -25,8 +25,8 @@ impl<A: SDF, B: SDF> SDF for SmoothUnion<A, B> {
         if let Some(a) = self.a.make_bounding_box() {
             if let Some(b) = self.b.make_bounding_box() {
                 return Some(AABB::new(
-                    a.min.min(&b.min) - vec3::splat(self.k - 1.0),
-                    a.max.max(&b.max) + vec3::splat(self.k - 1.0),
+                    a.min.min(&b.min) - vec3::splat(self.k),
+                    a.max.max(&b.max) + vec3::splat(self.k),
                 ));
             }
         }

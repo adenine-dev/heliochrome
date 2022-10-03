@@ -20,6 +20,24 @@ pub trait SDF: Send + Sync {
         None
     }
 
+    fn difference<T: SDF>(self, other: T) -> Difference<Self, T>
+    where
+        Self: Sized,
+    {
+        Difference { a: self, b: other }
+    }
+
+    fn smooth_difference<T: SDF>(self, k: f32, other: T) -> SmoothDifference<Self, T>
+    where
+        Self: Sized,
+    {
+        SmoothDifference {
+            k,
+            a: self,
+            b: other,
+        }
+    }
+
     fn smooth_union<T: SDF>(self, k: f32, other: T) -> SmoothUnion<Self, T>
     where
         Self: Sized,

@@ -24,15 +24,15 @@ use heliochrome::{
 #[allow(clippy::vec_init_then_push)]
 pub fn make_context() -> Context {
     let mut objects = vec![];
-    objects.push(Object::new(
-        hittables::InfinitePlane::new(
-            vec3::new(0.0, 0.0, 0.0),
-            vec3::new(0.0, 1.0, 0.0).normalized(),
-        )
-        .into(),
-        Lambertian::new(Color::splat(0.3)).into(),
-        None,
-    ));
+    // objects.push(Object::new(
+    //     hittables::InfinitePlane::new(
+    //         vec3::new(0.0, 0.0, 0.0),
+    //         vec3::new(0.0, 1.0, 0.0).normalized(),
+    //     )
+    //     .into(),
+    //     Lambertian::new(Color::splat(0.3)).into(),
+    //     None,
+    // ));
 
     // let mut meshes = load_obj("assets/suzanne.obj").unwrap();
     // let mesh = meshes.first_mut().unwrap();
@@ -148,7 +148,14 @@ pub fn make_context() -> Context {
     // ));
 
     objects.push(Object::new(
-        hittables::HittableSDF::new(sdf::Torus::new(1.0, 0.5)).into(),
+        hittables::HittableSDF::new(
+            sdf::Torus::new(1.0, 0.5)
+                .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_x()))
+                .smooth_difference(0.1, sdf::Sphere::new(0.5, vec3::unit_x()))
+                .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_z()))
+                .smooth_difference(0.1, sdf::Sphere::new(0.5, vec3::unit_z())),
+        )
+        .into(),
         Metal::new(Color::splat(0.4), 0.3).into(),
         None, // Some(Transform::new(mat3::rotate(vec3::new(
               //     0.0,
