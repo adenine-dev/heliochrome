@@ -14,14 +14,14 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(
-        hittable: HittableObject,
-        material: Material,
+    pub fn new<H: Into<HittableObject>, M: Into<Material>>(
+        hittable: H,
+        material: M,
         transform: Option<Transform>,
     ) -> Object {
         Object {
-            hittable,
-            material,
+            hittable: hittable.into(),
+            material: material.into(),
             transform,
         }
     }
@@ -39,8 +39,8 @@ impl Hittable for Object {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
         let r = if let Some(transform) = &self.transform {
             Ray::new(
-                transform.inverse * ray.origin,
-                transform.inverse * ray.direction,
+                transform.trans_pos(&ray.origin),
+                transform.trans_dir(&ray.direction),
             )
         } else {
             *ray
@@ -50,7 +50,7 @@ impl Hittable for Object {
         if let Some(hit) = &mut hit {
             if let Some(transform) = &self.transform {
                 hit.p = ray.at(hit.t);
-                hit.set_normal(ray, (transform.normal_matrix * hit.normal).normalize());
+                hit.set_normal(ray, transform.trans_normal(&hit.normal));
             }
         }
 
@@ -60,22 +60,7 @@ impl Hittable for Object {
     fn make_bounding_box(&self) -> Option<AABB> {
         let aabb = self.hittable.make_bounding_box()?;
         if let Some(transform) = &self.transform {
-            let mut min = vec3::splat(f32::INFINITY);
-            let mut max = vec3::splat(-f32::INFINITY);
-            for i in 0..=1 {
-                for j in 0..=1 {
-                    for k in 0..=1 {
-                        let p = transform.matrix
-                            * (aabb.min
-                                * vec3::new((1 - i) as f32, (1 - j) as f32, (1 - k) as f32)
-                                + aabb.max * vec3::new(i as f32, j as f32, k as f32));
-                        min = min.min(&p);
-                        max = max.max(&p);
-                    }
-                }
-            }
-
-            return Some(AABB::new(min, max));
+            return Some(transform.trans_aabb(&aabb));
         }
 
         Some(aabb)

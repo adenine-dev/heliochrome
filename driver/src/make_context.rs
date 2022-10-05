@@ -1,14 +1,16 @@
 // const WIDTH: f32 = 1280.0;
 // const HEIGHT: f32 = 720.0;
-const WIDTH: f32 = 800.0;
-const HEIGHT: f32 = 345.0;
+// const WIDTH: f32 = 800.0;
+// const HEIGHT: f32 = 345.0;
+const WIDTH: f32 = 600.0;
+const HEIGHT: f32 = 600.0;
 
 use std::path::Path;
 
 use heliochrome::{
     color::Color,
     context::Context,
-    hittables::{self},
+    hittables::{self, Hittable},
     image::Image,
     load_obj::load_obj,
     materials::*,
@@ -24,13 +26,103 @@ use heliochrome::{
 #[allow(clippy::vec_init_then_push)]
 pub fn make_context() -> Context {
     let mut objects = vec![];
+
+    {
+        // Cornell Box
+        let base = Color::splat(0.73);
+        let left = Color::new(0.12, 0.45, 0.15);
+        let right = Color::new(0.65, 0.05, 0.05);
+        objects.push(Object::new(
+            hittables::Rect::new(
+                vec3::new(555.0, 0.0, 0.0),
+                vec3::new(0.0, 555.0, 0.0),
+                vec3::new(0.0, 0.0, 555.0),
+            ),
+            Lambertian::new(left),
+            None,
+        ));
+        objects.push(Object::new(
+            hittables::Rect::new(
+                vec3::new(0.0, 0.0, 0.0),
+                vec3::new(0.0, 555.0, 0.0),
+                vec3::new(0.0, 0.0, 555.0),
+            ),
+            Lambertian::new(right),
+            None,
+        ));
+
+        objects.push(Object::new(
+            hittables::Rect::new(
+                vec3::new(0.0, 0.0, 0.0),
+                vec3::new(555.0, 0.0, 0.0),
+                vec3::new(0.0, 0.0, 555.0),
+            ),
+            Lambertian::new(base),
+            None,
+        ));
+        objects.push(Object::new(
+            hittables::Rect::new(
+                vec3::new(0.0, 555.0, 0.0),
+                vec3::new(555.0, 0.0, 0.0),
+                vec3::new(0.0, 0.0, 555.0),
+            ),
+            Lambertian::new(base),
+            None,
+        ));
+        objects.push(Object::new(
+            hittables::Rect::new(
+                vec3::new(0.0, 0.0, 555.0),
+                vec3::new(555.0, 0.0, 0.0),
+                vec3::new(0.0, 555.0, 0.0),
+            ),
+            Lambertian::new(base),
+            None,
+        ));
+
+        objects.push(Object::new(
+            hittables::Rect::new(
+                vec3::new(213.0, 554.0, 227.0),
+                vec3::new(130.0, 0.0, 0.0),
+                vec3::new(0.0, 0.0, 105.0),
+            ),
+            DiffuseLight::new(Color::splat(1.0), 15.0),
+            None,
+        ));
+
+        objects.push(Object::new(
+            hittables::AABB::new(vec3::splat(0.0), vec3::new(165.0, 330.0, 165.0)),
+            Lambertian::new(base),
+            Some(Transform::new(
+                mat4::translate(vec3::new(265.0, 0.0, 295.0))
+                    * mat4::rotate(vec3::new(0.0, std::f32::consts::TAU / 24.0, 0.0)),
+            )),
+        ));
+
+        objects.push(Object::new(
+            hittables::AABB::new(vec3::splat(0.0), vec3::new(165.0, 165.0, 165.0)),
+            Lambertian::new(base),
+            Some(Transform::new(
+                mat4::rotate(vec3::new(0.0, -std::f32::consts::TAU / 20.0, 0.0))
+                    * mat4::translate(vec3::new(130.0, 0.0, 65.0)),
+            )),
+        ));
+    }
+
+    // objects.push(Object::new(
+    //     hittables::Sphere::new(vec3::splat(0.0), 1.0),
+    //     Metal::new(Color::splat(1.0), 0.0),
+    //     Some(Transform::new(
+    //         mat4::rotate(vec3::new(std::f32::consts::TAU / 3.0, 0.0, 0.0))
+    //             * mat4::scale(vec3::new(1.0, 2.0, 1.0)),
+    //     )),
+    // ));
+
     // objects.push(Object::new(
     //     hittables::InfinitePlane::new(
-    //         vec3::new(0.0, 0.0, 0.0),
+    //         vec3::new(0.0, -1.2, 0.0),
     //         vec3::new(0.0, 1.0, 0.0).normalized(),
-    //     )
-    //     .into(),
-    //     Lambertian::new(Color::splat(0.3)).into(),
+    //     ),
+    //     Lambertian::new(Color::splat(0.3)),
     //     None,
     // ));
 
@@ -40,8 +132,8 @@ pub fn make_context() -> Context {
     //     *p -= vec3::new(0.0, -0.55, 0.0);
     // });
     // objects.push(Object::new(
-    //     hittables::Mesh::new(&mesh.vertices, &mesh.indices).into(),
-    //     Metal::new(Color::new(1.0, 0.9, 1.0), 0.7).into(),
+    //     hittables::Mesh::new(&mesh.vertices, &mesh.indices),
+    //     Metal::new(Color::new(1.0, 0.9, 1.0), 0.7),
     //     // None,
     //     Some(Transform::new(mat3::rotate(vec3::new(
     //         0.0,
@@ -51,9 +143,9 @@ pub fn make_context() -> Context {
     // ));
 
     // objects.push(Object::new(
-    //     // hittables::AABB::new(vec3::new(1.0, -1.0, -1.0), vec3::new(3.0, 1.0, 1.0)).into(),
-    //     hittables::AABB::new(vec3::splat(-1.0), vec3::splat(1.0)).into(),
-    //     Dielectric::new(1.5, Color::new(0.9, 1.0, 1.0)).into(),
+    //     // hittables::AABB::new(vec3::new(1.0, -1.0, -1.0), vec3::new(3.0, 1.0, 1.0)),
+    //     hittables::AABB::new(vec3::splat(-1.0), vec3::splat(1.0)),
+    //     Dielectric::new(1.5, Color::new(0.9, 1.0, 1.0)),
     //     // None,
     //     Some(Transform::new(
     //         mat3::rotate(vec3::splat(std::f32::consts::TAU / 8.0)) * mat3::scale(vec3::splat(0.3)),
@@ -61,37 +153,37 @@ pub fn make_context() -> Context {
     // ));
 
     // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(0.0, 3.0, 0.0), 0.4).into(),
-    //     DiffuseLight::new(Color::splat(1.0), 4.0).into(),
+    //     hittables::Sphere::new(vec3::new(0.0, 3.0, 0.0), 0.4),
+    //     DiffuseLight::new(Color::splat(1.0), 4.0),
     //     None,
     // ));
 
     // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95).into(),
-    //     Metal::new(Color::new(0.8, 0.8, 0.8), 0.0).into(),
+    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95),
+    //     Metal::new(Color::new(0.8, 0.8, 0.8), 0.0),
     //     None,
     // ));
 
     // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95).into(),
-    //     Lambertian::new(Color::new(0.1, 0.1, 0.1)).into(),
+    //     hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95),
+    //     Lambertian::new(Color::new(0.1, 0.1, 0.1)),
     //     None,
     // ));
 
     // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95).into(),
-    //     Metal::new(Color::new(0.3, 0.3, 0.3), 0.7).into(),
+    //     hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95),
+    //     Metal::new(Color::new(0.3, 0.3, 0.3), 0.7),
     //     None,
     // ));
 
     // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95).into(),
-    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
+    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95),
+    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)),
     //     None,
     // ));
     // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85).into(),
-    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)).into(),
+    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85),
+    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)),
     //     None,
     // ));
 
@@ -105,7 +197,7 @@ pub fn make_context() -> Context {
     //                 z as f32 - n as f32 / 2.0,
     //             );
     //             objects.push(Object::new(
-    //                 hittables::AABB::new(vec3::splat(-0.35) + p, vec3::splat(0.35) + p).into(),
+    //                 hittables::AABB::new(vec3::splat(-0.35) + p, vec3::splat(0.35) + p),
     //                 Lambertian::new(
     //                     Color::new(
     //                         x as f32 / n as f32,
@@ -115,7 +207,7 @@ pub fn make_context() -> Context {
     //                         + Color::splat(0.1),
     //                     // 0.1,
     //                 )
-    //                 .into(),
+    //                 ,
     //                 // None,
     //                 Some(Transform::new(mat3::rotate(vec3::splat(
     //                     std::f32::consts::TAU / 8.0,
@@ -126,28 +218,6 @@ pub fn make_context() -> Context {
     // }
 
     // objects.push(Object::new(
-    //     hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(-0.25, -0.25, 0.25))).into(),
-    //     Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
-    //     None,
-    // ));
-
-    // objects.push(Object::new(
-    //     hittables::HittableSDF::new(sdf::Sphere::new(0.2, vec3::new(0.25, 0.25, -0.25))).into(),
-    //     Lambertian::new(Color::new(0.9, 0.3, 0.6)).into(),
-    //     None,
-    // ));
-
-    // objects.push(Object::new(
-    //     hittables::HittableSDF::new(
-    //         sdf::Sphere::new(0.2, vec3::splat(0.25))
-    //             .smooth_union(1.0, sdf::Sphere::new(0.2, vec3::splat(-0.25))),
-    //     )
-    //     .into(),
-    //     Metal::new(Color::new(0.3, 0.9, 0.6), 0.1).into(),
-    //     None,
-    // ));
-
-    // objects.push(Object::new(
     //     hittables::HittableSDF::new(
     //         sdf::Torus::new(1.0, 0.5)
     //             .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_x()))
@@ -155,30 +225,27 @@ pub fn make_context() -> Context {
     //             .smooth_difference(0.1, sdf::Sphere::new(0.5, -vec3::unit_z()))
     //             .smooth_difference(0.1, sdf::Sphere::new(0.5, vec3::unit_z())),
     //     )
-    //     .into(),
-    //     Metal::new(Color::splat(0.4), 0.3).into(),
+    //     ,
+    //     Metal::new(Color::splat(0.4), 0.3),
     //     None,
     // ));
+
     // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::unit_x(), 0.75).into(),
-    //     Metal::new(Color::splat(0.4), 0.0).into(),
+    //     hittables::HittableSDF::new(
+    //         sdf::Torus::new(1.0, 0.5).intersection(sdf::Sphere::new(0.75, vec3::splat(0.0))),
+    //     ),
+    //     Metal::new(Color::splat(0.4), 0.0),
     //     None,
     // ));
-    objects.push(Object::new(
-        hittables::HittableSDF::new(
-            sdf::Torus::new(1.0, 0.5).intersection(sdf::Sphere::new(0.75, vec3::splat(0.0))),
-        )
-        .into(),
-        Metal::new(Color::splat(0.4), 0.0).into(),
-        None,
-    ));
 
     let scene = Scene::new(
         camera::Camera::new(
-            maths::vec3::new(0.0, 0.0, 4.0),
-            vec3::new(0.0, 0.0, 0.0),
+            // maths::vec3::new(3.0, 3.0, -3.0),
+            // vec3::new(0.0, 0.0, 0.0),
+            maths::vec3::new(278.0, 278.0, -800.0),
+            vec3::new(278.0, 278.0, 0.0),
             vec3::unit_y(),
-            60.0,
+            40.0,
             WIDTH as f32 / HEIGHT as f32,
             0.0,
             None,
@@ -192,62 +259,4 @@ pub fn make_context() -> Context {
     );
 
     Context::new(maths::vec2::new(WIDTH, HEIGHT), scene, ToneMap::HejlRichard)
-
-    // positions.iter_mut().for_each(|p| {
-    //     *p += vec3::new(1.0, 0.0, 0.0);
-    // });
-
-    // context.add_object(Object::new(
-    //     hittables::Mesh::new(&positions, &indices).into(),
-    //     Metal::new(Color::new(0.5, 0.5, 0.9), 0.0).into(),
-    //     None,
-    // ));
-
-    // context.add_object(Object::new(
-    //     hittables::Triangle::new([
-    //         vec3::new(2.179167, -0.818439, -1.094899),
-    //         vec3::new(2.145673, -0.693439, -1.094899),
-    //         vec3::new(2.054167, -0.601933, -1.094899),
-    //     ])
-    //     .into(),
-    //     Metal::new(Color::new(0.8, 0.3, 0.8), 0.1).into(),
-    //     None,
-    // ));
-
-    // context.add_object(
-    //     hittables::Rect::new(
-    //         vec3::new(0.0, 0.0, 0.0),
-    //         vec3::new(-1.0, (2.0f32).sqrt(), -1.0),
-    //         vec3::new(1.0, (2.0f32).sqrt(), 1.0),
-    //         Metal::new(Color::new(1.0, 0.2, 0.2), 0.5).into(),
-    //     )
-    //     .into(),
-    // );
-
-    // context.add_object(
-    //     hittables::Sphere::new(
-    //         vec3::new(0.0, 0.0, -1.0),
-    //         0.5,
-    //         Lambertian::new(Color::new(0.8, 0.3, 1.0)).into(),
-    //     )
-    //     .into(),
-    // );
-
-    // context.add_object(
-    //     hittables::Sphere::new(
-    //         vec3::new(-1.0, 0.0, -1.0),
-    //         -0.4,
-    //         Dielectric::new(1.5, Color::splat(1.0)).into(),
-    //     )
-    //     .into(),
-    // );
-
-    // context.add_object(
-    //     hittables::Sphere::new(
-    //         vec3::new(-1.0, 0.0, -1.0),
-    //         0.5,
-    //         Dielectric::new(1.5, Color::splat(1.0)).into(),
-    //     )
-    //     .into(),
-    // );
 }
