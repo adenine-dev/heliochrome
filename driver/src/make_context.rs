@@ -27,7 +27,7 @@ use heliochrome::{
 pub fn make_context() -> Context {
     let mut objects = vec![];
 
-    {
+    if false {
         // Cornell Box
         let base = Color::splat(0.73);
         let left = Color::new(0.12, 0.45, 0.15);
@@ -238,12 +238,26 @@ pub fn make_context() -> Context {
     //     None,
     // ));
 
+    // objects.push(Object::new(
+    //     hittables::HittableSDF::new(
+    //         sdf::Torus::new(1.0, 0.5).intersection(sdf::Sphere::new(0.75, vec3::splat(0.0))),
+    //     ),
+    //     Metal::new(Color::splat(0.4), 0.0),
+    //     None,
+    // ));
+
+    objects.push(Object::new(
+        hittables::HittableSDF::new(sdf::AAB::new(vec3::new(1.0, 2.0, 1.0))),
+        Metal::new(Color::splat(0.4), 0.4),
+        None,
+    ));
+
     let scene = Scene::new(
         camera::Camera::new(
-            // maths::vec3::new(3.0, 3.0, -3.0),
-            // vec3::new(0.0, 0.0, 0.0),
-            maths::vec3::new(278.0, 278.0, -800.0),
-            vec3::new(278.0, 278.0, 0.0),
+            maths::vec3::new(3.0, 3.0, -3.0),
+            vec3::new(0.0, 0.0, 0.0),
+            // maths::vec3::new(278.0, 278.0, -800.0),
+            // vec3::new(278.0, 278.0, 0.0),
             vec3::unit_y(),
             40.0,
             WIDTH as f32 / HEIGHT as f32,

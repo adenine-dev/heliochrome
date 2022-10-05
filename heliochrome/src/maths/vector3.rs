@@ -121,6 +121,11 @@ macro_rules! vec3_impl {
                 Self::new(self.$x.sqrt(), self.$y.sqrt(), self.$z.sqrt())
             }
 
+            pub fn abs(&self) -> Self {
+                Self::new(self.$x.abs(), self.$y.abs(), self.$z.abs())
+            }
+
+
             pub fn floor(&self) -> Self {
                 Self::new(self.$x.floor(), self.$y.floor(), self.$z.floor())
             }

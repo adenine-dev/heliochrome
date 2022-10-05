@@ -504,10 +504,14 @@ impl Tab for PreviewTab {
                 );
             }
         });
-        ui.label(format!(
-            "last render time: {:?}",
-            Instant::now().duration_since(start_time)
-        ));
+        ui.label(if self.rendering {
+            format!(
+                "last render time: {:?}",
+                Instant::now().duration_since(start_time)
+            )
+        } else {
+            "".to_owned()
+        });
 
         ui.centered_and_justified(|ui| {
             Plot::new("preview")
