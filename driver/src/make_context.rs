@@ -1,9 +1,9 @@
 // const WIDTH: f32 = 1280.0;
 // const HEIGHT: f32 = 720.0;
-// const WIDTH: f32 = 800.0;
-// const HEIGHT: f32 = 345.0;
-const WIDTH: f32 = 600.0;
-const HEIGHT: f32 = 600.0;
+const WIDTH: f32 = 800.0;
+const HEIGHT: f32 = 345.0;
+// const WIDTH: f32 = 600.0;
+// const HEIGHT: f32 = 600.0;
 
 use std::path::Path;
 
@@ -247,14 +247,16 @@ pub fn make_context() -> Context {
     // ));
 
     objects.push(Object::new(
-        hittables::HittableSDF::new(sdf::AAB::new(vec3::new(1.0, 2.0, 1.0))),
-        Metal::new(Color::splat(0.4), 0.4),
+        hittables::HittableSDF::new(
+            sdf::Sphere::new(1.0, vec3::splat(0.0)).modulo(vec3::splat(5.0)),
+        ),
+        Lambertian::new(Color::new(0.9, 0.2, 0.2)),
         None,
     ));
 
     let scene = Scene::new(
         camera::Camera::new(
-            maths::vec3::new(3.0, 3.0, -3.0),
+            maths::vec3::new(-3.0, -3.0, -3.0),
             vec3::new(0.0, 0.0, 0.0),
             // maths::vec3::new(278.0, 278.0, -800.0),
             // vec3::new(278.0, 278.0, 0.0),

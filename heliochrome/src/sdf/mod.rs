@@ -83,6 +83,16 @@ pub trait SDF: Send + Sync {
     {
         Twist { k, primitive: self }
     }
+
+    fn modulo(self, period: vec3) -> Modulo<Self>
+    where
+        Self: Sized,
+    {
+        Modulo {
+            period,
+            primitive: self,
+        }
+    }
 }
 
 mod operations;

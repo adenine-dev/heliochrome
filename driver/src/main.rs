@@ -219,7 +219,6 @@ impl Tab for SceneTab {
                         .camera
                         .focus_dist;
                     let mut custom_focus_dist = focus_dist.is_some();
-                    // println!("{custom_focus_dist}");
                     ui.label("focus distance: ");
                     if ui.checkbox(&mut custom_focus_dist, "Custom").changed() {
                         self.state

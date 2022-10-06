@@ -162,6 +162,10 @@ macro_rules! vec3_impl {
                 Self::new(self.$x.clamp(min, max), self.$y.clamp(min, max), self.$z.clamp(min, max))
             }
 
+            pub fn signum(&self) -> $n {
+                Self::new(self.$x.signum(), self.$y.signum(), self.$z.signum())
+            }
+
             pub fn exp(&self) -> $n {
                 Self::new(self.$x.exp(), self.$y.exp(), self.$z.exp())
             }

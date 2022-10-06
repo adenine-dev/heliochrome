@@ -175,6 +175,7 @@ impl Context {
             );
             let fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces);
             if self.samples == 0 {
+                std::f32::consts::E;
                 fragment
             } else {
                 self.accumulated_image.buffer[i] + fragment

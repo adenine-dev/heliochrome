@@ -17,9 +17,11 @@ impl SDF for Sphere {
     }
 
     fn make_bounding_box(&self) -> Option<AABB> {
-        Some(AABB::new(
-            self.c - vec3::splat(self.r),
-            self.c + vec3::splat(self.r),
-        ))
+        // Some(AABB::new(
+        //     self.c - vec3::splat(self.r),
+        //     self.c + vec3::splat(self.r),
+        // ))
+
+        None
     }
 }
