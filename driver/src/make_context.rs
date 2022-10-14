@@ -8,6 +8,7 @@ const HEIGHT: f32 = 500.0;
 use std::path::Path;
 
 use heliochrome::{
+    camera::Camera,
     color::Color,
     context::Context,
     hittables::{self, Hittable},
@@ -26,8 +27,17 @@ use heliochrome::{
 #[allow(clippy::vec_init_then_push)]
 pub fn make_context() -> Context {
     let mut objects = vec![];
+    let mut camera = Camera::new(
+        maths::vec3::new(3.0, 3.0, 3.0),
+        vec3::new(0.0, 0.0, 0.0),
+        vec3::unit_y(),
+        40.0,
+        WIDTH as f32 / HEIGHT as f32,
+        0.0,
+        None,
+    );
 
-    if true {
+    if false {
         // Cornell Box
         let base = Color::splat(0.73);
         let left = Color::new(0.12, 0.45, 0.15);
@@ -86,11 +96,7 @@ pub fn make_context() -> Context {
                 vec3::new(0.0, 0.0, 105.0),
             ),
             DiffuseLight::new(Color::splat(1.0), 15.0),
-            Some(Transform::new(mat4::rotate(vec3::new(
-                0.0,
-                std::f32::consts::TAU / 8.0,
-                0.0,
-            )))),
+            None,
         ));
 
         objects.push(Object::new(
@@ -110,6 +116,16 @@ pub fn make_context() -> Context {
                     * mat4::rotate(vec3::new(0.0, -std::f32::consts::TAU / 20.0, 0.0)),
             )),
         ));
+
+        camera = Camera::new(
+            maths::vec3::new(278.0, 278.0, -800.0),
+            vec3::new(278.0, 278.0, 0.0),
+            vec3::unit_y(),
+            40.0,
+            WIDTH as f32 / HEIGHT as f32,
+            0.0,
+            None,
+        );
     }
 
     // objects.push(Object::new(
@@ -121,30 +137,25 @@ pub fn make_context() -> Context {
     //     )),
     // ));
 
-    // objects.push(Object::new(
-    //     hittables::InfinitePlane::new(
-    //         vec3::new(0.0, -1.2, 0.0),
-    //         vec3::new(0.0, 1.0, 0.0).normalized(),
-    //     ),
-    //     Lambertian::new(Color::splat(0.3)),
-    //     None,
-    // ));
+    objects.push(Object::new(
+        hittables::InfinitePlane::new(
+            vec3::new(0.0, -1.2, 0.0),
+            vec3::new(0.0, 1.0, 0.0).normalized(),
+        ),
+        Lambertian::new(Color::splat(0.3)),
+        None,
+    ));
 
-    // let mut meshes = load_obj("assets/suzanne.obj").unwrap();
-    // let mesh = meshes.first_mut().unwrap();
-    // mesh.vertices.iter_mut().for_each(|p| {
-    //     *p -= vec3::new(0.0, -0.55, 0.0);
-    // });
-    // objects.push(Object::new(
-    //     hittables::Mesh::new(&mesh.vertices, &mesh.indices),
-    //     Metal::new(Color::new(1.0, 0.9, 1.0), 0.7),
-    //     // None,
-    //     Some(Transform::new(mat3::rotate(vec3::new(
-    //         0.0,
-    //         0.0,
-    //         -35.0f32.to_radians(),
-    //     )))),
-    // ));
+    let mut meshes = load_obj("assets/suzanne.obj").unwrap();
+    let mesh = meshes.first_mut().unwrap();
+    objects.push(Object::new(
+        hittables::Mesh::new(&mesh.vertices, &mesh.indices),
+        Metal::new(Color::new(1.0, 0.9, 1.0), 0.7),
+        Some(Transform::new(
+            mat4::rotate(vec3::new(0.0, 0.0, -35.0f32.to_radians()))
+                * mat4::translate(vec3::new(0.0, 3.0, 0.0)),
+        )),
+    ));
 
     // objects.push(Object::new(
     //     // hittables::AABB::new(vec3::new(1.0, -1.0, -1.0), vec3::new(3.0, 1.0, 1.0)),
@@ -162,34 +173,34 @@ pub fn make_context() -> Context {
     //     None,
     // ));
 
-    // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95),
-    //     Metal::new(Color::new(0.8, 0.8, 0.8), 0.0),
-    //     None,
-    // ));
+    objects.push(Object::new(
+        hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95),
+        Metal::new(Color::new(0.8, 0.8, 0.8), 0.0),
+        None,
+    ));
 
-    // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95),
-    //     Lambertian::new(Color::new(0.1, 0.1, 0.1)),
-    //     None,
-    // ));
+    objects.push(Object::new(
+        hittables::Sphere::new(vec3::new(1.0, 0.0, -1.0), 0.95),
+        Lambertian::new(Color::new(0.1, 0.1, 0.1)),
+        None,
+    ));
 
-    // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95),
-    //     Metal::new(Color::new(0.3, 0.3, 0.3), 0.7),
-    //     None,
-    // ));
+    objects.push(Object::new(
+        hittables::Sphere::new(vec3::new(1.0, 0.0, 1.0), 0.95),
+        Metal::new(Color::new(0.3, 0.3, 0.3), 0.7),
+        None,
+    ));
 
-    // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95),
-    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)),
-    //     None,
-    // ));
-    // objects.push(Object::new(
-    //     hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85),
-    //     Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)),
-    //     None,
-    // ));
+    objects.push(Object::new(
+        hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), 0.95),
+        Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)),
+        None,
+    ));
+    objects.push(Object::new(
+        hittables::Sphere::new(vec3::new(-1.0, 0.0, 1.0), -0.85),
+        Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)),
+        None,
+    ));
 
     // let n = 5;
     // for x in 0..n {
@@ -301,22 +312,12 @@ pub fn make_context() -> Context {
     // ));
 
     let scene = Scene::new(
-        camera::Camera::new(
-            // maths::vec3::new(3.0, 3.0, 3.0),
-            // vec3::new(0.0, 0.0, 0.0),
-            maths::vec3::new(278.0, 278.0, -800.0),
-            vec3::new(278.0, 278.0, 0.0),
-            vec3::unit_y(),
-            40.0,
-            WIDTH as f32 / HEIGHT as f32,
-            0.0,
-            None,
+        camera,
+        // SkyBox::Color(Color::splat(0.0)),
+        // SkyBox::Debug,
+        SkyBox::Equirectangular(
+            Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
         ),
-        SkyBox::Color(Color::splat(0.0)),
-        // SkyBox::Debug,p
-        // SkyBox::Equirectangular(
-        //     Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
-        // ),
         objects,
     );
 

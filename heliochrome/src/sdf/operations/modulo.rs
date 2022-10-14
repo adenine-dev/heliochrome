@@ -16,7 +16,7 @@ impl<A: SDF> SDF for Modulo<A> {
         )
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        None
+    fn make_bounding_box(&self) -> AABB {
+        AABB::new(vec3::splat(-f32::INFINITY), vec3::splat(f32::INFINITY))
     }
 }

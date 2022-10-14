@@ -73,7 +73,7 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             return Color::splat(0.0);
         }
 
-        if let Some((hit, object)) = scene.objects.hit(&ray, 0.001, f32::INFINITY) {
+        if let Some((hit, object)) = scene.hit(&ray, 0.001, f32::INFINITY) {
             // color = if hit.front_face {
             //     Color::new(0.0, 1.0, 0.0)
             // } else {
@@ -85,25 +85,31 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             let emitted = object.material.emitted(&hit);
 
             if let Some(scatter) = object.material.scatter(&ray, &hit) {
-                let pdf1: PDF =
-                    ObjectPDF::new(scene.objects.bounded_objects.hittables[5].clone(), hit.p)
-                        .into();
+                // {
+                //     // importance sampled
+                //     let pdf1: PDF =
+                //         ObjectPDF::new(scene.objects.bounded_objects.hittables[5].clone(), hit.p)
+                //             .into();
 
-                let pdf2: PDF = CosinePDF::new(hit.normal).into();
-                let pdf = pdf1; // (pdf1, pdf2);
+                //     let pdf2: PDF = CosinePDF::new(hit.normal).into();
+                //     let pdf = (pdf1, pdf2);
 
-                let dir = pdf.generate();
-                let scattered = Ray::new(hit.p, dir);
-                let pdf_val = pdf.value(&scattered.direction);
+                //     let dir = pdf.generate();
+                //     let scattered = Ray::new(hit.p, dir);
+                //     let pdf_val = pdf.value(&scattered.direction);
 
-                color *=
-                    object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation / pdf_val;
-                color += emitted;
-                ray = scattered;
-                // color *= object.material.pdf(&ray, &scatter.outgoing, &hit) * scatter.attenuation
-                //     / scatter.pdf;
-                // color += emitted;
-                // ray = scatter.outgoing;
+                //     color *=
+                //         object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation / pdf_val;
+                //     color += emitted;
+                //     ray = scattered;
+                // }
+
+                {
+                    // monte carlo
+                    color *= scatter.attenuation;
+                    color += emitted;
+                    ray = scatter.outgoing;
+                }
             } else {
                 color *= emitted;
                 break;
@@ -256,8 +262,8 @@ impl Context {
 
         let (mut rs, rr) = spmc::channel::<(usize, usize)>();
 
-        let cx = (self.size.x / CHUNK_SIZE as f32).ceil() as i32;
-        let cy = (self.size.y / CHUNK_SIZE as f32).ceil() as i32;
+        let cx = (self.size.x / CHUNK_SIZE as f32 + 1.0).ceil() as i32;
+        let cy = (self.size.y / CHUNK_SIZE as f32 + 1.0).ceil() as i32;
 
         let mut tx: i32 = 0;
         let mut ty: i32 = 0;

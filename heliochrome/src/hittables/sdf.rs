@@ -38,7 +38,7 @@ impl Hittable for HittableSDF {
         None
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
+    fn make_bounding_box(&self) -> AABB {
         self.sdf.make_bounding_box()
     }
 }

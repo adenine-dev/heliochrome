@@ -44,10 +44,10 @@ impl Hittable for Sphere {
         ))
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        Some(AABB::new(
-            self.center - vec3::splat(self.radius),
-            self.center + vec3::splat(self.radius),
-        ))
+    fn make_bounding_box(&self) -> AABB {
+        AABB::new(
+            self.center - vec3::splat(self.radius.abs()),
+            self.center + vec3::splat(self.radius.abs()),
+        )
     }
 }

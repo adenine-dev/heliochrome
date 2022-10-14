@@ -13,10 +13,7 @@ impl<A: SDF, B: SDF> SDF for Intersection<A, B> {
         (d1).max(d2)
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        Some(AABB::intersection(
-            &self.a.make_bounding_box()?,
-            &self.b.make_bounding_box()?,
-        ))
+    fn make_bounding_box(&self) -> AABB {
+        AABB::intersection(&self.a.make_bounding_box(), &self.b.make_bounding_box())
     }
 }

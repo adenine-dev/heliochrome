@@ -171,8 +171,15 @@ macro_rules! vec3_impl {
                 r_out_perp + r_out_parallel
             }
 
-            pub fn project_on(&self, n: $n) -> Self {
+            pub fn project_on(&self, n: $n) -> $n {
                 (self.dot(n) / n.dot(n)) * n
+            }
+
+            pub fn un_nan(mut self) -> $n {
+                if self.$x != self.$x {self.$x = 0.0;}
+                if self.$y != self.$y {self.$y = 0.0;}
+                if self.$z != self.$z {self.$z = 0.0;}
+                self
             }
 
             pub fn min(&self, other: &$n) -> $n {

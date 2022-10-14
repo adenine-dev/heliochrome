@@ -26,9 +26,7 @@ pub trait SDF: Send + Sync {
         .normalized()
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        None
-    }
+    fn make_bounding_box(&self) -> AABB;
 
     fn difference<T: SDF>(self, other: T) -> Difference<Self, T>
     where

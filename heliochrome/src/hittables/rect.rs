@@ -38,11 +38,11 @@ impl Hittable for Rect {
         None
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
+    fn make_bounding_box(&self) -> AABB {
         let min = self.origin.min(&(self.origin + self.s1 + self.s2)) - vec3::splat(0.0001);
         let max = self.origin.max(&(self.origin + self.s1 + self.s2)) + vec3::splat(0.0001);
 
-        Some(AABB::new(min, max))
+        AABB::new(min, max)
     }
 
     fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {

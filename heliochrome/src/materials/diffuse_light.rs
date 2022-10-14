@@ -26,4 +26,8 @@ impl Scatterable for DiffuseLight {
             Color::splat(0.0)
         }
     }
+
+    fn is_light(&self) -> bool {
+        true
+    }
 }

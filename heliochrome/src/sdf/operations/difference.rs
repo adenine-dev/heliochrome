@@ -13,7 +13,7 @@ impl<A: SDF, B: SDF> SDF for Difference<A, B> {
         (-d2).max(d1)
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
+    fn make_bounding_box(&self) -> AABB {
         self.a.make_bounding_box()
     }
 }

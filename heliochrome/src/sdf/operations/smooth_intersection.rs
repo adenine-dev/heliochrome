@@ -18,7 +18,7 @@ impl<A: SDF, B: SDF> SDF for SmoothIntersection<A, B> {
         lerp(d2, d1, h) + self.k * h * (1.0 - h)
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
+    fn make_bounding_box(&self) -> AABB {
         self.a.make_bounding_box()
     }
 }

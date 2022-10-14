@@ -2,6 +2,7 @@ use super::{
     hittables::{Hit, Hittable, AABB},
     maths::Ray,
 };
+use crate::maths::vec3;
 
 const INVALID_IDX: usize = usize::MAX;
 
@@ -53,7 +54,7 @@ pub struct BVH<T: Hittable> {
 
 impl<T: Hittable> Hittable for BVH<T> {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        return self.hittables[0].hit(ray, t_min, t_max);
+        // return self.hittables[0].hit(ray, t_min, t_max);
         if let Some((hit, _)) =
             self.nodes
                 .last()?
@@ -65,55 +66,33 @@ impl<T: Hittable> Hittable for BVH<T> {
         None
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        Some(self.nodes.last()?.bounds)
+    fn make_bounding_box(&self) -> AABB {
+        if let Some(last) = self.nodes.last() {
+            last.bounds
+        } else {
+            AABB::new(vec3::splat(-0.0001), vec3::splat(0.0001))
+        }
     }
 }
 
 impl<T: Hittable> BVH<T> {
-    pub fn new(mut hittables: Vec<T>) -> (Self, Vec<T>) {
+    pub fn new(mut hittables: Vec<T>) -> Self {
         if hittables.is_empty() {
-            return (
-                BVH {
-                    hittables,
-                    nodes: vec![],
-                },
-                vec![],
-            );
+            return BVH {
+                hittables,
+                nodes: vec![],
+            };
         }
 
         let mut nodes = Vec::with_capacity(hittables.len() * 2 - 1);
         let mut available = vec![false; hittables.len() * 2 - 1];
-        let mut unboundable_indices = vec![];
-        let mut removed_count = 0;
         for i in 0..hittables.len() {
-            let bounds = hittables[i].make_bounding_box();
-            if let Some(bounds) = bounds {
-                nodes.push(BVHNode {
-                    bounds,
-                    idx: i - removed_count,
-                    children: [INVALID_IDX; 2],
-                });
-                available[i - removed_count] = true;
-            } else {
-                removed_count += 1;
-                unboundable_indices.push(i);
-            }
-        }
-
-        let mut unboundables = Vec::with_capacity(unboundable_indices.len());
-        for idx in unboundable_indices.iter().rev() {
-            unboundables.push(hittables.remove(*idx));
-        }
-
-        if hittables.is_empty() {
-            return (
-                BVH {
-                    hittables,
-                    nodes: vec![],
-                },
-                unboundables,
-            );
+            nodes.push(BVHNode {
+                bounds: hittables[i].make_bounding_box(),
+                idx: i,
+                children: [INVALID_IDX; 2],
+            });
+            available[i] = true;
         }
 
         while nodes.len() < hittables.len() * 2 - 1 {
@@ -127,7 +106,7 @@ impl<T: Hittable> BVH<T> {
                         if available[j] && i != j {
                             let b = AABB::surrounding(&nodes[i].bounds, &nodes[j].bounds);
                             let s = b.surface_area();
-                            if s < best {
+                            if s <= best {
                                 best = s;
                                 bounds = b;
                                 l = i;
@@ -149,7 +128,7 @@ impl<T: Hittable> BVH<T> {
             available[nodes.len() - 1] = true;
         }
 
-        (Self { hittables, nodes }, unboundables)
+        Self { hittables, nodes }
     }
 
     pub fn hit_obj(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Hit, &T)> {

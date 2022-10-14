@@ -86,7 +86,7 @@ impl Hittable for Mesh {
         res
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
+    fn make_bounding_box(&self) -> AABB {
         // return None;
         let mut min = vec3::splat(f32::INFINITY);
         let mut max = vec3::splat(-f32::INFINITY);
@@ -98,9 +98,6 @@ impl Hittable for Mesh {
             max = max.max(&aabb.max);
         }
 
-        Some(AABB::new(
-            min - vec3::splat(0.001),
-            max + vec3::splat(0.001),
-        ))
+        AABB::new(min - vec3::splat(0.001), max + vec3::splat(0.001))
     }
 }

@@ -1,5 +1,5 @@
 use super::{Hit, Hittable, AABB};
-use crate::maths::{vec3, Ray};
+use crate::maths::{vec3, Ray, ONB};
 
 #[derive(Clone)]
 pub struct InfinitePlane {
@@ -26,7 +26,14 @@ impl Hittable for InfinitePlane {
         None
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        None
+    fn make_bounding_box(&self) -> AABB {
+        // return None;
+        // this lets the bounding box be tight if the normal is axis aligned.
+        let onb = ONB::new_from_w(self.normal);
+        let v = ((onb.v + onb.u) * f32::INFINITY).un_nan().abs();
+        AABB::new(
+            -v + self.origin - vec3::splat(0.0001),
+            v + self.origin + vec3::splat(0.0001),
+        )
     }
 }

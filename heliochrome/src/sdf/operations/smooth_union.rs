@@ -21,16 +21,12 @@ impl<A: SDF, B: SDF> SDF for SmoothUnion<A, B> {
         // d1.min(d2) - h * h * self.k * (1.0 / 4.0)
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        if let Some(a) = self.a.make_bounding_box() {
-            if let Some(b) = self.b.make_bounding_box() {
-                return Some(AABB::new(
-                    a.min.min(&b.min) - vec3::splat(self.k),
-                    a.max.max(&b.max) + vec3::splat(self.k),
-                ));
-            }
-        }
-
-        None
+    fn make_bounding_box(&self) -> AABB {
+        let a = self.a.make_bounding_box();
+        let b = self.b.make_bounding_box();
+        AABB::new(
+            a.min.min(&b.min) - vec3::splat(self.k),
+            a.max.max(&b.max) + vec3::splat(self.k),
+        )
     }
 }

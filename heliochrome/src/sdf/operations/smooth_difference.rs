@@ -19,7 +19,7 @@ impl<A: SDF, B: SDF> SDF for SmoothDifference<A, B> {
         lerp(d1, -d2, h) + self.k * h * (1.0 - h)
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
+    fn make_bounding_box(&self) -> AABB {
         self.a.make_bounding_box()
     }
 }

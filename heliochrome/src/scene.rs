@@ -8,41 +8,39 @@ use crate::{
     object::Object,
 };
 
-pub struct ObjectStore {
-    pub bounded_objects: BVH<Object>,
-    pub unbounded_objects: Vec<Object>,
-}
+// pub struct ObjectStore {
+//     pub bounded_objects: BVH<Object>,
+// }
 
-impl ObjectStore {
+// impl ObjectStore {
+//     pub fn new(objects: Vec<Object>) -> ObjectStore {
+//         let (bounded_objects, unbounded_objects) = BVH::new(objects);
 
-    pub fn new(objects: Vec<Object>) -> ObjectStore {
-        let (bounded_objects, unbounded_objects) = BVH::new(objects);
-        
-        ObjectStore {
-            bounded_objects,
-            unbounded_objects,
-        }
-    }
+//         ObjectStore {
+//             bounded_objects,
+//             unbounded_objects,
+//         }
+//     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<(Hit, &Object)> {
-        let mut res: Option<(Hit, &Object)> = None;
+//     pub fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<(Hit, &Object)> {
+//         let mut res: Option<(Hit, &Object)> = None;
 
-        for object in self.unbounded_objects.iter() {
-            let hit = object.hit(ray, t_min, t_max);
-            if let Some(hit) = hit {
-                t_max = hit.t;
-                res = Some((hit, object));
-            }
-        }
+//         for object in self.unbounded_objects.iter() {
+//             let hit = object.hit(ray, t_min, t_max);
+//             if let Some(hit) = hit {
+//                 t_max = hit.t;
+//                 res = Some((hit, object));
+//             }
+//         }
 
-        let o = self.bounded_objects.hit_obj(ray, t_min, t_max);
-        if o.is_some() && (res.is_none() || o.as_ref().unwrap().0.t < res.as_ref().unwrap().0.t) {
-            res = o
-        }
+//         let o = self.bounded_objects.hit_obj(ray, t_min, t_max);
+//         if o.is_some() && (res.is_none() || o.as_ref().unwrap().0.t < res.as_ref().unwrap().0.t) {
+//             res = o
+//         }
 
-        res
-    }
-}
+//         res
+//     }
+// }
 
 pub enum SkyBox {
     Color(Color),
@@ -70,7 +68,7 @@ pub struct Scene {
     pub camera: Camera,
     pub skybox: SkyBox,
 
-    pub objects: ObjectStore,
+    pub objects: BVH<Object>,
 }
 
 impl Scene {
@@ -78,7 +76,11 @@ impl Scene {
         Self {
             camera,
             skybox,
-            objects: ObjectStore::new(objects),
+            objects: BVH::new(objects),
         }
+    }
+
+    pub fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<(Hit, &Object)> {
+        self.objects.hit_obj(ray, t_min, t_max)
     }
 }

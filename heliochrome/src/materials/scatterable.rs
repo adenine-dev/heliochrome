@@ -19,4 +19,8 @@ pub trait Scatterable: Clone {
     fn emitted(&self, hit: &Hit) -> Color {
         Color::splat(0.0)
     }
+
+    fn is_light(&self) -> bool {
+        false
+    }
 }

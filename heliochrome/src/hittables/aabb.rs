@@ -77,7 +77,7 @@ impl Hittable for AABB {
         Some(Hit::new(ray, entrance, n))
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        Some(*self)
+    fn make_bounding_box(&self) -> AABB {
+        *self
     }
 }

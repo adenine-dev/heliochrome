@@ -50,13 +50,13 @@ impl Hittable for Object {
         hit
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        let aabb = self.hittable.make_bounding_box()?;
+    fn make_bounding_box(&self) -> AABB {
+        let aabb = self.hittable.make_bounding_box();
         if let Some(transform) = &self.transform {
-            return Some(transform.trans_aabb(&aabb));
+            return transform.trans_aabb(&aabb);
         }
 
-        Some(aabb)
+        aabb
     }
 
     fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {

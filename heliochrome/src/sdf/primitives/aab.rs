@@ -16,7 +16,7 @@ impl SDF for AAB {
         return q.max(&vec3::splat(0.0)).mag() + q.x.max(q.y).max(q.z).min(0.0);
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        Some(AABB::new(-self.extent, self.extent))
+    fn make_bounding_box(&self) -> AABB {
+        AABB::new(-self.extent, self.extent)
     }
 }

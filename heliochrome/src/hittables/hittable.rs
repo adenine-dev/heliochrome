@@ -36,7 +36,7 @@ impl Hit {
 pub trait Hittable: Send + Sync + Clone {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit>;
 
-    fn make_bounding_box(&self) -> Option<AABB>;
+    fn make_bounding_box(&self) -> AABB;
 
     fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {
         panic!("oof you need to implement this :<");

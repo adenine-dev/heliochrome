@@ -21,12 +21,12 @@ impl SDF for Torus {
         q.mag() - self.r_minor
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
+    fn make_bounding_box(&self) -> AABB {
         let extent = vec3::new(
             self.r_major + self.r_minor,
             self.r_minor,
             self.r_major + self.r_minor,
         );
-        Some(AABB::new(-extent, extent))
+        AABB::new(-extent, extent)
     }
 }

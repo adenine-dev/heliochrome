@@ -61,7 +61,7 @@ impl Hittable for Triangle {
         ray_triangle_intersection(ray, &self.vertices, t_min, t_max)
     }
 
-    fn make_bounding_box(&self) -> Option<AABB> {
-        Some(triangle_bounding_box(&self.vertices))
+    fn make_bounding_box(&self) -> AABB {
+        triangle_bounding_box(&self.vertices)
     }
 }
