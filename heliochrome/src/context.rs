@@ -11,10 +11,14 @@ use rayon::{ThreadPool, ThreadPoolBuilder};
 use spmc;
 
 use crate::color::Color;
+use crate::hittables::Hittable;
 use crate::image::Image;
+use crate::materials::Scatterable;
 use crate::maths::*;
+use crate::pdf::{CosinePDF, ObjectPDF, ProbabilityDensityFn, PDF};
 use crate::scene::Scene;
 use crate::tonemap::ToneMap;
+use crate::transform::Transform;
 
 #[derive(Clone, Copy)]
 pub struct QualitySettings {
@@ -69,25 +73,6 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             return Color::splat(0.0);
         }
 
-        // let x = scene.objects.hit(&ray, f32::INFINITY, 0.001);
-        // let (hit, object) = {
-        //     let mut t_max = f32::INFINITY;
-        //     let t_min = 0.001;
-
-        //     let mut hit: Option<Hit> = None;
-        //     let mut obj = None;
-        //     for object in scene.objects.iter() {
-        //         let new_hit = object.hit(&ray, t_min, t_max);
-        //         if new_hit.is_some() {
-        //             hit = new_hit;
-        //             obj = Some(object);
-        //             t_max = hit.as_ref().unwrap().t;
-        //         }
-        //     }
-
-        //     (hit, obj)
-        // };
-
         if let Some((hit, object)) = scene.objects.hit(&ray, 0.001, f32::INFINITY) {
             // color = if hit.front_face {
             //     Color::new(0.0, 1.0, 0.0)
@@ -97,12 +82,28 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             // let n = 0.5 * (hit.normal + vec3::splat(1.0));
             // color = Color::new(n.x, n.y, n.z);
             // break;
-            let emitted = object.get_emitted();
+            let emitted = object.material.emitted(&hit);
 
-            if let Some(scatter) = object.get_scatter(&ray, &hit) {
+            if let Some(scatter) = object.material.scatter(&ray, &hit) {
+                let pdf1: PDF =
+                    ObjectPDF::new(scene.objects.bounded_objects.hittables[5].clone(), hit.p)
+                        .into();
+
+                let pdf2: PDF = CosinePDF::new(hit.normal).into();
+                let pdf = pdf1; // (pdf1, pdf2);
+
+                let dir = pdf.generate();
+                let scattered = Ray::new(hit.p, dir);
+                let pdf_val = pdf.value(&scattered.direction);
+
+                color *=
+                    object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation / pdf_val;
                 color += emitted;
-                color *= scatter.attenuation;
-                ray = scatter.outgoing;
+                ray = scattered;
+                // color *= object.material.pdf(&ray, &scatter.outgoing, &hit) * scatter.attenuation
+                //     / scatter.pdf;
+                // color += emitted;
+                // ray = scatter.outgoing;
             } else {
                 color *= emitted;
                 break;
@@ -175,7 +176,6 @@ impl Context {
             );
             let fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces);
             if self.samples == 0 {
-                std::f32::consts::E;
                 fragment
             } else {
                 self.accumulated_image.buffer[i] + fragment

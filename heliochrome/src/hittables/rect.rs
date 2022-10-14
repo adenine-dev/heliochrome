@@ -4,18 +4,18 @@ use crate::maths::{vec3, Ray};
 #[derive(Clone)]
 pub struct Rect {
     origin: vec3,
-    sx: vec3,
-    sy: vec3,
+    s1: vec3,
+    s2: vec3,
     normal: vec3,
 }
 
 impl Rect {
-    pub fn new(origin: vec3, sx: vec3, sy: vec3) -> Self {
+    pub fn new(origin: vec3, s1: vec3, s2: vec3) -> Self {
         Rect {
             origin,
-            sx,
-            sy,
-            normal: sx.cross(sy).normalize(),
+            s1,
+            s2,
+            normal: s1.cross(s2).normalize(),
         }
     }
 }
@@ -27,9 +27,9 @@ impl Hittable for Rect {
             let t = (self.origin - ray.origin).dot(self.normal) / d;
             if t_min <= t && t <= t_max {
                 let p = self.origin - ray.at(t);
-                let q1m = ((p.dot(self.sx) / self.sx.mag()) * (self.sx / self.sx.mag())).mag();
-                let q2m = ((p.dot(self.sy) / self.sy.mag()) * (self.sy / self.sy.mag())).mag();
-                if 0.0 <= q1m && q1m <= self.sx.mag() && 0.0 <= q2m && q2m <= self.sy.mag() {
+                let q1m = p.project_on(self.s1).mag() * -p.dot(self.s1).signum();
+                let q2m = p.project_on(self.s2).mag() * -p.dot(self.s2).signum();
+                if 0.0 <= q1m && q1m <= self.s1.mag() && 0.0 <= q2m && q2m <= self.s2.mag() {
                     return Some(Hit::new(ray, t, self.normal));
                 }
             }
@@ -37,20 +37,27 @@ impl Hittable for Rect {
 
         None
     }
+
     fn make_bounding_box(&self) -> Option<AABB> {
-        let min = self
-            .origin
-            .min(&(self.origin + self.sx))
-            .min(&(self.origin + self.sy))
-            .min(&(self.origin + self.sx + self.sy))
-            - vec3::splat(0.0001);
-        let max = self
-            .origin
-            .max(&(self.origin + self.sx))
-            .max(&(self.origin + self.sy))
-            .max(&(self.origin + self.sx + self.sy))
-            + vec3::splat(0.0001);
+        let min = self.origin.min(&(self.origin + self.s1 + self.s2)) - vec3::splat(0.0001);
+        let max = self.origin.max(&(self.origin + self.s1 + self.s2)) + vec3::splat(0.0001);
 
         Some(AABB::new(min, max))
+    }
+
+    fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {
+        if let Some(hit) = self.hit(&Ray::new(*origin, *dir), 0.001, f32::INFINITY) {
+            let area = self.s1.mag() * self.s2.mag();
+            let dist_sq = hit.t * hit.t * dir.mag_sq();
+            let cosine = (dir.dot(hit.normal) / dir.mag()).abs();
+
+            dist_sq / (cosine * area)
+        } else {
+            0.0
+        }
+    }
+
+    fn random_point_on(&self) -> vec3 {
+        self.origin + (self.s1 * rand::random::<f32>()) + (self.s2 * rand::random::<f32>())
     }
 }

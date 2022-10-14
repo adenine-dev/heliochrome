@@ -19,7 +19,11 @@ impl Scatterable for DiffuseLight {
         None
     }
 
-    fn emitted(&self) -> Color {
-        self.color
+    fn emitted(&self, hit: &Hit) -> Color {
+        if hit.front_face {
+            self.color
+        } else {
+            Color::splat(0.0)
+        }
     }
 }

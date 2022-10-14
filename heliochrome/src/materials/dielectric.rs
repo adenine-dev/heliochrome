@@ -44,6 +44,7 @@ impl Scatterable for Dielectric {
         Some(Scatter {
             attenuation: self.color,
             outgoing: Ray::new(hit.p, direction),
+            pdf: f32::NAN,
         })
     }
 }

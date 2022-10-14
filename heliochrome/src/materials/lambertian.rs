@@ -3,7 +3,7 @@ use crate::{
     color::Color,
     hittables::Hit,
     materials::Scatterable,
-    maths::{vec3, Ray},
+    maths::{vec3, Ray, ONB},
 };
 
 #[derive(Clone)]
@@ -19,13 +19,21 @@ impl Lambertian {
 
 impl Scatterable for Lambertian {
     fn scatter(&self, _ray: &Ray, hit: &Hit) -> Option<Scatter> {
-        let mut dir = hit.normal + vec3::random_in_unit_sphere().normalize();
-        if dir.near_zero() {
-            dir = hit.normal;
-        }
+        let uvw = ONB::new_from_w(hit.normal);
+        let dir = uvw.local(&vec3::random_cosine_direction());
         Some(Scatter {
             outgoing: Ray::new(hit.p, dir),
             attenuation: self.albedo,
+            pdf: hit.normal.dot(dir) / std::f32::consts::PI,
         })
+    }
+
+    fn pdf(&self, _incoming: &Ray, outgoing: &Ray, hit: &Hit) -> f32 {
+        let cosine = hit.normal.dot(outgoing.direction);
+        if cosine > 0.0 {
+            cosine / std::f32::consts::PI
+        } else {
+            0.0
+        }
     }
 }

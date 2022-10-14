@@ -24,6 +24,7 @@ impl Scatterable for Metal {
             Some(Scatter {
                 outgoing: Ray::new(hit.p, reflected + self.fuzz * vec3::random_in_unit_sphere()),
                 attenuation: self.albedo,
+                pdf: f32::NAN,
             })
         } else {
             None

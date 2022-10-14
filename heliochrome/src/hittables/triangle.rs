@@ -3,7 +3,7 @@ use crate::maths::{vec3, Ray};
 
 #[derive(Clone, Default)]
 pub struct Triangle {
-    vertices: [vec3; 3],
+    pub vertices: [vec3; 3],
 }
 
 impl Triangle {

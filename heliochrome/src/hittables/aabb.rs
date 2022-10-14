@@ -1,7 +1,7 @@
 use super::{Hit, Hittable};
 use crate::maths::{vec3, Ray};
 
-#[derive(Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub struct AABB {
     pub min: vec3,
     pub max: vec3,

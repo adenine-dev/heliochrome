@@ -35,6 +35,7 @@ pub mod image;
 pub mod materials;
 pub mod maths;
 pub mod object;
+pub mod pdf;
 pub mod scene;
 pub mod sdf;
 pub mod tonemap;

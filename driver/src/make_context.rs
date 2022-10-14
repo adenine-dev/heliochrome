@@ -1,9 +1,9 @@
 // const WIDTH: f32 = 1280.0;
 // const HEIGHT: f32 = 720.0;
-const WIDTH: f32 = 800.0;
-const HEIGHT: f32 = 345.0;
-// const WIDTH: f32 = 600.0;
-// const HEIGHT: f32 = 600.0;
+// const WIDTH: f32 = 800.0;
+// const HEIGHT: f32 = 345.0;
+const WIDTH: f32 = 500.0;
+const HEIGHT: f32 = 500.0;
 
 use std::path::Path;
 
@@ -27,7 +27,7 @@ use heliochrome::{
 pub fn make_context() -> Context {
     let mut objects = vec![];
 
-    if false {
+    if true {
         // Cornell Box
         let base = Color::splat(0.73);
         let left = Color::new(0.12, 0.45, 0.15);
@@ -86,7 +86,11 @@ pub fn make_context() -> Context {
                 vec3::new(0.0, 0.0, 105.0),
             ),
             DiffuseLight::new(Color::splat(1.0), 15.0),
-            None,
+            Some(Transform::new(mat4::rotate(vec3::new(
+                0.0,
+                std::f32::consts::TAU / 8.0,
+                0.0,
+            )))),
         ));
 
         objects.push(Object::new(
@@ -102,8 +106,8 @@ pub fn make_context() -> Context {
             hittables::AABB::new(vec3::splat(0.0), vec3::new(165.0, 165.0, 165.0)),
             Lambertian::new(base),
             Some(Transform::new(
-                mat4::rotate(vec3::new(0.0, -std::f32::consts::TAU / 20.0, 0.0))
-                    * mat4::translate(vec3::new(130.0, 0.0, 65.0)),
+                mat4::translate(vec3::new(130.0, 0.0, 65.0))
+                    * mat4::rotate(vec3::new(0.0, -std::f32::consts::TAU / 20.0, 0.0)),
             )),
         ));
     }
@@ -246,31 +250,73 @@ pub fn make_context() -> Context {
     //     None,
     // ));
 
-    objects.push(Object::new(
-        hittables::HittableSDF::new(
-            sdf::Sphere::new(1.0, vec3::splat(0.0)).modulo(vec3::splat(5.0)),
-        ),
-        Lambertian::new(Color::new(0.9, 0.2, 0.2)),
-        None,
-    ));
+    // objects.push(Object::new(
+    //     hittables::HittableSDF::new(
+    //         sdf::Sphere::new(1.0, vec3::splat(0.0)).modulo(vec3::splat(5.0)),
+    //     ),
+    //     Lambertian::new(Color::new(0.9, 0.2, 0.2)),
+    //     None,
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::Rect::new(
+    //         vec3::new(0.0, 0.0, 0.0),
+    //         // vec3::new(213.0, 554.0, 227.0),
+    //         vec3::new(1.0, 0.0, 0.0),
+    //         vec3::new(0.0, 0.0, 1.0),
+    //     ),
+    //     DiffuseLight::new(Color::splat(1.0), 15.0),
+    //     // None,
+    //     Some(Transform::new(
+    //         mat4::rotate(vec3::new(0.0, std::f32::consts::TAU / 8.0, 0.0))
+    //             * mat4::translate(vec3::new(-1.0, -1.0, -1.0))
+    //             * mat4::scale(vec3::new(2.0, 1.0, 1.0)),
+    //     )),
+    // ));
+
+    // objects.push(Object::new(
+    //     hittables::Rect::new(
+    //         vec3::splat(0.0),
+    //         vec3::new(2.0, 0.0, 0.0),
+    //         vec3::new(0.0, 0.0, -2.0),
+    //     ),
+    //     DiffuseLight::new(Color::unit_x(), 15.0),
+    //     Some(Transform::new(mat4::rotate(vec3::new(
+    //         0.0,
+    //         std::f32::consts::TAU / 8.0,
+    //         0.0,
+    //     )))),
+    // ));
+
+    // let m = &load_obj::load_obj("assets/rect.obj").unwrap()[0];
+
+    // objects.push(Object::new(
+    //     hittables::Mesh::new(&m.vertices, &m.indices),
+    //     DiffuseLight::new(Color::unit_z(), 15.0),
+    //     Some(Transform::new(mat4::rotate(vec3::new(
+    //         0.0,
+    //         std::f32::consts::TAU / 8.0,
+    //         0.0,
+    //     )))),
+    // ));
 
     let scene = Scene::new(
         camera::Camera::new(
-            maths::vec3::new(-3.0, -3.0, -3.0),
-            vec3::new(0.0, 0.0, 0.0),
-            // maths::vec3::new(278.0, 278.0, -800.0),
-            // vec3::new(278.0, 278.0, 0.0),
+            // maths::vec3::new(3.0, 3.0, 3.0),
+            // vec3::new(0.0, 0.0, 0.0),
+            maths::vec3::new(278.0, 278.0, -800.0),
+            vec3::new(278.0, 278.0, 0.0),
             vec3::unit_y(),
             40.0,
             WIDTH as f32 / HEIGHT as f32,
             0.0,
             None,
         ),
-        // SkyBox::Color(Color::new(0.0, 0.0, 0.0)),
-        // SkyBox::Debug,
-        SkyBox::Equirectangular(
-            Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
-        ),
+        SkyBox::Color(Color::splat(0.0)),
+        // SkyBox::Debug,p
+        // SkyBox::Equirectangular(
+        //     Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
+        // ),
         objects,
     );
 

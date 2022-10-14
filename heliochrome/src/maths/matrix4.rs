@@ -46,6 +46,7 @@ impl mat4 {
         let sin_b = euler_angles.y.sin();
         let cos_c = euler_angles.z.cos();
         let sin_c = euler_angles.z.sin();
+
         Self::new([
             vec4::new(cos_a * cos_b, sin_a * cos_b, -sin_b, 0.0),
             vec4::new(

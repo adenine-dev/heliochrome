@@ -53,6 +53,7 @@ pub struct BVH<T: Hittable> {
 
 impl<T: Hittable> Hittable for BVH<T> {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
+        return self.hittables[0].hit(ray, t_min, t_max);
         if let Some((hit, _)) =
             self.nodes
                 .last()?

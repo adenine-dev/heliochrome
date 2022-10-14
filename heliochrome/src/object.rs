@@ -4,13 +4,17 @@ use super::{
     maths::Ray,
     transform::Transform,
 };
-use crate::{color::Color, maths::vec3};
+use crate::{
+    color::Color,
+    maths::{vec3, vec4},
+    transform,
+};
 
 #[derive(Clone)]
 pub struct Object {
-    hittable: HittableObject,
-    material: Material,
-    transform: Option<Transform>,
+    pub hittable: HittableObject,
+    pub material: Material,
+    pub transform: Option<Transform>,
 }
 
 impl Object {
@@ -25,23 +29,12 @@ impl Object {
             transform,
         }
     }
-
-    pub fn get_scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter> {
-        self.material.scatter(ray, hit)
-    }
-
-    pub fn get_emitted(&self) -> Color {
-        self.material.emitted()
-    }
 }
 
 impl Hittable for Object {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
         let r = if let Some(transform) = &self.transform {
-            Ray::new(
-                transform.trans_pos(&ray.origin),
-                transform.trans_dir(&ray.direction),
-            )
+            transform.trans_ray(ray)
         } else {
             *ray
         };
@@ -64,5 +57,25 @@ impl Hittable for Object {
         }
 
         Some(aabb)
+    }
+
+    fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {
+        if let Some(transform) = &self.transform {
+            let origin = &transform.trans_pos(origin);
+            let dir = &transform.trans_dir(dir);
+            self.hittable.pdf_value(origin, dir)
+        } else {
+            self.hittable.pdf_value(origin, dir)
+        }
+    }
+
+    fn random_point_on(&self) -> vec3 {
+        let p = self.hittable.random_point_on();
+        if let Some(transform) = &self.transform {
+            // (transform.matrix * vec4::from_vec3(p, 1.0)).to_vec3()
+            transform.trans_point(&p)
+        } else {
+            p
+        }
     }
 }

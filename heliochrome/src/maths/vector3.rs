@@ -98,6 +98,27 @@ macro_rules! vec3_impl {
                 }
             }
 
+            pub fn random_in_hemisphere(normal: &Self) -> Self {
+                let v = Self::random_in_unit_sphere();
+                if v.dot(*normal) > 0.0 {
+                    v
+                } else {
+                    -v
+                }
+            }
+
+            pub fn random_cosine_direction() -> Self {
+                let r1 = rand::random::<$t>();
+                let r2 = rand::random::<$t>();
+                let z = (1.0 - r2).sqrt();
+
+                let phi = std::$t::consts::TAU * r1;
+                let x = phi.cos() * r2.sqrt();
+                let y = phi.sin() * r2.sqrt();
+
+                Self::new(x, y, z)
+            }
+
             pub fn near_zero(&self) -> bool {
                 self.$x.abs() < $t::EPSILON
                     && self.$y.abs() < $t::EPSILON
@@ -148,6 +169,10 @@ macro_rules! vec3_impl {
                 let r_out_perp = etai_over_etat * (self + cos_theta * n);
                 let r_out_parallel = -(1.0 - r_out_perp.mag_sq()).abs().sqrt() * n;
                 r_out_perp + r_out_parallel
+            }
+
+            pub fn project_on(&self, n: $n) -> Self {
+                (self.dot(n) / n.dot(n)) * n
             }
 
             pub fn min(&self, other: &$n) -> $n {

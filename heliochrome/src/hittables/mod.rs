@@ -24,7 +24,7 @@ pub use aabb::*;
 mod sdf;
 pub use sdf::*;
 
-use crate::maths::Ray;
+use crate::maths::{vec3, Ray};
 
 #[enum_dispatch(Hittable)]
 #[derive(Clone)]

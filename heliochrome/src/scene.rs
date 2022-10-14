@@ -9,14 +9,15 @@ use crate::{
 };
 
 pub struct ObjectStore {
-    bounded_objects: BVH<Object>,
-    unbounded_objects: Vec<Object>,
+    pub bounded_objects: BVH<Object>,
+    pub unbounded_objects: Vec<Object>,
 }
 
 impl ObjectStore {
+
     pub fn new(objects: Vec<Object>) -> ObjectStore {
         let (bounded_objects, unbounded_objects) = BVH::new(objects);
-
+        
         ObjectStore {
             bounded_objects,
             unbounded_objects,
