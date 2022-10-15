@@ -1,13 +1,9 @@
-use super::{
+use crate::{
     hittables::{Hit, Hittable, HittableObject, AABB},
-    materials::{Material, Scatter, Scatterable},
+    materials::Material,
+    maths::vec3,
     maths::Ray,
     transform::Transform,
-};
-use crate::{
-    color::Color,
-    maths::{vec3, vec4},
-    transform,
 };
 
 #[derive(Clone)]

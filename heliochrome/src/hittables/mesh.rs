@@ -54,7 +54,7 @@ use crate::{
 
 #[derive(Clone)]
 pub struct Mesh {
-    tris: Vec<Triangle>,
+    tris: BVH<Triangle>,
 }
 
 impl Mesh {
@@ -67,32 +67,22 @@ impl Mesh {
                 positions[indices[i * 3 + 2] as usize],
             ]);
         }
-        Mesh { tris }
+        Mesh {
+            tris: BVH::new(tris),
+        }
     }
 }
 
 impl Hittable for Mesh {
-    fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<Hit> {
-        let mut res: Option<Hit> = None;
-
-        for object in self.tris.iter() {
-            let hit = object.hit(ray, t_min, t_max);
-            if let Some(hit) = hit {
-                t_max = hit.t;
-                res = Some(hit);
-            }
-        }
-
-        res
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
+        self.tris.hit(ray, t_min, t_max)
     }
 
     fn make_bounding_box(&self) -> AABB {
-        // return None;
         let mut min = vec3::splat(f32::INFINITY);
         let mut max = vec3::splat(-f32::INFINITY);
 
-        for t in self.tris.iter() {
-            // let aabb = t.make_bounding_box().unwrap();
+        for t in self.tris.hittables.iter() {
             let aabb = triangle_bounding_box(&t.vertices);
             min = min.min(&aabb.min);
             max = max.max(&aabb.max);

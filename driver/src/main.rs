@@ -1,23 +1,29 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    path::Path,
+    rc::Rc,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use eframe::{
     egui::{
         self,
         plot::{Legend, Plot, PlotImage, PlotPoint},
-        *,
+        CollapsingHeader, ComboBox, Key, TextureFilter, Ui, WidgetText,
     },
     epaint::{Color32, ColorImage, ImageData, TextureHandle, Vec2},
     CreationContext, NativeOptions,
 };
 use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
 use heliochrome::{
+    color::Color,
     context::Context,
-    hittables::{Hittable, HittableObject},
+    image::Image,
     maths::vec2,
-    sdf::Twist,
     tonemap::ToneMap,
+    util::{self, write_image},
 };
 
 mod make_context;
@@ -27,6 +33,7 @@ use make_context::make_context;
 struct StateData {
     pub changed: bool,
     pub gamma: f32,
+    pub image: Image,
     pub context: Context,
 }
 
@@ -35,13 +42,25 @@ impl StateData {
         Self {
             changed: false,
             gamma: 1.0,
+            image: Image::new(context.get_size()),
             context,
+        }
+    }
+
+    pub fn save(&self) {
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        if let Err(err) = write_image(
+            Path::new(&format!("img_{}", now.as_secs())),
+            self.context.get_size(),
+            self.gamma,
+            &self.image,
+        ) {
+            println!("{err}");
         }
     }
 }
 
 type State = Rc<RefCell<StateData>>;
-
 struct ConfigTab {
     width: u16,
     height: u16,
@@ -152,12 +171,11 @@ impl Tab for ConfigTab {
 
 struct SceneTab {
     state: State,
-    k: u16,
 }
 
 impl SceneTab {
     fn new(state: State) -> Self {
-        Self { state, k: 10 }
+        Self { state }
     }
 }
 
@@ -319,6 +337,21 @@ impl Tab for RenderTab {
                         self.state.borrow().context.start_full_render();
                         self.rendering = true;
                         self.paused = false;
+                        let size = self.state.borrow().context.get_size();
+
+                        self.texture_handle.set(
+                            ImageData::Color(ColorImage::new(
+                                [size.x as usize, size.y as usize],
+                                EMPTY_TEXTURE_COLOR,
+                            )),
+                            TextureFilter::Nearest,
+                        );
+
+                        self.state.borrow_mut().image.buffer.fill(Color::new(
+                            EMPTY_TEXTURE_COLOR.r() as f32 / 255.0,
+                            EMPTY_TEXTURE_COLOR.g() as f32 / 255.0,
+                            EMPTY_TEXTURE_COLOR.b() as f32 / 255.0,
+                        ));
                     }
                 });
                 ui.add_enabled_ui(self.rendering, |ui| {
@@ -353,6 +386,12 @@ impl Tab for RenderTab {
             if self.texture_handle.size()[0] != size.x as usize
                 || self.texture_handle.size()[1] != size.y as usize
             {
+                self.state.borrow_mut().image.buffer.fill(Color::new(
+                    EMPTY_TEXTURE_COLOR.r() as f32 / 255.0,
+                    EMPTY_TEXTURE_COLOR.g() as f32 / 255.0,
+                    EMPTY_TEXTURE_COLOR.b() as f32 / 255.0,
+                ));
+
                 self.texture_handle.set(
                     ImageData::Color(ColorImage::new(
                         [size.x as usize, size.y as usize],
@@ -363,6 +402,8 @@ impl Tab for RenderTab {
             }
         }
 
+        let mut img = self.state.borrow().image.clone();
+
         self.state
             .borrow()
             .context
@@ -370,6 +411,14 @@ impl Tab for RenderTab {
             .try_iter()
             .take(1000)
             .for_each(|(c, pos)| {
+                img.set_pixel(
+                    &pos,
+                    Color::new(
+                        c[0] as f32 / 255.0,
+                        c[1] as f32 / 255.0,
+                        c[2] as f32 / 255.0,
+                    ),
+                );
                 self.texture_handle.set_partial(
                     [pos.x as usize, pos.y as usize],
                     ImageData::Color(ColorImage::new([1, 1], Color32::from_rgb(c[0], c[1], c[2]))),
@@ -377,6 +426,7 @@ impl Tab for RenderTab {
                 );
             });
 
+        self.state.borrow_mut().image = img;
         ui.centered_and_justified(|ui| {
             Plot::new("render")
                 .legend(Legend::default())
@@ -396,6 +446,10 @@ impl Tab for RenderTab {
                     ));
                 });
         });
+
+        if ui.input().key_down(Key::S) && ui.input().modifiers.ctrl {
+            self.state.borrow().save();
+        }
     }
 
     fn title(&mut self) -> WidgetText {
@@ -440,22 +494,27 @@ impl Tab for PreviewTab {
             let input = ui.input();
             let mut should_update = true;
             let camera_speed = (camera.at - camera.eye).mag() / 10.0;
-            if input.key_down(Key::A) {
-                camera.eye -= (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
-            } else if input.key_down(Key::D) {
-                camera.eye += (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
-            } else if input.key_down(Key::W) {
-                camera.eye += (camera.at - camera.eye).normalize() * camera_speed;
-            } else if input.key_down(Key::S) {
-                camera.eye -= (camera.at - camera.eye).normalize() * camera_speed;
-            } else if input.key_down(Key::Q) {
-                camera.eye += camera.up.normalize() * camera_speed;
-            } else if input.key_down(Key::E) {
-                camera.eye -= camera.up.normalize() * camera_speed;
+            if !ui.input().modifiers.ctrl {
+                if input.key_down(Key::A) {
+                    camera.eye -=
+                        (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
+                } else if input.key_down(Key::D) {
+                    camera.eye +=
+                        (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
+                } else if input.key_down(Key::W) {
+                    camera.eye += (camera.at - camera.eye).normalize() * camera_speed;
+                } else if input.key_down(Key::S) {
+                    camera.eye -= (camera.at - camera.eye).normalize() * camera_speed;
+                } else if input.key_down(Key::Q) {
+                    camera.eye += camera.up.normalize() * camera_speed;
+                } else if input.key_down(Key::E) {
+                    camera.eye -= camera.up.normalize() * camera_speed;
+                } else {
+                    should_update = false;
+                }
             } else {
                 should_update = false;
             }
-
             should_update || state.changed
         };
         {
@@ -489,15 +548,12 @@ impl Tab for PreviewTab {
 
             if self.rendering {
                 let gamma = self.state.borrow().gamma;
+                let image = self.state.borrow_mut().context.render_sample();
+                self.state.borrow_mut().image = image;
                 self.texture_handle.set(
                     ImageData::Color(ColorImage::from_rgba_unmultiplied(
                         [size.x as usize, size.y as usize],
-                        &self
-                            .state
-                            .borrow_mut()
-                            .context
-                            .render_sample()
-                            .to_gamma_corrected_rgba8(gamma),
+                        &self.state.borrow().image.to_gamma_corrected_rgba8(gamma),
                     )),
                     TextureFilter::Linear,
                 );
@@ -531,6 +587,10 @@ impl Tab for PreviewTab {
                     ));
                 });
         });
+
+        if ui.input().key_down(Key::S) && ui.input().modifiers.ctrl {
+            self.state.borrow().save();
+        }
     }
 
     fn title(&mut self) -> WidgetText {
@@ -551,7 +611,7 @@ impl HeliochromeDriver {
             Box::new(RenderTab::new(&cc.egui_ctx, state.clone())),
         ]);
 
-        let [a, b] = tree.split_left(
+        let [_, b] = tree.split_left(
             NodeIndex::root(),
             0.2,
             vec![Box::new(SceneTab::new(state.clone()))],

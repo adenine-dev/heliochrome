@@ -40,6 +40,7 @@ pub mod scene;
 pub mod sdf;
 pub mod tonemap;
 pub mod transform;
+pub mod util;
 
 // use context::{Context, RenderTask};
 // use maths::vec2;

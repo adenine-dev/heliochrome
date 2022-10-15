@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::atomic::{AtomicU32, AtomicU8, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, RwLock};
@@ -14,11 +15,10 @@ use crate::color::Color;
 use crate::hittables::Hittable;
 use crate::image::Image;
 use crate::materials::Scatterable;
-use crate::maths::*;
 use crate::pdf::{CosinePDF, ObjectPDF, ProbabilityDensityFn, PDF};
 use crate::scene::Scene;
 use crate::tonemap::ToneMap;
-use crate::transform::Transform;
+use crate::{maths::*, util};
 
 #[derive(Clone, Copy)]
 pub struct QualitySettings {
@@ -115,17 +115,7 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
                 break;
             }
         } else {
-            color *= scene.skybox.sample(ray.direction);
-            // if let Some(skybox) = &scene.skybox {
-            //     let uv = vec2::new(
-            //         0.5 + ray.direction.z.atan2(ray.direction.x) / std::f32::consts::TAU,
-            //         0.5 + ray.direction.y.asin() / std::f32::consts::PI,
-            //     );
-            //     color *= skybox.sample_uv(&uv);
-            // } else {
-            //     let t = (ray.direction.y + 1.0) / 2.0;
-            //     color *= (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0);
-            // }
+            color *= scene.skybox.sample(ray.direction.normalize());
             break;
         }
     }
@@ -172,7 +162,13 @@ impl Context {
         self.scene.write().unwrap().camera.aspect_ratio = size.x / size.y;
     }
 
-    pub fn render_sample(&mut self) -> &Image {
+    // pub fn save(&self, path: &Path, gamma: f32) -> Result<(), Box<dyn std::error::Error>> {
+    //     util::write_image(path, self.size, gamma, &self.out_image)
+    // }
+
+    pub fn render_sample(&mut self) -> Image {
+        let mut out_image = Image::new(self.size);
+
         let per_pixel = |(i, _color): (usize, &Color)| {
             let u = (i % self.size.x as usize) as f32 + rand::random::<f32>();
             let v = (i / self.size.x as usize) as f32 + rand::random::<f32>();
@@ -212,14 +208,14 @@ impl Context {
         }
 
         self.samples += 1;
-        self.out_image
+        out_image
             .buffer
             .iter_mut()
             .enumerate()
             .for_each(|(i, color)| {
                 *color = self.accumulated_image.buffer[i] / self.samples as f32;
             });
-        self.tone_map.map(&mut self.out_image);
+        self.tone_map.map(&mut out_image);
 
         // self.pixel_buffer
         //     .iter_mut()
@@ -234,7 +230,7 @@ impl Context {
         //         *color = red | (green << 8) | (blue << 16) | (0xFF << 24)
         //     });
 
-        &self.out_image
+        out_image
     }
 
     pub fn stop_full_render(&mut self) {

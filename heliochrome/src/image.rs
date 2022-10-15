@@ -6,6 +6,7 @@ use image;
 use super::maths::vec2;
 use crate::color::Color;
 
+#[derive(Clone)]
 pub struct Image {
     pub size: vec2,
     pub buffer: Vec<Color>,
@@ -34,9 +35,23 @@ impl Image {
     }
 
     pub fn sample_uv(&self, uv: &vec2) -> Color {
-        //TODO: smooth sample
-        self.buffer[((uv.y * (self.size.y - 1.0)).floor() as usize) * self.size.x as usize
-            + ((uv.x * (self.size.x - 1.0)).floor() as usize)]
+        let x0 = (uv.x * (self.size.x - 1.0)).floor() as usize;
+        let x1 = (uv.x * (self.size.x - 1.0)).ceil() as usize;
+        let xx = (uv.x * (self.size.x - 1.0)).fract();
+        let y0 = (uv.y * (self.size.y - 1.0)).floor() as usize;
+        let y1 = (uv.y * (self.size.y - 1.0)).ceil() as usize;
+        let yy = (uv.y * (self.size.y - 1.0)).fract();
+
+        let c1 = self.buffer[y0 * self.size.x as usize + x0];
+        let c2 = self.buffer[y0 * self.size.x as usize + x1];
+        let c3 = self.buffer[y1 * self.size.x as usize + x0];
+        let c4 = self.buffer[y1 * self.size.x as usize + x1];
+
+        c1 * (1.0 - xx) * (1.0 - yy) + c2 * (xx) * (1.0 - yy) + c3 * (1.0 - xx) * yy + c4 * xx * yy
+    }
+
+    pub fn set_pixel(&mut self, pos: &vec2, color: Color) {
+        self.buffer[(pos.x + pos.y * self.size.x) as usize] = color;
     }
 
     pub fn to_gamma_corrected_rgba8(&self, gamma: f32) -> Vec<u8> {
@@ -44,7 +59,6 @@ impl Image {
             .iter()
             .flat_map(|c| {
                 let out = c.powf(1.0 / gamma).clamp(0.0, 0.999) * 256.0;
-
                 [out[0] as u8, out[1] as u8, out[2] as u8, 0xff]
             })
             .collect::<Vec<_>>()

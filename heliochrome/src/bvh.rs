@@ -76,7 +76,7 @@ impl<T: Hittable> Hittable for BVH<T> {
 }
 
 impl<T: Hittable> BVH<T> {
-    pub fn new(mut hittables: Vec<T>) -> Self {
+    pub fn new(hittables: Vec<T>) -> Self {
         if hittables.is_empty() {
             return BVH {
                 hittables,
