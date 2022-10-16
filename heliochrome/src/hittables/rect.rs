@@ -1,5 +1,5 @@
 use super::{Hit, Hittable, AABB};
-use crate::maths::{vec3, Ray};
+use crate::maths::{mat3, vec3, Ray};
 
 #[derive(Clone)]
 pub struct Rect {
@@ -22,25 +22,43 @@ impl Rect {
 
 impl Hittable for Rect {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let d = self.normal.dot(ray.direction);
-        if d.abs() >= 0.0001 {
-            let t = (self.origin - ray.origin).dot(self.normal) / d;
-            if t_min <= t && t <= t_max {
-                let p = self.origin - ray.at(t);
-                let q1m = p.project_on(self.s1).mag() * -p.dot(self.s1).signum();
-                let q2m = p.project_on(self.s2).mag() * -p.dot(self.s2).signum();
-                if 0.0 <= q1m && q1m <= self.s1.mag() && 0.0 <= q2m && q2m <= self.s2.mag() {
-                    return Some(Hit::new(ray, t, self.normal));
-                }
-            }
+        let b_inv = mat3::new([self.s1, self.s2, ray.direction]).inverse();
+        let ol = b_inv * (ray.origin - self.origin);
+        let t = -ol.z;
+        if t_min <= t && t <= t_max && 0.0 <= ol.x && ol.x <= 1.0 && 0.0 <= ol.y && ol.y <= 1.0 {
+            Some(Hit::new(ray, t, self.normal))
+        } else {
+            None
         }
 
-        None
+        // works for rectangles but not parallelograms
+        // let d = self.normal.dot(ray.direction);
+        // if d.abs() >= 0.0001 {
+        //     let t = (self.origin - ray.origin).dot(self.normal) / d;
+        //     if t_min <= t && t <= t_max {
+        //         let v = ray.at(t) - self.origin;
+        //         let q1m = v.dot(self.s1);
+        //         let q2m = v.dot(self.s2);
+        //         if 0.0 <= q1m && q1m <= self.s1.mag_sq() && 0.0 <= q2m && q2m <= self.s2.mag_sq() {
+        //             return Some(Hit::new(ray, t, self.normal));
+        //         }
+        //     }
+        // }
     }
 
     fn make_bounding_box(&self) -> AABB {
-        let min = self.origin.min(&(self.origin + self.s1 + self.s2)) - vec3::splat(0.0001);
-        let max = self.origin.max(&(self.origin + self.s1 + self.s2)) + vec3::splat(0.0001);
+        let min = self
+            .origin
+            .min(&(self.origin + self.s1))
+            .min(&(self.origin + self.s2))
+            .min(&(self.origin + self.s1 + self.s2))
+            - vec3::splat(0.001);
+        let max = self
+            .origin
+            .max(&(self.origin + self.s1))
+            .max(&(self.origin + self.s2))
+            .max(&(self.origin + self.s1 + self.s2))
+            + vec3::splat(0.001);
 
         AABB::new(min, max)
     }
@@ -57,7 +75,9 @@ impl Hittable for Rect {
         }
     }
 
-    fn random_point_on(&self) -> vec3 {
-        self.origin + (self.s1 * rand::random::<f32>()) + (self.s2 * rand::random::<f32>())
+    fn random(&self, origin: &vec3) -> vec3 {
+        (self.origin + (self.s1 * rand::random::<f32>()) + (self.s2 * rand::random::<f32>())
+            - origin)
+            .normalize()
     }
 }
