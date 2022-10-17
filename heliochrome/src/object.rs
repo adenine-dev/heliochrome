@@ -65,13 +65,12 @@ impl Hittable for Object {
         }
     }
 
-    fn random_point_on(&self) -> vec3 {
-        let p = self.hittable.random_point_on();
+    fn random(&self, origin: &vec3) -> vec3 {
         if let Some(transform) = &self.transform {
-            // (transform.matrix * vec4::from_vec3(p, 1.0)).to_vec3()
-            transform.trans_point(&p)
+            let origin = &transform.trans_pos(origin);
+            self.hittable.random(origin)
         } else {
-            p
+            self.hittable.random(origin)
         }
     }
 }

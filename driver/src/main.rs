@@ -90,10 +90,10 @@ impl Tab for ConfigTab {
             ui.end_row();
             if resw.changed() || resh.changed() {
                 let mut state = self.state.borrow_mut();
+                let size = vec2::new(self.width as f32, self.height as f32);
                 state.context.stop_full_render();
-                state
-                    .context
-                    .resize(vec2::new(self.width as f32, self.height as f32));
+                state.context.resize(size);
+                state.image = Image::new(size);
             }
         });
 

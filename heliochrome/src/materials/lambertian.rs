@@ -4,6 +4,7 @@ use crate::{
     hittables::Hit,
     materials::Scatterable,
     maths::{vec3, Ray, ONB},
+    pdf::CosinePDF,
 };
 
 #[derive(Clone)]
@@ -19,17 +20,18 @@ impl Lambertian {
 
 impl Scatterable for Lambertian {
     fn scatter(&self, _ray: &Ray, hit: &Hit) -> Option<Scatter> {
-        let uvw = ONB::new_from_w(hit.normal);
-        let dir = uvw.local(&vec3::random_cosine_direction());
+        // let uvw = ONB::new_from_w(hit.normal);
+        // let dir = uvw.local(&vec3::random_cosine_direction());
         Some(Scatter {
-            outgoing: Ray::new(hit.p, dir),
+            // outgoing: Ray::new(hit.p, dir),
             attenuation: self.albedo,
-            pdf: hit.normal.dot(dir) / std::f32::consts::PI,
+            pdf: Some(CosinePDF::new(hit.normal).into()),
+            specular: None,
         })
     }
 
     fn pdf(&self, _incoming: &Ray, outgoing: &Ray, hit: &Hit) -> f32 {
-        let cosine = hit.normal.dot(outgoing.direction);
+        let cosine = hit.normal.dot(outgoing.direction.normalized());
         if cosine > 0.0 {
             cosine / std::f32::consts::PI
         } else {

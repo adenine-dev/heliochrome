@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::process::exit;
 use std::sync::atomic::{AtomicU32, AtomicU8, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, RwLock};
@@ -15,7 +16,7 @@ use crate::color::Color;
 use crate::hittables::Hittable;
 use crate::image::Image;
 use crate::materials::Scatterable;
-use crate::pdf::{CosinePDF, ObjectPDF, ProbabilityDensityFn, PDF};
+use crate::pdf::{CosinePDF, ObjectListPDF, ObjectPDF, ProbabilityDensityFn, PDF};
 use crate::scene::Scene;
 use crate::tonemap::ToneMap;
 use crate::{maths::*, util};
@@ -64,7 +65,8 @@ fn gamma_correct(color: Color, gamma: f32) -> Color {
     color.powf(1.0 / gamma)
 }
 
-pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Color {
+pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16, i: usize) -> Color {
+    // dbg!(uv);
     let scene = scene.read().unwrap();
     let mut ray = scene.camera.get_ray(uv);
     let mut color = Color::splat(1.0);
@@ -85,30 +87,48 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             let emitted = object.material.emitted(&hit);
 
             if let Some(scatter) = object.material.scatter(&ray, &hit) {
-                // {
-                //     // importance sampled
-                //     let pdf1: PDF =
-                //         ObjectPDF::new(scene.objects.bounded_objects.hittables[5].clone(), hit.p)
-                //             .into();
-
-                //     let pdf2: PDF = CosinePDF::new(hit.normal).into();
-                //     let pdf = (pdf1, pdf2);
-
-                //     let dir = pdf.generate();
-                //     let scattered = Ray::new(hit.p, dir);
-                //     let pdf_val = pdf.value(&scattered.direction);
-
-                //     color *=
-                //         object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation / pdf_val;
-                //     color += emitted;
-                //     ray = scattered;
-                // }
-
                 {
-                    // monte carlo
-                    color *= scatter.attenuation;
-                    color += emitted;
-                    ray = scatter.outgoing;
+                    if let Some(specular) = scatter.specular {
+                        color *= scatter.attenuation;
+                        // color += emitted;
+                        ray = specular;
+                    } else if let Some(pdf) = scatter.pdf {
+                        let importance_pdf = ObjectListPDF::new(scene.get_importants(), hit.p);
+                        let pdf = (importance_pdf, pdf);
+
+                        let dir = pdf.generate();
+                        let scattered = Ray::new(hit.p, dir);
+                        let pdf_val = pdf.value(&scattered.direction);
+
+                        color *= object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation
+                            / pdf_val;
+                        color += emitted;
+                        ray = scattered;
+                        // if i == 44897 {
+                        //     color = Color::new(0.0, 1.0, 1.0);
+                        //     break;
+                        // }
+                        // if color.mag() > 100.0 {
+                        //     dbg!(i);
+                        //     dbg!(color);
+                        //     dbg!(pdf_val);
+                        //     dbg!(pdf);
+                        //     dbg!(object.material.pdf(&ray, &scattered, &hit));
+                        //     dbg!(scatter.attenuation);
+                        //     exit(0);
+                        // }
+
+                        // let dir = pdf.generate();
+                        // let scattered = Ray::new(hit.p, dir);
+                        // let pdf_val = pdf.value(&scattered.direction);
+
+                        // color *= object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation
+                        //     / pdf_val;
+                        // color += emitted;
+                        // ray = scattered;
+                    } else {
+                        panic!("oof :<");
+                    }
                 }
             } else {
                 color *= emitted;
@@ -120,7 +140,7 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
         }
     }
 
-    color
+    color.un_nan()
 }
 
 impl Context {
@@ -162,10 +182,6 @@ impl Context {
         self.scene.write().unwrap().camera.aspect_ratio = size.x / size.y;
     }
 
-    // pub fn save(&self, path: &Path, gamma: f32) -> Result<(), Box<dyn std::error::Error>> {
-    //     util::write_image(path, self.size, gamma, &self.out_image)
-    // }
-
     pub fn render_sample(&mut self) -> Image {
         let mut out_image = Image::new(self.size);
 
@@ -176,7 +192,8 @@ impl Context {
                 u / (self.size.x - 1.0),
                 1.0 - (v / (self.size.y - 1.0)), // flip
             );
-            let fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces);
+            let fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces, i);
+
             if self.samples == 0 {
                 fragment
             } else {
@@ -258,14 +275,14 @@ impl Context {
 
         let (mut rs, rr) = spmc::channel::<(usize, usize)>();
 
-        let cx = (self.size.x / CHUNK_SIZE as f32 + 1.0).ceil() as i32;
-        let cy = (self.size.y / CHUNK_SIZE as f32 + 1.0).ceil() as i32;
+        let cx = (self.size.x / CHUNK_SIZE as f32).ceil() as i32;
+        let cy = (self.size.y / CHUNK_SIZE as f32).ceil() as i32;
 
-        let mut tx: i32 = 0;
-        let mut ty: i32 = 0;
+        let mut tx = 0;
+        let mut ty = 0;
         let mut dx = 0;
         let mut dy = -1;
-        for _ in 0..(cx.max(cy).pow(2)) {
+        for _ in 0..((cx + 1).max(cy + 1).pow(2)) {
             if (-cx / 2 <= tx) && (tx <= cx / 2) && (-cy / 2 <= ty) && (ty <= cy / 2) {
                 rs.send(((tx + (cx / 2)) as usize, (ty + (cy / 2)) as usize))
                     .unwrap();
@@ -325,7 +342,8 @@ impl Context {
                                     u / (size.x - 1.0),
                                     1.0 - (v / (size.y - 1.0)), // flip
                                 );
-                                let fragment = render_fragment(scene.clone(), &uv, quality.bounces);
+                                let fragment =
+                                    render_fragment(scene.clone(), &uv, quality.bounces, i);
                                 c += fragment;
                             }
 

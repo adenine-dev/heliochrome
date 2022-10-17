@@ -2,8 +2,8 @@
 // const HEIGHT: f32 = 720.0;
 // const WIDTH: f32 = 800.0;
 // const HEIGHT: f32 = 345.0;
-const WIDTH: f32 = 500.0;
-const HEIGHT: f32 = 500.0;
+const WIDTH: f32 = 300.0;
+const HEIGHT: f32 = 300.0;
 
 use std::path::Path;
 
@@ -39,7 +39,7 @@ pub fn make_context() -> Context {
 
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 4 {
+    match 5 {
         // Cornell Box
         0 => {
             let base = Color::splat(0.73);
@@ -263,6 +263,112 @@ pub fn make_context() -> Context {
                 Metal::new(Color::splat(0.4), 0.3),
                 None,
             ));
+        }
+        // Cornell Box 2
+        5 => {
+            let base = Color::splat(0.73);
+            let left = Color::new(0.12, 0.45, 0.15);
+            let right = Color::new(0.65, 0.05, 0.05);
+            objects.push(Object::new(
+                hittables::Rect::new(
+                    vec3::new(555.0, 0.0, 0.0),
+                    vec3::new(0.0, 555.0, 0.0),
+                    vec3::new(0.0, 0.0, 555.0),
+                ),
+                Lambertian::new(left),
+                None,
+            ));
+            objects.push(Object::new(
+                hittables::Rect::new(
+                    vec3::new(0.0, 0.0, 0.0),
+                    vec3::new(0.0, 555.0, 0.0),
+                    vec3::new(0.0, 0.0, 555.0),
+                ),
+                Lambertian::new(right),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Rect::new(
+                    vec3::new(0.0, 0.0, 0.0),
+                    vec3::new(555.0, 0.0, 0.0),
+                    vec3::new(0.0, 0.0, 555.0),
+                ),
+                Lambertian::new(base),
+                None,
+            ));
+            objects.push(Object::new(
+                hittables::Rect::new(
+                    vec3::new(0.0, 555.0, 0.0),
+                    vec3::new(555.0, 0.0, 0.0),
+                    vec3::new(0.0, 0.0, 555.0),
+                ),
+                Lambertian::new(base),
+                None,
+            ));
+            objects.push(Object::new(
+                hittables::Rect::new(
+                    vec3::new(0.0, 0.0, 555.0),
+                    vec3::new(555.0, 0.0, 0.0),
+                    vec3::new(0.0, 555.0, 0.0),
+                ),
+                Lambertian::new(base),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Rect::new(
+                    vec3::new(213.0, 554.0, 227.0),
+                    vec3::new(130.0, 0.0, 0.0),
+                    vec3::new(0.0, 0.0, 105.0),
+                ),
+                DiffuseLight::new(Color::splat(1.0), 15.0),
+                None,
+            ));
+
+            // objects.push(Object::new(
+            //     hittables::Sphere::new(vec3::new(278.0, 554.0, 279.5), 65.0),
+            //     DiffuseLight::new(Color::splat(1.0), 15.0),
+            //     None,
+            // ));
+
+            objects.push(Object::new(
+                hittables::AABB::new(vec3::splat(0.0), vec3::new(165.0, 330.0, 165.0)),
+                // Lambertian::new(base),
+                Metal::new(Color::splat(0.85), 0.1),
+                Some(Transform::new(
+                    mat4::translate(vec3::new(265.0, 0.0, 295.0))
+                        * mat4::rotate(vec3::new(0.0, std::f32::consts::TAU / 24.0, 0.0)),
+                )),
+            ));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(190.0, 90.0, 190.0), 90.0),
+                // DiffuseLight::new(Color::new(0.0, 0.0, 1.0), 0.1),
+                Dielectric::new(1.5, Color::splat(1.0)),
+                None,
+            ));
+
+            // objects.push(Object::new(
+            //     hittables::Rect::new(
+            //         vec3::splat(0.0),
+            //         vec3::new(0.0, 319.04231694243947, 0.0),
+            //         vec3::new(319.04231694243947, 0.0, 0.0),
+            //     ),
+            //     // DiffuseLight::new(Color::new(0.0, 0.0, 1.0), 0.1),
+            //     Dielectric::new(1.5, Color::splat(1.0)),
+            //     None,
+            // ));
+
+            camera = Camera::new(
+                maths::vec3::new(278.0, 278.0, -800.0),
+                vec3::new(278.0, 278.0, 0.0),
+                vec3::unit_y(),
+                35.0,
+                WIDTH as f32 / HEIGHT as f32,
+                0.0,
+                None,
+            );
         }
         _ => panic!("oof"),
     }

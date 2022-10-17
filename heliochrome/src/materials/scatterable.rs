@@ -1,11 +1,11 @@
 use enum_dispatch::enum_dispatch;
 
-use crate::{color::Color, hittables::Hit, maths::Ray};
+use crate::{color::Color, hittables::Hit, maths::Ray, pdf::PDF};
 
 pub struct Scatter {
-    pub outgoing: Ray,
     pub attenuation: Color,
-    pub pdf: f32,
+    pub pdf: Option<PDF>,
+    pub specular: Option<Ray>,
 }
 
 #[enum_dispatch]
@@ -20,7 +20,7 @@ pub trait Scatterable: Clone {
         Color::splat(0.0)
     }
 
-    fn is_light(&self) -> bool {
+    fn is_important(&self) -> bool {
         false
     }
 }

@@ -42,7 +42,7 @@ pub trait Hittable: Send + Sync + Clone {
         panic!("oof you need to implement this :<");
     }
 
-    fn random_point_on(&self) -> vec3 {
+    fn random(&self, origin: &vec3) -> vec3 {
         panic!("haha you need to implement this :<");
     }
 }

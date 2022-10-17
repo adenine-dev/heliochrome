@@ -119,6 +119,18 @@ macro_rules! vec3_impl {
                 Self::new(x, y, z)
             }
 
+            pub fn random_to_sphere(radius: $t, dist_sq: $t) -> Self {
+                let r1 = rand::random::<$t>();
+                let r2 = rand::random::<$t>();
+                let z = 1.0 + r2*((1.0-radius*radius/dist_sq).sqrt() - 1.0);
+
+                let phi = std::$t::consts::TAU*r1;
+                let x = phi.cos()*(1.0-z*z).sqrt();
+                let y = phi.sin()*(1.0-z*z).sqrt();
+
+                Self::new(x, y, z)
+            }
+
             pub fn near_zero(&self) -> bool {
                 self.$x.abs() < $t::EPSILON
                     && self.$y.abs() < $t::EPSILON

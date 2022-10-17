@@ -43,8 +43,12 @@ impl Scatterable for Dielectric {
 
         Some(Scatter {
             attenuation: self.color,
-            outgoing: Ray::new(hit.p, direction),
-            pdf: f32::NAN,
+            pdf: None,
+            specular: Some(Ray::new(hit.p, direction)),
         })
+    }
+
+    fn is_important(&self) -> bool {
+        true
     }
 }

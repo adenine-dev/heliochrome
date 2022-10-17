@@ -27,7 +27,7 @@ impl Scatterable for DiffuseLight {
         }
     }
 
-    fn is_light(&self) -> bool {
+    fn is_important(&self) -> bool {
         true
     }
 }

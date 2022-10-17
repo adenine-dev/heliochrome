@@ -50,4 +50,26 @@ impl Hittable for Sphere {
             self.center + vec3::splat(self.radius.abs()),
         )
     }
+
+    fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {
+        if self
+            .hit(&Ray::new(*origin, *dir), 0.001, f32::INFINITY)
+            .is_none()
+        {
+            0.0
+        } else {
+            let cos_theta_max =
+                (1.0 - self.radius * self.radius / (self.center - origin).mag_sq()).sqrt();
+            let solid_angle = std::f32::consts::TAU * (1.0 - cos_theta_max);
+
+            1.0 / solid_angle
+        }
+    }
+
+    fn random(&self, origin: &vec3) -> vec3 {
+        let direction = self.center - origin;
+        let distance_squared = direction.mag_sq();
+        let uvw = ONB::new_from_w(direction);
+        uvw.local(&vec3::random_to_sphere(self.radius, distance_squared))
+    }
 }
