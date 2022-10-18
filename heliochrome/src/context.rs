@@ -93,12 +93,22 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16, i: us
                         // color += emitted;
                         ray = specular;
                     } else if let Some(pdf) = scatter.pdf {
-                        let importance_pdf = ObjectListPDF::new(scene.get_importants(), hit.p);
-                        let pdf = (importance_pdf, pdf);
+                        let importants = scene.get_importants();
 
-                        let dir = pdf.generate();
-                        let scattered = Ray::new(hit.p, dir);
-                        let pdf_val = pdf.value(&scattered.direction);
+                        let (dir, scattered, pdf_val) = if importants.is_empty() {
+                            let dir = pdf.generate();
+                            let scattered = Ray::new(hit.p, dir);
+                            let pdf_val = pdf.value(&scattered.direction);
+                            (dir, scattered, pdf_val)
+                        } else {
+                            let importance_pdf = ObjectListPDF::new(importants, hit.p);
+                            let pdf = (importance_pdf, pdf);
+
+                            let dir = pdf.generate();
+                            let scattered = Ray::new(hit.p, dir);
+                            let pdf_val = pdf.value(&scattered.direction);
+                            (dir, scattered, pdf_val)
+                        };
 
                         color *= object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation
                             / pdf_val;

@@ -49,6 +49,6 @@ impl Scatterable for Dielectric {
     }
 
     fn is_important(&self) -> bool {
-        true
+        false
     }
 }

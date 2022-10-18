@@ -285,6 +285,13 @@ impl Tab for SceneTab {
                     });
                     ui.end_row();
                 });
+
+                let state = self.state.borrow();
+                let camera = &state.context.scene.read().unwrap().camera;
+
+                ui.label(format!("eye: {:?}", camera.eye));
+                ui.label(format!("at: {:?}", camera.at));
+                ui.label(format!("up: {:?}", camera.up));
             });
 
         self.state.borrow_mut().changed = changed;

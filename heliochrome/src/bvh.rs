@@ -131,6 +131,12 @@ impl<T: Hittable> BVH<T> {
         Self { hittables, nodes }
     }
 
+    pub fn hit_with_index(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Hit, usize)> {
+        self.nodes
+            .last()?
+            .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
+    }
+
     pub fn hit_obj(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Hit, &T)> {
         if let Some((hit, idx)) =
             self.nodes
