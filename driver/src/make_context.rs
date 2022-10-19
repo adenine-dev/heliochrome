@@ -39,10 +39,10 @@ pub fn make_context() -> Context {
         0.0,
         None,
     );
-
+    let mut tone_map = ToneMap::HejlRichard;
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 4 {
+    match 6 {
         // Cornell Box
         0 => {
             let base = Color::splat(0.73);
@@ -364,10 +364,52 @@ pub fn make_context() -> Context {
                 None,
             );
         }
+        // mandel bulb
+        6 => {
+            width = 200.0;
+            height = 200.0;
+            skybox = SkyBox::Color(Color::splat(0.05));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(0.0, 5.0, 0.0), 2.0),
+                DiffuseLight::new(Color::new(1.0, 0.1, 0.2), 5.0),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(0.0, -5.0, 0.0), 2.0),
+                DiffuseLight::new(Color::new(0.2, 0.1, 1.0), 5.0),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::HittableSDF::new(sdf::MandelBulb::new(8.0)),
+                Lambertian::new(Color::new(0.85, 0.75, 0.85)),
+                None,
+            ));
+
+            // objects.push(Object::new(
+            //     hittables::Sphere::new(vec3::default(), 1.0),
+            //     Lambertian::new(Color::new(0.85, 0.85, 0.85)),
+            //     None,
+            // ));
+
+            camera = Camera::new(
+                maths::vec3::new(-3.0, 0.0, -3.0),
+                vec3::splat(0.0),
+                vec3::unit_y(),
+                35.0,
+                width as f32 / height as f32,
+                0.0,
+                None,
+            );
+
+            tone_map = ToneMap::Reinhard(1.0);
+        }
         _ => panic!("oof"),
     }
 
     let scene = Scene::new(camera, skybox, objects);
 
-    Context::new(maths::vec2::new(width, height), scene, ToneMap::HejlRichard)
+    Context::new(maths::vec2::new(width, height), scene, tone_map)
 }

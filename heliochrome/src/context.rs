@@ -30,8 +30,8 @@ pub struct QualitySettings {
 impl Default for QualitySettings {
     fn default() -> Self {
         Self {
-            samples: 50,
-            bounces: 50,
+            samples: 250,
+            bounces: 12,
         }
     }
 }
@@ -95,11 +95,11 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16, i: us
                     } else if let Some(pdf) = scatter.pdf {
                         let importants = scene.get_importants();
 
-                        let (dir, scattered, pdf_val) = if importants.is_empty() {
+                        let (scattered, pdf_val) = if importants.is_empty() {
                             let dir = pdf.generate();
                             let scattered = Ray::new(hit.p, dir);
                             let pdf_val = pdf.value(&scattered.direction);
-                            (dir, scattered, pdf_val)
+                            (scattered, pdf_val)
                         } else {
                             let importance_pdf = ObjectListPDF::new(importants, hit.p);
                             let pdf = (importance_pdf, pdf);
@@ -107,7 +107,7 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16, i: us
                             let dir = pdf.generate();
                             let scattered = Ray::new(hit.p, dir);
                             let pdf_val = pdf.value(&scattered.direction);
-                            (dir, scattered, pdf_val)
+                            (scattered, pdf_val)
                         };
 
                         color *= object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation
@@ -305,7 +305,7 @@ impl Context {
             ty += dy;
         }
 
-        let thread_count = 6;
+        let thread_count = 7;
 
         for _ in 0..thread_count {
             let dtx = self.pixel_sender.clone();

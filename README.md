@@ -9,7 +9,7 @@ Heliochrome is a CPU ray tracer written in rust. This was initially adapted from
 ## Features
 * Semi-real time previewing of renders using a cumulative image buffer
 * Mesh primitive and loading from obj files
-* SDF primitives using ray marching
+* Signed Distance Function (SDF) primitives using ray marching
 * homogeneous transforms using matrices and a custom maths module
 * hdri equirectangular skyboxes
 * Tone mapping using Hable, Reinhard, Hejl-Richard, and ACES
@@ -33,6 +33,13 @@ Heliochrome is a CPU ray tracer written in rust. This was initially adapted from
     <p  align="center">
         <img src="results/swirlyboi.png" />
         <figcaption><p align="center">swirlyboi, 300 samples</p><figcaption/>
+    </p>
+</figure>
+<br/>
+<figure>
+    <p  align="center">
+        <img src="results/mandel_bulb.png" />
+        <figcaption><p align="center">mandel bulb, 250 samples (Reinhard tone mapping)</p><figcaption/>
     </p>
 </figure>
 <br/>
