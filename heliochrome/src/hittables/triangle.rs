@@ -53,7 +53,7 @@ pub(crate) fn triangle_bounding_box(vertices: &[vec3; 3]) -> AABB {
         max = max.max(v);
     }
 
-    AABB::new(min, max)
+    AABB::new(min - vec3::splat(0.0001), max + vec3::splat(0.0001))
 }
 
 impl Hittable for Triangle {

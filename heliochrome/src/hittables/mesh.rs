@@ -61,7 +61,7 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(positions: &[vec3], indices: &Vec<u32>, vnormals: &[vec3]) -> Self {
         let mut tris = vec![Triangle::default(); indices.len() / 3];
-        let mut normals = if indices.is_empty() {
+        let mut normals = if vnormals.is_empty() {
             None
         } else {
             Some(Vec::with_capacity(indices.len()))
