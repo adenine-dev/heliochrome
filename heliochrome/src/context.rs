@@ -1,5 +1,3 @@
-use std::path::Path;
-use std::process::exit;
 use std::sync::atomic::{AtomicU32, AtomicU8, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, RwLock};
@@ -7,19 +5,17 @@ use std::sync::{Arc, RwLock};
 use indicatif;
 use indicatif::ParallelProgressIterator;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-#[cfg(feature = "multithread")]
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use spmc;
 
 use crate::color::Color;
-use crate::hittables::Hittable;
 use crate::image::Image;
 use crate::materials::Scatterable;
-use crate::pdf::{CosinePDF, ObjectListPDF, ObjectPDF, ProbabilityDensityFn, PDF};
+use crate::maths::*;
+use crate::pdf::{ObjectListPDF, ProbabilityDensityFn};
 use crate::scene::Scene;
 use crate::tonemap::ToneMap;
-use crate::{maths::*, util};
 
 #[derive(Clone, Copy)]
 pub struct QualitySettings {
@@ -65,7 +61,7 @@ fn gamma_correct(color: Color, gamma: f32) -> Color {
     color.powf(1.0 / gamma)
 }
 
-pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16, i: usize) -> Color {
+pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Color {
     // dbg!(uv);
     let scene = scene.read().unwrap();
     let mut ray = scene.camera.get_ray(uv);
@@ -202,7 +198,7 @@ impl Context {
                 u / (self.size.x - 1.0),
                 1.0 - (v / (self.size.y - 1.0)), // flip
             );
-            let fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces, i);
+            let fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces);
 
             if self.samples == 0 {
                 fragment
@@ -211,28 +207,14 @@ impl Context {
             }
         };
 
-        #[cfg(feature = "multithread")]
-        {
-            self.accumulated_image.buffer = self
-                .accumulated_image
-                .buffer
-                .par_iter()
-                .progress_count(self.accumulated_image.buffer.len() as u64)
-                .enumerate()
-                .map(per_pixel)
-                .collect();
-        }
-
-        #[cfg(not(feature = "multithread"))]
-        {
-            self.accumulated_image.buffer = self
-                .accumulated_image
-                .buffer
-                .iter()
-                .enumerate()
-                .map(per_pixel)
-                .collect();
-        }
+        self.accumulated_image.buffer = self
+            .accumulated_image
+            .buffer
+            .par_iter()
+            .progress_count(self.accumulated_image.buffer.len() as u64)
+            .enumerate()
+            .map(per_pixel)
+            .collect();
 
         self.samples += 1;
         out_image
@@ -352,8 +334,7 @@ impl Context {
                                     u / (size.x - 1.0),
                                     1.0 - (v / (size.y - 1.0)), // flip
                                 );
-                                let fragment =
-                                    render_fragment(scene.clone(), &uv, quality.bounces, i);
+                                let fragment = render_fragment(scene.clone(), &uv, quality.bounces);
                                 c += fragment;
                             }
 

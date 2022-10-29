@@ -1,17 +1,13 @@
-use core::panic;
-
-use rand::seq::SliceRandom;
-
 use crate::{
     bvh::BVH,
     camera::Camera,
     color::Color,
-    hittables::{Hit, Hittable},
+    hittables::Hit,
     image::Image,
     materials::Scatterable,
     maths::{vec2, vec3, Ray},
     object::Object,
-    pdf::{ObjectPDF, PDF},
+    pdf::ObjectPDF,
 };
 
 pub enum SkyBox {

@@ -63,24 +63,6 @@ impl Transform {
             }
         }
 
-        // let mut min = vec3::splat(f32::INFINITY);
-        // let mut max = vec3::splat(-f32::INFINITY);
-
-        // for i in 0..=1 {
-        //     for j in 0..=1 {
-        //         for k in 0..=1 {
-        //             let p = (self.matrix
-        //                 * vec4::from_vec3(
-        //                     aabb.min * vec3::new((1 - i) as f32, (1 - j) as f32, (1 - k) as f32)
-        //                         + aabb.max * vec3::new(i as f32, j as f32, k as f32),
-        //                     1.0,
-        //                 ))
-        //             .to_vec3();
-        //             min = min.min(&p);
-        //             max = max.max(&p);
-        //         }
-        //     }
-        // }
         AABB::new(min, max)
     }
 }

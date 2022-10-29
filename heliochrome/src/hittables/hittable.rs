@@ -33,6 +33,7 @@ impl Hit {
 }
 
 #[enum_dispatch]
+#[allow(unused_variables)] // default trait impls
 pub trait Hittable: Send + Sync + Clone {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit>;
 

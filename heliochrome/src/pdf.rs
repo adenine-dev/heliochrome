@@ -5,7 +5,6 @@ use crate::{
     hittables::Hittable,
     maths::{vec3, ONB},
     object::Object,
-    scene::Scene,
 };
 
 #[enum_dispatch]

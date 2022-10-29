@@ -1,17 +1,9 @@
-// const WIDTH: f32 = 1280.0;
-// const HEIGHT: f32 = 720.0;
-// const WIDTH: f32 = 800.0;
-// const HEIGHT: f32 = 345.0;
-// const WIDTH: f32 = 300.0;
-// const HEIGHT: f32 = 300.0;
-
-use std::{fs, path::Path};
+use std::path::Path;
 
 use heliochrome::{
     camera::Camera,
     color::Color,
     context::Context,
-    hittables::{self, Hittable},
     image::Image,
     load_obj::load_obj,
     materials::*,

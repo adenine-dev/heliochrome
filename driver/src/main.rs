@@ -18,12 +18,7 @@ use eframe::{
 };
 use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
 use heliochrome::{
-    color::Color,
-    context::Context,
-    image::Image,
-    maths::vec2,
-    tonemap::ToneMap,
-    util::{self, write_image},
+    color::Color, context::Context, image::Image, maths::vec2, tonemap::ToneMap, util::write_image,
 };
 
 mod make_context;
@@ -611,7 +606,6 @@ impl Tab for PreviewTab {
 
 struct HeliochromeDriver {
     tree: DynamicTree,
-    state: State,
 }
 
 impl HeliochromeDriver {
@@ -629,7 +623,7 @@ impl HeliochromeDriver {
         );
         let [_, _] = tree.split_below(b, 0.7, vec![Box::new(ConfigTab::new(state.clone()))]);
 
-        Self { tree, state }
+        Self { tree }
     }
 }
 

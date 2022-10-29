@@ -2,7 +2,6 @@
 members = [
     "driver", "heliochrome"
 ]
-default = "driver"
 
 [profile.dev]
 opt-level = 3

@@ -9,6 +9,7 @@ pub struct Scatter {
 }
 
 #[enum_dispatch]
+#[allow(unused_variables)] // default trait impls
 pub trait Scatterable: Clone {
     fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter>;
 

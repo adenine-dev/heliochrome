@@ -7,10 +7,6 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-[features]
-default = ["multithread"]
-multithread = []
-
 [dependencies]
 rayon = "1.5.3"
 rand = "0.8"
