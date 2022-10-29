@@ -61,6 +61,30 @@ macro_rules! vec2_impl {
             pub fn normalized(&self) -> Self {
                 self.clone().normalize()
             }
+
+            pub fn prod(&self) -> $t {
+                self.$x * self.$y
+            }
+
+            pub fn min(&self, other: &$n) -> $n {
+                Self::new(self.$x.min(other.$x), self.$y.min(other.$y))
+            }
+
+            pub fn max(&self, other: &$n) -> $n {
+                Self::new(self.$x.max(other.$x), self.$y.max(other.$y))
+            }
+
+            pub fn clamp(&self, min: $t, max: $t) -> $n {
+                Self::new(self.$x.clamp(min, max), self.$y.clamp(min, max))
+            }
+
+            pub fn floor(&self) -> Self {
+                Self::new(self.$x.floor(), self.$y.floor())
+            }
+
+            pub fn abs(&self) -> Self {
+                Self::new(self.$x.abs(), self.$y.abs())
+            }
         }
 
         impl Add for $n {
@@ -129,35 +153,35 @@ macro_rules! vec2_impl {
         impl Div for $n {
             type Output = Self;
             fn div(self, rhs: $n) -> Self {
-                $n::new(self.$x * rhs.$x, self.$y * rhs.$y)
+                $n::new(self.$x / rhs.$x, self.$y / rhs.$y)
             }
         }
 
         impl DivAssign for $n {
             fn div_assign(&mut self, rhs: $n) {
-                self.$x *= rhs.$x;
-                self.$y *= rhs.$y;
+                self.$x /= rhs.$x;
+                self.$y /= rhs.$y;
             }
         }
 
         impl Div<$t> for $n {
             type Output = Self;
             fn div(self, rhs: $t) -> Self {
-                $n::new(self.$x * rhs, self.$y * rhs)
+                $n::new(self.$x / rhs, self.$y / rhs)
             }
         }
 
         impl DivAssign<$t> for $n {
             fn div_assign(&mut self, rhs: $t) {
-                self.$x *= rhs;
-                self.$y *= rhs;
+                self.$x /= rhs;
+                self.$y /= rhs;
             }
         }
 
         impl Div<$n> for $t {
             type Output = $n;
             fn div(self, rhs: $n) -> $n {
-                $n::new(self * rhs.$x, self * rhs.$y)
+                $n::new(self / rhs.$x, self / rhs.$y)
             }
         }
     };

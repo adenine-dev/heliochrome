@@ -5,7 +5,7 @@
 // const WIDTH: f32 = 300.0;
 // const HEIGHT: f32 = 300.0;
 
-use std::path::Path;
+use std::{fs, path::Path};
 
 use heliochrome::{
     camera::Camera,
@@ -42,9 +42,12 @@ pub fn make_context() -> Context {
     let mut tone_map = ToneMap::HejlRichard;
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 6 {
+    match 0 {
         // Cornell Box
         0 => {
+            width = 400.0;
+            height = 400.0;
+
             let base = Color::splat(0.73);
             let left = Color::new(0.12, 0.45, 0.15);
             let right = Color::new(0.65, 0.05, 0.05);
@@ -136,7 +139,8 @@ pub fn make_context() -> Context {
         // orbs
         1 => {
             skybox = SkyBox::Equirectangular(
-                Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
+                Image::load_from_hdri(Path::new("assets/skyboxes/snowy_forest_path_01_4k.hdr"))
+                    .unwrap(),
             );
 
             objects.push(Object::new(
@@ -180,7 +184,8 @@ pub fn make_context() -> Context {
         // glass suzanne
         2 => {
             skybox = SkyBox::Equirectangular(
-                Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
+                Image::load_from_hdri(Path::new("assets/skyboxes/snowy_forest_path_01_4k.hdr"))
+                    .unwrap(),
             );
 
             objects.push(Object::new(
@@ -192,7 +197,7 @@ pub fn make_context() -> Context {
                 None,
             ));
 
-            let mut meshes = load_obj("assets/suzanne.obj").unwrap();
+            let mut meshes = load_obj("assets/models/suzanne.obj").unwrap();
             let mesh = meshes.first_mut().unwrap();
             objects.push(Object::new(
                 hittables::Mesh::new(&mesh.vertices, &mesh.indices, &[]),
@@ -206,7 +211,8 @@ pub fn make_context() -> Context {
         // cubes
         3 => {
             skybox = SkyBox::Equirectangular(
-                Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
+                Image::load_from_hdri(Path::new("assets/skyboxes/snowy_forest_path_01_4k.hdr"))
+                    .unwrap(),
             );
 
             let n = 5;
@@ -258,7 +264,8 @@ pub fn make_context() -> Context {
             ));
 
             skybox = SkyBox::Equirectangular(
-                Image::load_from_hdri(Path::new("assets/snowy_forest_path_01_4k.hdr")).unwrap(),
+                Image::load_from_hdri(Path::new("assets/skyboxes/snowy_forest_path_01_4k.hdr"))
+                    .unwrap(),
             );
 
             objects.push(Object::new(
@@ -338,7 +345,7 @@ pub fn make_context() -> Context {
                 None,
             ));
 
-            let meshes = load_obj("assets/smoothanne.obj").unwrap();
+            let meshes = load_obj("assets/models/smoothanne.obj").unwrap();
             let mesh = meshes.first().unwrap();
             objects.push(Object::new(
                 hittables::Mesh::new(&mesh.vertices, &mesh.indices, &mesh.normals),

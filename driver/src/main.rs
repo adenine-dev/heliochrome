@@ -41,7 +41,11 @@ impl StateData {
     pub fn new(context: Context) -> Self {
         Self {
             changed: false,
-            gamma: 1.0,
+            gamma: if matches!(context.tone_map, ToneMap::HejlRichard) {
+                1.0
+            } else {
+                2.2
+            },
             image: Image::new(context.get_size()),
             context,
         }
