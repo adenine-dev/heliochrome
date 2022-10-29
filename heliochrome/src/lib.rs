@@ -3,6 +3,8 @@
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
 #![feature(let_chains)]
+#![feature(vec_into_raw_parts)]
+#![feature(generic_const_exprs)]
 // lib but not and maths
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]

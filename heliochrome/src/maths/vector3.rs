@@ -131,6 +131,10 @@ macro_rules! vec3_impl {
                 Self::new(x, y, z)
             }
 
+            pub fn new_with<F: FnMut(usize) -> $t>(mut f: F) -> Self {
+                Self::new(f(0), f(1), f(2))
+            }
+
             pub fn near_zero(&self) -> bool {
                 self.$x.abs() < $t::EPSILON
                     && self.$y.abs() < $t::EPSILON
@@ -158,11 +162,9 @@ macro_rules! vec3_impl {
                 Self::new(self.$x.abs(), self.$y.abs(), self.$z.abs())
             }
 
-
             pub fn floor(&self) -> Self {
                 Self::new(self.$x.floor(), self.$y.floor(), self.$z.floor())
             }
-
 
             pub fn powf(&self, n: $t) -> Self {
                 Self::new(self.$x.powf(n), self.$y.powf(n), self.$z.powf(n))

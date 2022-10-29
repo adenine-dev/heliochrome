@@ -15,6 +15,9 @@ pub use dielectric::*;
 mod diffuse_light;
 pub use diffuse_light::*;
 
+mod measured;
+pub use measured::*;
+
 use super::color::Color;
 use super::hittables::Hit;
 use super::maths::Ray;
@@ -26,4 +29,5 @@ pub enum Material {
     Metal,
     Dielectric,
     DiffuseLight,
+    Measured,
 }

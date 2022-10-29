@@ -29,3 +29,6 @@ pub use ray::*;
 
 mod onb;
 pub use onb::*;
+
+mod marginal2d;
+pub use marginal2d::*;

@@ -89,8 +89,12 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16, i: us
             if let Some(scatter) = object.material.scatter(&ray, &hit) {
                 {
                     if let Some(specular) = scatter.specular {
+                        // let n = 0.5 * (specular.direction.normalized() + vec3::splat(1.0));
+                        // color = Color::new(n.x, n.y, n.z);
+                        // break;
+
                         color *= scatter.attenuation;
-                        // color += emitted;
+                        color += emitted;
                         ray = specular;
                     } else if let Some(pdf) = scatter.pdf {
                         let importants = scene.get_importants();
@@ -114,15 +118,11 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16, i: us
                             / pdf_val;
                         color += emitted;
                         ray = scattered;
-                        // if i == 44897 {
-                        //     color = Color::new(0.0, 1.0, 1.0);
-                        //     break;
-                        // }
-                        // if color.mag() > 100.0 {
+                        // if color.mag() > 10.0 {
                         //     dbg!(i);
                         //     dbg!(color);
                         //     dbg!(pdf_val);
-                        //     dbg!(pdf);
+                        //     dbg!(emitted);
                         //     dbg!(object.material.pdf(&ray, &scattered, &hit));
                         //     dbg!(scatter.attenuation);
                         //     exit(0);

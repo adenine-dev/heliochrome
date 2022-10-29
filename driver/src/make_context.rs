@@ -26,8 +26,8 @@ use heliochrome::{
 
 #[allow(clippy::vec_init_then_push)]
 pub fn make_context() -> Context {
-    let mut width = 500.0;
-    let mut height = 500.0;
+    let mut width = 300.0;
+    let mut height = 300.0;
 
     let mut objects = vec![];
     let mut camera = Camera::new(
@@ -42,7 +42,7 @@ pub fn make_context() -> Context {
     let mut tone_map = ToneMap::HejlRichard;
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 0 {
+    match 8 {
         // Cornell Box
         0 => {
             width = 400.0;
@@ -412,6 +412,150 @@ pub fn make_context() -> Context {
             );
 
             tone_map = ToneMap::Reinhard(1.0);
+        }
+        // materials
+        7 => {
+            width = 500.0;
+            height = 200.0;
+            camera = Camera::new(
+                maths::vec3::new(0.0, 1.0, 18.0),
+                vec3::new(0.0, 0.0, 0.0),
+                vec3::unit_y(),
+                40.0,
+                width as f32 / height as f32,
+                0.1,
+                None,
+            );
+            skybox = SkyBox::Equirectangular(
+                Image::load_from_hdri(Path::new("assets/skyboxes/belfast_sunset_puresky_4k.hdr"))
+                    .unwrap(),
+            );
+
+            // skybox = SkyBox::Color(Color::splat(0.85));
+
+            let files = fs::read_dir("assets/bsdfs")
+                .unwrap()
+                .flatten()
+                .collect::<Vec<_>>();
+            let cols = 10;
+            for (i, path) in files.iter().enumerate() {
+                let r = i % (cols);
+                let c = i / cols;
+                let s = 2.2;
+                let x = r as f32 - cols as f32 / 2.0 + 0.5;
+                let y = c as f32;
+                let z = 0.0;
+                objects.push(Object::new(
+                    hittables::Sphere::new(vec3::new(x, y, z) * s, 1.0),
+                    Measured::load_from_rgl_rgb_bsdf(path.path().as_path()).unwrap(),
+                    None,
+                ));
+            }
+
+            // objects.push(Object::new(
+            //     hittables::Sphere::new(vec3::splat(0.0), 1.0),
+            //     // BRDF::load_from_rgl_rgb_bsdf(Path::new("assets/bsdfs/acrylic_felt_pink_rgb.bsdf"))
+            //     //     .unwrap(),
+            //     BRDF::load_from_rgl_rgb_bsdf(Path::new(
+            //         "assets/bsdfs/aniso_morpho_melenaus_rgb.bsdf",
+            //     ))
+            //     .unwrap(),
+            //     // BRDF::load_from_rgl_rgb_bsdf(Path::new("assets/bsdfs/chm_mint_rgb.bsdf")).unwrap(),
+            //     None,
+            // ));
+
+            objects.push(Object::new(
+                hittables::InfinitePlane::new(
+                    vec3::new(0.0, -1.2, 0.0),
+                    vec3::new(0.0, 1.0, 0.0).normalized(),
+                ),
+                Metal::new(Color::splat(0.25), 0.2),
+                // Lambertian::new(Color::splat(0.85)),
+                None,
+            ));
+
+            tone_map = ToneMap::Clamp;
+        }
+        8 => {
+            width = 400.0;
+            height = 400.0;
+            camera = Camera::new(
+                maths::vec3::new(110.0, 110.0, 650.0),
+                vec3::new(110.0, 110.0, 0.0),
+                vec3::unit_y(),
+                40.0,
+                width as f32 / height as f32,
+                0.0,
+                None,
+            );
+            skybox = SkyBox::Equirectangular(
+                Image::load_from_hdri(Path::new(
+                    "assets/skyboxes/christmas_photo_studio_05_4k.hdr",
+                ))
+                .unwrap(),
+            );
+
+            // skybox = SkyBox::Color(Color::splat(0.85));
+            // tone_map = ToneMap::Clamp;
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::splat(0.0), 100.0),
+                Measured::load_from_rgl_rgb_bsdf(Path::new(
+                    "assets/bsdfs/acrylic_felt_pink_rgb.bsdf",
+                ))
+                .unwrap(),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(220.0, 0.0, 0.0), 100.0),
+                Measured::load_from_rgl_rgb_bsdf(Path::new(
+                    "assets/bsdfs/aniso_morpho_melenaus_rgb.bsdf",
+                ))
+                .unwrap(),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(0.0, 220.0, 0.0), 100.0),
+                Measured::load_from_rgl_rgb_bsdf(Path::new("assets/bsdfs/cg_sunflower_rgb.bsdf"))
+                    .unwrap(),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(220.0, 220.0, 0.0), 100.0),
+                Measured::load_from_rgl_rgb_bsdf(Path::new("assets/bsdfs/chm_mint_rgb.bsdf"))
+                    .unwrap(),
+                None,
+            ));
+
+            // let meshes = load_obj("assets/models/ornament.obj").unwrap();
+            // dbg!(meshes.len());
+            // let mesh = meshes.first().unwrap();
+            // objects.push(Object::new(
+            //     hittables::Mesh::new(&mesh.vertices, &mesh.indices, &mesh.normals),
+            //     Metal::new(Color::splat(0.95), 0.0),
+            //     Some(Transform::new(
+            //         mat4::scale(vec3::splat(0.3)) * mat4::translate(vec3::new(0.0, 5.0, 0.0)),
+            //     )),
+            // ));
+
+            objects.push(Object::new(
+                hittables::InfinitePlane::new(
+                    vec3::new(0.0, -110.0, 0.0),
+                    vec3::new(0.0, 1.0, 0.0).normalized(),
+                ),
+                Metal::new(Color::splat(0.25), 0.2),
+                // Lambertian::new(Color::splat(0.85)),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(110.0, 110.0, 1000.0), 100.0),
+                DiffuseLight::new(Color::splat(1.0), 20.0),
+                None,
+            ));
         }
         _ => panic!("oof"),
     }
