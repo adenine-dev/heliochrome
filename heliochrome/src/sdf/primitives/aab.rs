@@ -13,7 +13,7 @@ impl AAB {
 impl SDF for AAB {
     fn dist(&self, p: vec3) -> f32 {
         let q = p.abs() - self.extent;
-        return q.max(&vec3::splat(0.0)).mag() + q.x.max(q.y).max(q.z).min(0.0);
+        q.max(&vec3::splat(0.0)).mag() + q.x.max(q.y).max(q.z).min(0.0)
     }
 
     fn make_bounding_box(&self) -> AABB {

@@ -1,5 +1,6 @@
 use rand::random;
 
+use super::ScatterType;
 use crate::{
     color::Color,
     hittables::Hit,
@@ -43,8 +44,7 @@ impl Scatterable for Dielectric {
 
         Some(Scatter {
             attenuation: self.color,
-            pdf: None,
-            specular: Some(Ray::new(hit.p, direction)),
+            scatter_type: ScatterType::Specular(Ray::new(hit.p, direction)),
         })
     }
 

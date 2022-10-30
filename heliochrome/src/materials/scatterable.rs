@@ -1,11 +1,15 @@
 use enum_dispatch::enum_dispatch;
 
-use crate::{color::Color, hittables::Hit, maths::Ray, pdf::PDF};
+use crate::{color::Color, hittables::Hit, maths::Ray, pdf::Pdf};
 
-pub struct Scatter {
+pub enum ScatterType<'a> {
+    Pdf(Pdf<'a>),
+    Specular(Ray),
+}
+
+pub struct Scatter<'a> {
     pub attenuation: Color,
-    pub pdf: Option<PDF>,
-    pub specular: Option<Ray>,
+    pub scatter_type: ScatterType<'a>,
 }
 
 #[enum_dispatch]

@@ -12,11 +12,11 @@ pub trait ProbabilityDensityFn {
     fn value(&self, dir: &vec3) -> f32;
     fn generate(&self) -> vec3;
 }
-pub struct CosinePDF {
+pub struct CosinePdf {
     onb: ONB,
 }
 
-impl CosinePDF {
+impl CosinePdf {
     pub fn new(w: vec3) -> Self {
         Self {
             onb: ONB::new_from_w(w),
@@ -24,7 +24,7 @@ impl CosinePDF {
     }
 }
 
-impl ProbabilityDensityFn for CosinePDF {
+impl ProbabilityDensityFn for CosinePdf {
     fn value(&self, dir: &vec3) -> f32 {
         let cosine = dir.normalized().dot(self.onb.w);
         if cosine <= 0.0 {
@@ -38,18 +38,18 @@ impl ProbabilityDensityFn for CosinePDF {
         self.onb.local(&vec3::random_cosine_direction())
     }
 }
-pub struct ObjectPDF {
-    pub obj: Object,
+pub struct ObjectPdf<'a> {
+    pub obj: &'a Object,
     pub origin: vec3,
 }
 
-impl ObjectPDF {
-    pub fn new(obj: Object, origin: vec3) -> Self {
+impl<'a> ObjectPdf<'a> {
+    pub fn new(obj: &'a Object, origin: vec3) -> Self {
         Self { obj, origin }
     }
 }
 
-impl ProbabilityDensityFn for ObjectPDF {
+impl<'a> ProbabilityDensityFn for ObjectPdf<'a> {
     fn value(&self, dir: &vec3) -> f32 {
         self.obj.pdf_value(&self.origin, dir)
     }
@@ -59,18 +59,18 @@ impl ProbabilityDensityFn for ObjectPDF {
     }
 }
 
-pub struct ObjectListPDF {
+pub struct ObjectListPdf {
     pub objs: Vec<Object>,
     pub origin: vec3,
 }
 
-impl ObjectListPDF {
+impl ObjectListPdf {
     pub fn new(objs: Vec<Object>, origin: vec3) -> Self {
         Self { objs, origin }
     }
 }
 
-impl ProbabilityDensityFn for ObjectListPDF {
+impl ProbabilityDensityFn for ObjectListPdf {
     fn value(&self, dir: &vec3) -> f32 {
         self.objs
             .iter()
@@ -87,10 +87,10 @@ impl ProbabilityDensityFn for ObjectListPDF {
 }
 
 #[enum_dispatch(ProbabilityDensityFn)]
-pub enum PDF {
-    CosinePDF,
-    ObjectPDF,
-    ObjectListPDF,
+pub enum Pdf<'a> {
+    CosinePdf,
+    ObjectPdf(ObjectPdf<'a>),
+    ObjectListPdf,
 }
 
 impl<P: ProbabilityDensityFn> ProbabilityDensityFn for Vec<P> {

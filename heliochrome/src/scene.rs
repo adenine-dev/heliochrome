@@ -7,7 +7,7 @@ use crate::{
     materials::Scatterable,
     maths::{vec2, vec3, Ray},
     object::Object,
-    pdf::ObjectPDF,
+    pdf::ObjectPdf,
 };
 
 pub enum SkyBox {
@@ -68,10 +68,10 @@ impl Scene {
         self.objects.hit_obj(ray, t_min, t_max)
     }
 
-    pub fn make_importance_pdf(&self, origin: &vec3) -> Vec<ObjectPDF> {
+    pub fn make_importance_pdf(&self, origin: &vec3) -> Vec<ObjectPdf> {
         self.important_indices
             .iter()
-            .map(|idx| ObjectPDF::new(self.objects.hittables[*idx].clone(), *origin))
+            .map(|idx| ObjectPdf::new(&self.objects.hittables[*idx], *origin))
             .collect()
     }
 

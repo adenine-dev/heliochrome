@@ -1,5 +1,5 @@
-use super::Scatter;
-use crate::{color::Color, hittables::Hit, materials::Scatterable, maths::Ray, pdf::CosinePDF};
+use super::{Scatter, ScatterType};
+use crate::{color::Color, hittables::Hit, materials::Scatterable, maths::Ray, pdf::CosinePdf};
 
 #[derive(Clone)]
 pub struct Lambertian {
@@ -19,8 +19,7 @@ impl Scatterable for Lambertian {
         Some(Scatter {
             // outgoing: Ray::new(hit.p, dir),
             attenuation: self.albedo,
-            pdf: Some(CosinePDF::new(hit.normal).into()),
-            specular: None,
+            scatter_type: ScatterType::Pdf(CosinePdf::new(hit.normal).into()),
         })
     }
 

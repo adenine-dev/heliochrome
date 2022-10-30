@@ -1,3 +1,4 @@
+use super::ScatterType;
 use crate::{
     color::Color,
     hittables::Hit,
@@ -24,8 +25,7 @@ impl Scatterable for Metal {
             Some(Scatter {
                 // outgoing: Ray::new(hit.p, reflected + self.fuzz * vec3::random_in_unit_sphere()),
                 attenuation: self.albedo,
-                pdf: None,
-                specular: Some(Ray::new(
+                scatter_type: ScatterType::Specular(Ray::new(
                     hit.p,
                     reflected + self.fuzz * vec3::random_in_unit_sphere(),
                 )),

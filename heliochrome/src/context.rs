@@ -11,9 +11,9 @@ use spmc;
 
 use crate::color::Color;
 use crate::image::Image;
-use crate::materials::Scatterable;
+use crate::materials::{ScatterType, Scatterable};
 use crate::maths::*;
-use crate::pdf::{ObjectListPDF, ProbabilityDensityFn};
+use crate::pdf::{ObjectListPdf, ProbabilityDensityFn};
 use crate::scene::Scene;
 use crate::tonemap::ToneMap;
 
@@ -83,12 +83,8 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             let emitted = object.material.emitted(&hit);
 
             if let Some(scatter) = object.material.scatter(&ray, &hit) {
-                {
-                    if let Some(specular) = scatter.specular {
-                        color *= scatter.attenuation;
-                        // color += emitted;
-                        ray = specular;
-                    } else if let Some(pdf) = scatter.pdf {
+                match scatter.scatter_type {
+                    ScatterType::Pdf(pdf) => {
                         let importants = scene.get_importants();
 
                         let (scattered, pdf_val) = if importants.is_empty() {
@@ -97,7 +93,7 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
                             let pdf_val = pdf.value(&scattered.direction);
                             (scattered, pdf_val)
                         } else {
-                            let importance_pdf = ObjectListPDF::new(importants, hit.p);
+                            let importance_pdf = ObjectListPdf::new(importants, hit.p);
                             let pdf = (importance_pdf, pdf);
 
                             let dir = pdf.generate();
@@ -110,30 +106,10 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
                             / pdf_val;
                         color += emitted;
                         ray = scattered;
-                        // if i == 44897 {
-                        //     color = Color::new(0.0, 1.0, 1.0);
-                        //     break;
-                        // }
-                        // if color.mag() > 100.0 {
-                        //     dbg!(i);
-                        //     dbg!(color);
-                        //     dbg!(pdf_val);
-                        //     dbg!(pdf);
-                        //     dbg!(object.material.pdf(&ray, &scattered, &hit));
-                        //     dbg!(scatter.attenuation);
-                        //     exit(0);
-                        // }
-
-                        // let dir = pdf.generate();
-                        // let scattered = Ray::new(hit.p, dir);
-                        // let pdf_val = pdf.value(&scattered.direction);
-
-                        // color *= object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation
-                        //     / pdf_val;
-                        // color += emitted;
-                        // ray = scattered;
-                    } else {
-                        panic!("oof :<");
+                    }
+                    ScatterType::Specular(specular) => {
+                        color *= scatter.attenuation;
+                        ray = specular;
                     }
                 }
             } else {
@@ -225,19 +201,6 @@ impl Context {
                 *color = self.accumulated_image.buffer[i] / self.samples as f32;
             });
         self.tone_map.map(&mut out_image);
-
-        // self.pixel_buffer
-        //     .iter_mut()
-        //     .enumerate()
-        //     .for_each(|(i, color)| {
-        //         let out_color =
-        //             gamma_correct(self.accumulated_image.buffer[i] / self.samples as f32, 2.0);
-        //         let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u32;
-        //         let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u32;
-        //         let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u32;
-
-        //         *color = red | (green << 8) | (blue << 16) | (0xFF << 24)
-        //     });
 
         out_image
     }
