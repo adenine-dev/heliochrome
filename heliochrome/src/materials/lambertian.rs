@@ -1,5 +1,7 @@
 use super::{Scatter, ScatterType};
-use crate::{color::Color, hittables::Hit, materials::Scatterable, maths::Ray, pdf::CosinePdf};
+use crate::{
+    color::Color, hittables::BounceInfo, materials::Scatterable, maths::Ray, pdf::CosinePdf,
+};
 
 #[derive(Clone)]
 pub struct Lambertian {
@@ -13,7 +15,7 @@ impl Lambertian {
 }
 
 impl Scatterable for Lambertian {
-    fn scatter(&self, _ray: &Ray, hit: &Hit) -> Option<Scatter> {
+    fn scatter(&self, _ray: &Ray, hit: &BounceInfo) -> Option<Scatter> {
         // let uvw = ONB::new_from_w(hit.normal);
         // let dir = uvw.local(&vec3::random_cosine_direction());
         Some(Scatter {
@@ -23,7 +25,7 @@ impl Scatterable for Lambertian {
         })
     }
 
-    fn pdf(&self, _incoming: &Ray, outgoing: &Ray, hit: &Hit) -> f32 {
+    fn pdf(&self, _incoming: &Ray, outgoing: &Ray, hit: &BounceInfo) -> f32 {
         let cosine = hit.normal.dot(outgoing.direction.normalized());
         if cosine > 0.0 {
             cosine / std::f32::consts::PI

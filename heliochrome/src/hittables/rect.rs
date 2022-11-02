@@ -1,4 +1,4 @@
-use super::{Hit, Hittable, Intersect, AABB};
+use super::{BounceInfo, Hittable, Intersection, AABB};
 use crate::maths::{mat3, vec3, Ray};
 
 #[derive(Clone, Debug)]
@@ -21,20 +21,19 @@ impl Rect {
 }
 
 impl Hittable for Rect {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let intersection = self.intersect(ray, t_min, t_max)?;
-        Some(Hit::new(ray, intersection.t, self.normal))
-    }
-
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         let b_inv = mat3::new([self.s1, self.s2, ray.direction]).inverse();
         let ol = b_inv * (ray.origin - self.origin);
         let t = -ol.z;
         if t_min <= t && t <= t_max && 0.0 <= ol.x && ol.x <= 1.0 && 0.0 <= ol.y && ol.y <= 1.0 {
-            Some(Intersect { t, i: 0 })
+            Some(Intersection { t, i: 0 })
         } else {
             None
         }
+    }
+
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo {
+        BounceInfo::new(ray, intersection.t, self.normal)
     }
 
     fn make_bounding_box(&self) -> AABB {
@@ -55,15 +54,16 @@ impl Hittable for Rect {
     }
 
     fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {
-        if let Some(hit) = self.hit(&Ray::new(*origin, *dir), 0.001, f32::INFINITY) {
+        if let Some(bounce) = self.intersect(&Ray::new(*origin, *dir), 0.001, f32::INFINITY) {
             let area = self.s1.mag() * self.s2.mag();
-            let dist_sq = hit.t * hit.t * dir.mag_sq();
-            let cosine = (dir.dot(hit.normal) / dir.mag()).abs();
+            let dist_sq = bounce.t * bounce.t * dir.mag_sq();
+            let cosine = (dir.dot(self.normal).abs() / dir.mag()).abs();
 
             dist_sq / (cosine * area)
         } else {
             0.0
         }
+        // 0.0
     }
 
     fn random(&self, origin: &vec3) -> vec3 {

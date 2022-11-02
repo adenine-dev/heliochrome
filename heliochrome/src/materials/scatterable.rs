@@ -1,6 +1,6 @@
 use enum_dispatch::enum_dispatch;
 
-use crate::{color::Color, hittables::Hit, maths::Ray, pdf::Pdf};
+use crate::{color::Color, hittables::BounceInfo, maths::Ray, pdf::Pdf};
 
 pub enum ScatterType<'a> {
     Pdf(Pdf<'a>),
@@ -15,13 +15,13 @@ pub struct Scatter<'a> {
 #[enum_dispatch]
 #[allow(unused_variables)] // default trait impls
 pub trait Scatterable: Clone {
-    fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter>;
+    fn scatter(&self, ray: &Ray, hit: &BounceInfo) -> Option<Scatter>;
 
-    fn pdf(&self, incoming: &Ray, outgoing: &Ray, hit: &Hit) -> f32 {
+    fn pdf(&self, incoming: &Ray, outgoing: &Ray, hit: &BounceInfo) -> f32 {
         0.0
     }
 
-    fn emitted(&self, hit: &Hit) -> Color {
+    fn emitted(&self, hit: &BounceInfo) -> Color {
         Color::splat(0.0)
     }
 

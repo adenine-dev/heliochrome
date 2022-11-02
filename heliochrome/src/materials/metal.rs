@@ -1,7 +1,7 @@
 use super::ScatterType;
 use crate::{
     color::Color,
-    hittables::Hit,
+    hittables::BounceInfo,
     materials::{Scatter, Scatterable},
     maths::{vec3, Ray},
 };
@@ -19,7 +19,7 @@ impl Metal {
 }
 
 impl Scatterable for Metal {
-    fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter> {
+    fn scatter(&self, ray: &Ray, hit: &BounceInfo) -> Option<Scatter> {
         let reflected = ray.direction.reflect_over(hit.normal);
         if reflected.dot(hit.normal) > 0.0 {
             Some(Scatter {

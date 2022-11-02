@@ -1,10 +1,10 @@
 use indicatif::{ProgressBar, ProgressStyle};
 
 use super::{
-    hittables::{Hit, Hittable, AABB},
+    hittables::{BounceInfo, Hittable, AABB},
     maths::Ray,
 };
-use crate::{hittables::Intersect, maths::vec3};
+use crate::{hittables::Intersection, maths::vec3};
 
 const INVALID_IDX: usize = usize::MAX;
 
@@ -16,37 +16,6 @@ struct BVHNode {
 }
 
 impl BVHNode {
-    pub fn hit<T: Hittable>(
-        &self,
-        nodes: &Vec<BVHNode>,
-        hittables: &Vec<T>,
-        ray: &Ray,
-        t_min: f32,
-        mut t_max: f32,
-    ) -> Option<(Hit, usize)> {
-        if !self.bounds.hits(ray, t_min, t_max) {
-            return None;
-        }
-
-        if self.idx != INVALID_IDX {
-            if let Some(hit) = hittables[self.idx].hit(ray, t_min, t_max) {
-                return Some((hit, self.idx));
-            }
-            return None;
-        }
-
-        let mut hit = None;
-        for child in self.children {
-            let h = nodes[child].hit(nodes, hittables, ray, t_min, t_max);
-            if h.is_some() {
-                hit = h;
-                t_max = hit.as_ref().unwrap().0.t;
-            }
-        }
-
-        hit
-    }
-
     pub fn intersect<T: Hittable>(
         &self,
         nodes: &Vec<BVHNode>,
@@ -54,7 +23,7 @@ impl BVHNode {
         ray: &Ray,
         t_min: f32,
         mut t_max: f32,
-    ) -> Option<(Intersect, usize)> {
+    ) -> Option<(Intersection, usize)> {
         if !self.bounds.hits(ray, t_min, t_max) {
             return None;
         }
@@ -86,20 +55,7 @@ pub struct BVH<T: Hittable> {
 }
 
 impl<T: Hittable> Hittable for BVH<T> {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        // return self.hittables[0].hit(ray, t_min, t_max);
-        if let Some((hit, _)) =
-            self.nodes
-                .last()?
-                .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
-        {
-            return Some(hit);
-        }
-
-        None
-    }
-
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         if let Some((intersection, _)) =
             self.nodes
                 .last()?
@@ -109,6 +65,10 @@ impl<T: Hittable> Hittable for BVH<T> {
         }
 
         None
+    }
+
+    fn get_bounce_info(&self, _ray: &Ray, _intersection: Intersection) -> BounceInfo {
+        panic!("don't call get bounce info on a bvh");
     }
 
     fn make_bounding_box(&self) -> AABB {
@@ -180,32 +140,22 @@ impl<T: Hittable> BVH<T> {
         Self { hittables, nodes }
     }
 
-    pub fn hit_with_index(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Hit, usize)> {
-        self.nodes
-            .last()?
-            .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
-    }
-
-    pub fn hit_obj(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Hit, &T)> {
-        if let Some((hit, idx)) =
-            self.nodes
-                .last()?
-                .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
-        {
-            return Some((hit, &self.hittables[idx]));
-        }
-
-        None
-    }
-
     pub fn intersect_with_index(
         &self,
         ray: &Ray,
         t_min: f32,
         t_max: f32,
-    ) -> Option<(Intersect, usize)> {
+    ) -> Option<(Intersection, usize)> {
         self.nodes
             .last()?
             .intersect(&self.nodes, &self.hittables, ray, t_min, t_max)
+    }
+
+    pub fn intersect_obj(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Intersection, &T)> {
+        let (intersection, idx) =
+            self.nodes
+                .last()?
+                .intersect(&self.nodes, &self.hittables, ray, t_min, t_max)?;
+        Some((intersection, &self.hittables[idx]))
     }
 }

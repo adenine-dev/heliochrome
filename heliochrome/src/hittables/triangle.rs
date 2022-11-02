@@ -1,4 +1,4 @@
-use super::{Hit, Hittable, Intersect, AABB};
+use super::{BounceInfo, Hittable, Intersection, AABB};
 use crate::maths::{vec3, Ray};
 
 #[derive(Clone, Default)]
@@ -10,32 +10,16 @@ impl Triangle {
     pub fn new(vertices: [vec3; 3]) -> Self {
         Self { vertices }
     }
-}
 
-pub(crate) fn triangle_bounding_box(vertices: &[vec3; 3]) -> AABB {
-    let mut min = vec3::splat(f32::INFINITY);
-    let mut max = vec3::splat(-f32::INFINITY);
-    for v in vertices {
-        min = min.min(v);
-        max = max.max(v);
+    pub fn normal(&self) -> vec3 {
+        let edge1 = self.vertices[1] - self.vertices[0];
+        let edge2 = self.vertices[2] - self.vertices[0];
+        edge2.cross(edge1).normalize()
     }
-
-    AABB::new(min - vec3::splat(0.0001), max + vec3::splat(0.0001))
 }
 
 impl Hittable for Triangle {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let intersection = self.intersect(ray, t_min, t_max)?;
-        let edge1 = self.vertices[1] - self.vertices[0];
-        let edge2 = self.vertices[2] - self.vertices[0];
-        Some(Hit::new(
-            ray,
-            intersection.t,
-            edge2.cross(edge1).normalize(),
-        ))
-    }
-
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         let edge1 = self.vertices[1] - self.vertices[0];
         let edge2 = self.vertices[2] - self.vertices[0];
         let h = ray.direction.cross(edge2);
@@ -60,10 +44,21 @@ impl Hittable for Triangle {
             return None;
         }
 
-        Some(Intersect { t, i: 0 })
+        Some(Intersection { t, i: 0 })
+    }
+
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo {
+        BounceInfo::new(ray, intersection.t, self.normal())
     }
 
     fn make_bounding_box(&self) -> AABB {
-        triangle_bounding_box(&self.vertices)
+        let mut min = vec3::splat(f32::INFINITY);
+        let mut max = vec3::splat(-f32::INFINITY);
+        for v in &self.vertices {
+            min = min.min(v);
+            max = max.max(v);
+        }
+
+        AABB::new(min - vec3::splat(0.0001), max + vec3::splat(0.0001))
     }
 }

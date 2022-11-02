@@ -16,7 +16,7 @@ mod diffuse_light;
 pub use diffuse_light::*;
 
 use super::color::Color;
-use super::hittables::Hit;
+use super::hittables::BounceInfo;
 use super::maths::Ray;
 
 #[enum_dispatch(Scatterable)]

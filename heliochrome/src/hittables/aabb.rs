@@ -1,4 +1,4 @@
-use super::{Hit, Hittable, Intersect};
+use super::{BounceInfo, Hittable, Intersection};
 use crate::maths::{vec3, Ray};
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -45,24 +45,7 @@ impl AABB {
 }
 
 impl Hittable for AABB {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let normals = [
-            vec3::unit_x(),
-            -vec3::unit_x(),
-            vec3::unit_y(),
-            -vec3::unit_y(),
-            vec3::unit_z(),
-            -vec3::unit_z(),
-        ];
-        let intersection = self.intersect(ray, t_min, t_max)?;
-        Some(Hit::new(
-            ray,
-            intersection.t,
-            normals[intersection.i as usize],
-        ))
-    }
-
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         let mut entrance = t_min - f32::EPSILON;
         let mut exit = t_max;
         let mut i = 0;
@@ -90,7 +73,19 @@ impl Hittable for AABB {
             return None;
         }
 
-        Some(Intersect { t: entrance, i })
+        Some(Intersection { t: entrance, i })
+    }
+
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo {
+        let normals = [
+            vec3::unit_x(),
+            -vec3::unit_x(),
+            vec3::unit_y(),
+            -vec3::unit_y(),
+            vec3::unit_z(),
+            -vec3::unit_z(),
+        ];
+        BounceInfo::new(ray, intersection.t, normals[intersection.i as usize])
     }
 
     fn make_bounding_box(&self) -> AABB {

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::{Hit, Hittable, Intersect, AABB};
+use super::{BounceInfo, Hittable, Intersection, AABB};
 use crate::{maths::Ray, sdf::SDF};
 
 const MIN_DIST: f32 = 0.000001;
@@ -19,17 +19,7 @@ impl HittableSDF {
 }
 
 impl Hittable for HittableSDF {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let intersection = self.intersect(ray, t_min, t_max)?;
-
-        Some(Hit::new(
-            ray,
-            intersection.t,
-            self.sdf.normal_at(&ray.at(intersection.t)),
-        ))
-    }
-
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         let mut t = t_min;
         let mut p = ray.at(t);
 
@@ -41,11 +31,19 @@ impl Hittable for HittableSDF {
             }
             p = ray.at(t);
             if d.abs() < MIN_DIST {
-                return Some(Intersect { t, i: 0 });
+                return Some(Intersection { t, i: 0 });
             }
         }
 
         None
+    }
+
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo {
+        BounceInfo::new(
+            ray,
+            intersection.t,
+            self.sdf.normal_at(&ray.at(intersection.t)),
+        )
     }
 
     fn make_bounding_box(&self) -> AABB {

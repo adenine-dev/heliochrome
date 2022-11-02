@@ -1,5 +1,5 @@
 use crate::{
-    hittables::{Hit, Hittable, HittableObject, Intersect, AABB},
+    hittables::{BounceInfo, Hittable, HittableObject, Intersection, AABB},
     materials::Material,
     maths::vec3,
     maths::Ray,
@@ -28,25 +28,7 @@ impl Object {
 }
 
 impl Hittable for Object {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let r = if let Some(transform) = &self.transform {
-            transform.trans_ray(ray)
-        } else {
-            *ray
-        };
-
-        let mut hit = self.hittable.hit(&r, t_min, t_max);
-        if let Some(hit) = &mut hit {
-            if let Some(transform) = &self.transform {
-                hit.p = ray.at(hit.t);
-                hit.set_normal(ray, transform.trans_normal(&hit.normal));
-            }
-        }
-
-        hit
-    }
-
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         let r = if let Some(transform) = &self.transform {
             transform.trans_ray(ray)
         } else {
@@ -54,6 +36,22 @@ impl Hittable for Object {
         };
 
         self.hittable.intersect(&r, t_min, t_max)
+    }
+
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo {
+        let r = if let Some(transform) = &self.transform {
+            transform.trans_ray(ray)
+        } else {
+            *ray
+        };
+
+        let mut bounce_info = self.hittable.get_bounce_info(&r, intersection);
+        if let Some(transform) = &self.transform {
+            bounce_info.p = ray.at(bounce_info.t);
+            bounce_info.set_normal(ray, transform.trans_normal(&bounce_info.normal));
+        }
+
+        bounce_info
     }
 
     fn make_bounding_box(&self) -> AABB {

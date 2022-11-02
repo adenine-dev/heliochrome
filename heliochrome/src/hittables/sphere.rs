@@ -1,6 +1,6 @@
-use super::{Intersect, AABB};
+use super::{Intersection, AABB};
 use crate::{
-    hittables::{Hit, Hittable},
+    hittables::{BounceInfo, Hittable},
     maths::*,
 };
 
@@ -17,17 +17,7 @@ impl Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let intersection = self.intersect(ray, t_min, t_max)?;
-
-        Some(Hit::new(
-            ray,
-            intersection.t,
-            (ray.at(intersection.t) - self.center) / self.radius,
-        ))
-    }
-
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         let oc = ray.origin - self.center;
         let a = ray.direction.mag_sq();
         let half_b = oc.dot(ray.direction);
@@ -47,7 +37,15 @@ impl Hittable for Sphere {
             }
         }
 
-        Some(Intersect { t: root, i: 0 })
+        Some(Intersection { t: root, i: 0 })
+    }
+
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo {
+        BounceInfo::new(
+            ray,
+            intersection.t,
+            (ray.at(intersection.t) - self.center) / self.radius,
+        )
     }
 
     fn make_bounding_box(&self) -> AABB {
@@ -59,7 +57,7 @@ impl Hittable for Sphere {
 
     fn pdf_value(&self, origin: &vec3, dir: &vec3) -> f32 {
         if self
-            .hit(&Ray::new(*origin, *dir), 0.001, f32::INFINITY)
+            .intersect(&Ray::new(*origin, *dir), 0.001, f32::INFINITY)
             .is_none()
         {
             0.0

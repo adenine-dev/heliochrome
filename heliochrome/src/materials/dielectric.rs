@@ -3,7 +3,7 @@ use rand::random;
 use super::ScatterType;
 use crate::{
     color::Color,
-    hittables::Hit,
+    hittables::BounceInfo,
     materials::{Scatter, Scatterable},
     maths::Ray,
 };
@@ -26,7 +26,7 @@ fn reflectance(cosine: f32, ref_idx: f32) -> f32 {
 }
 
 impl Scatterable for Dielectric {
-    fn scatter(&self, ray: &Ray, hit: &Hit) -> Option<Scatter> {
+    fn scatter(&self, ray: &Ray, hit: &BounceInfo) -> Option<Scatter> {
         let refraction_ratio = if hit.front_face {
             1.0 / self.ir
         } else {

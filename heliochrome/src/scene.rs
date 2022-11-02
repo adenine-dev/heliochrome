@@ -2,7 +2,7 @@ use crate::{
     bvh::BVH,
     camera::Camera,
     color::Color,
-    hittables::Hit,
+    hittables::{BounceInfo, Intersection},
     image::Image,
     materials::Scatterable,
     maths::{vec2, vec3, Ray},
@@ -64,8 +64,8 @@ impl Scene {
         }
     }
 
-    pub fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Hit, &Object)> {
-        self.objects.hit_obj(ray, t_min, t_max)
+    pub fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Intersection, &Object)> {
+        self.objects.intersect_obj(ray, t_min, t_max)
     }
 
     pub fn make_importance_pdf(&self, origin: &vec3) -> Vec<ObjectPdf> {

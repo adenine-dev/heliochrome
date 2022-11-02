@@ -2,14 +2,14 @@ use enum_dispatch::enum_dispatch;
 
 use crate::{maths::vec3, maths::Ray};
 
-pub struct Hit {
+pub struct BounceInfo {
     pub t: f32,
     pub p: vec3,
     pub normal: vec3,
     pub front_face: bool,
 }
 
-impl Hit {
+impl BounceInfo {
     pub fn new(src_ray: &Ray, t: f32, normal: vec3) -> Self {
         let front_face = src_ray.direction.dot(normal) < 0.0;
 
@@ -31,7 +31,7 @@ impl Hit {
     }
 }
 
-pub struct Intersect {
+pub struct Intersection {
     pub t: f32,
     pub i: u32,
 }
@@ -39,9 +39,9 @@ pub struct Intersect {
 #[enum_dispatch]
 #[allow(unused_variables)] // default trait impls
 pub trait Hittable: Send + Sync + Clone {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit>;
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection>;
 
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect>;
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo;
 
     fn make_bounding_box(&self) -> AABB;
 

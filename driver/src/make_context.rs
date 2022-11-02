@@ -34,7 +34,7 @@ pub fn make_context() -> Context {
     let mut tone_map = ToneMap::HejlRichard;
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 7 {
+    match 0 {
         // Cornell Box
         0 => {
             width = 400.0;

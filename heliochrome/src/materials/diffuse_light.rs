@@ -1,5 +1,5 @@
 use super::Scatter;
-use crate::{color::Color, hittables::Hit, materials::Scatterable, maths::Ray};
+use crate::{color::Color, hittables::BounceInfo, materials::Scatterable, maths::Ray};
 
 #[derive(Clone)]
 pub struct DiffuseLight {
@@ -15,11 +15,11 @@ impl DiffuseLight {
 }
 
 impl Scatterable for DiffuseLight {
-    fn scatter(&self, _ray: &Ray, _hit: &Hit) -> Option<Scatter> {
+    fn scatter(&self, _ray: &Ray, _hit: &BounceInfo) -> Option<Scatter> {
         None
     }
 
-    fn emitted(&self, hit: &Hit) -> Color {
+    fn emitted(&self, hit: &BounceInfo) -> Color {
         if hit.front_face {
             self.color
         } else {

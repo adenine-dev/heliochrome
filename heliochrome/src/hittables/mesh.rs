@@ -46,7 +46,7 @@
 //     }
 // }
 
-use super::{triangle_bounding_box, Hit, Hittable, Intersect, Triangle, AABB};
+use super::{BounceInfo, Hittable, Intersection, Triangle, AABB};
 use crate::{
     bvh::BVH,
     maths::{vec3, Ray},
@@ -89,17 +89,25 @@ impl Mesh {
 }
 
 impl Hittable for Mesh {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        if let Some((mut hit, idx)) = self.tris.hit_with_index(ray, t_min, t_max) {
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
+        let (mut intersect, idx) = self.tris.intersect_with_index(ray, t_min, t_max)?;
+        intersect.i = idx as u32;
+        Some(intersect)
+    }
+
+    fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo {
+        let idx = intersection.i as usize;
+        let mut bounce_info = BounceInfo::new(ray, intersection.t, vec3::default());
+        bounce_info.set_normal(
+            ray,
             if let Some(normals) = &self.normals {
                 let a = self.tris.hittables[idx].vertices[0];
                 let b = self.tris.hittables[idx].vertices[1];
                 let c = self.tris.hittables[idx].vertices[2];
-                let p = hit.p;
 
                 let v0 = b - a;
                 let v1 = c - a;
-                let v2 = p - a;
+                let v2 = bounce_info.p - a;
                 let d00 = v0.dot(v0);
                 let d01 = v0.dot(v1);
                 let d11 = v1.dot(v1);
@@ -110,21 +118,13 @@ impl Hittable for Mesh {
                 let w = (d00 * d21 - d01 * d20) / denom;
                 let u = 1.0 - v - w;
 
-                hit.set_normal(
-                    ray,
-                    u * normals[idx][0] + v * normals[idx][1] + w * normals[idx][2],
-                );
-            }
-            Some(hit)
-        } else {
-            None
-        }
-    }
+                u * normals[idx][0] + v * normals[idx][1] + w * normals[idx][2]
+            } else {
+                self.tris.hittables[idx].normal()
+            },
+        );
 
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
-        let (mut intersect, idx) = self.tris.intersect_with_index(ray, t_min, t_max)?;
-        intersect.i = idx as u32;
-        Some(intersect)
+        bounce_info
     }
 
     fn make_bounding_box(&self) -> AABB {
@@ -132,7 +132,7 @@ impl Hittable for Mesh {
         let mut max = vec3::splat(-f32::INFINITY);
 
         for t in self.tris.hittables.iter() {
-            let aabb = triangle_bounding_box(&t.vertices);
+            let aabb = t.make_bounding_box();
             min = min.min(&aabb.min);
             max = max.max(&aabb.max);
         }

@@ -10,6 +10,7 @@ use rayon::{ThreadPool, ThreadPoolBuilder};
 use spmc;
 
 use crate::color::Color;
+use crate::hittables::Hittable;
 use crate::image::Image;
 use crate::materials::{ScatterType, Scatterable};
 use crate::maths::*;
@@ -62,7 +63,6 @@ fn gamma_correct(color: Color, gamma: f32) -> Color {
 }
 
 pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Color {
-    // dbg!(uv);
     let scene = scene.read().unwrap();
     let mut ray = scene.camera.get_ray(uv);
     let mut color = Color::splat(1.0);
@@ -71,38 +71,32 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
             return Color::splat(0.0);
         }
 
-        if let Some((hit, object)) = scene.hit(&ray, 0.001, f32::INFINITY) {
-            // color = if hit.front_face {
-            //     Color::new(0.0, 1.0, 0.0)
-            // } else {
-            //     Color::new(0.0, 0.0, 1.0)
-            // };
-            // let n = 0.5 * (hit.normal + vec3::splat(1.0));
-            // color = Color::new(n.x, n.y, n.z);
-            // break;
-            let emitted = object.material.emitted(&hit);
+        if let Some((intersection, object)) = scene.intersect(&ray, 0.001, f32::INFINITY) {
+            let bounce = object.get_bounce_info(&ray, intersection);
 
-            if let Some(scatter) = object.material.scatter(&ray, &hit) {
+            let emitted = object.material.emitted(&bounce);
+            if let Some(scatter) = object.material.scatter(&ray, &bounce) {
                 match scatter.scatter_type {
                     ScatterType::Pdf(pdf) => {
                         let importants = scene.get_importants();
 
                         let (scattered, pdf_val) = if importants.is_empty() {
                             let dir = pdf.generate();
-                            let scattered = Ray::new(hit.p, dir);
+                            let scattered = Ray::new(bounce.p, dir);
                             let pdf_val = pdf.value(&scattered.direction);
                             (scattered, pdf_val)
                         } else {
-                            let importance_pdf = ObjectListPdf::new(importants, hit.p);
+                            let importance_pdf = ObjectListPdf::new(importants, bounce.p);
                             let pdf = (importance_pdf, pdf);
 
                             let dir = pdf.generate();
-                            let scattered = Ray::new(hit.p, dir);
+                            let scattered = Ray::new(bounce.p, dir);
                             let pdf_val = pdf.value(&scattered.direction);
                             (scattered, pdf_val)
                         };
 
-                        color *= object.material.pdf(&ray, &scattered, &hit) * scatter.attenuation
+                        color *= object.material.pdf(&ray, &scattered, &bounce)
+                            * scatter.attenuation
                             / pdf_val;
                         color += emitted;
                         ray = scattered;
