@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use super::{Hit, Hittable, AABB};
+use super::{Hit, Hittable, Intersect, AABB};
 use crate::{maths::Ray, sdf::SDF};
 
 const MIN_DIST: f32 = 0.000001;
@@ -20,6 +20,16 @@ impl HittableSDF {
 
 impl Hittable for HittableSDF {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
+        let intersection = self.intersect(ray, t_min, t_max)?;
+
+        Some(Hit::new(
+            ray,
+            intersection.t,
+            self.sdf.normal_at(&ray.at(intersection.t)),
+        ))
+    }
+
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
         let mut t = t_min;
         let mut p = ray.at(t);
 
@@ -31,7 +41,7 @@ impl Hittable for HittableSDF {
             }
             p = ray.at(t);
             if d.abs() < MIN_DIST {
-                return Some(Hit::new(ray, t, self.sdf.normal_at(&p)));
+                return Some(Intersect { t, i: 0 });
             }
         }
 

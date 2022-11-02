@@ -4,7 +4,7 @@ use super::{
     hittables::{Hit, Hittable, AABB},
     maths::Ray,
 };
-use crate::maths::vec3;
+use crate::{hittables::Intersect, maths::vec3};
 
 const INVALID_IDX: usize = usize::MAX;
 
@@ -46,6 +46,37 @@ impl BVHNode {
 
         hit
     }
+
+    pub fn intersect<T: Hittable>(
+        &self,
+        nodes: &Vec<BVHNode>,
+        hittables: &Vec<T>,
+        ray: &Ray,
+        t_min: f32,
+        mut t_max: f32,
+    ) -> Option<(Intersect, usize)> {
+        if !self.bounds.hits(ray, t_min, t_max) {
+            return None;
+        }
+
+        if self.idx != INVALID_IDX {
+            if let Some(intersection) = hittables[self.idx].intersect(ray, t_min, t_max) {
+                return Some((intersection, self.idx));
+            }
+            return None;
+        }
+
+        let mut intersection = None;
+        for child in self.children {
+            let i = nodes[child].intersect(nodes, hittables, ray, t_min, t_max);
+            if i.is_some() {
+                intersection = i;
+                t_max = intersection.as_ref().unwrap().0.t;
+            }
+        }
+
+        intersection
+    }
 }
 
 #[derive(Clone)]
@@ -63,6 +94,18 @@ impl<T: Hittable> Hittable for BVH<T> {
                 .hit(&self.nodes, &self.hittables, ray, t_min, t_max)
         {
             return Some(hit);
+        }
+
+        None
+    }
+
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+        if let Some((intersection, _)) =
+            self.nodes
+                .last()?
+                .intersect(&self.nodes, &self.hittables, ray, t_min, t_max)
+        {
+            return Some(intersection);
         }
 
         None
@@ -153,5 +196,16 @@ impl<T: Hittable> BVH<T> {
         }
 
         None
+    }
+
+    pub fn intersect_with_index(
+        &self,
+        ray: &Ray,
+        t_min: f32,
+        t_max: f32,
+    ) -> Option<(Intersect, usize)> {
+        self.nodes
+            .last()?
+            .intersect(&self.nodes, &self.hittables, ray, t_min, t_max)
     }
 }

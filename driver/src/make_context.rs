@@ -34,7 +34,7 @@ pub fn make_context() -> Context {
     let mut tone_map = ToneMap::HejlRichard;
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 2 {
+    match 7 {
         // Cornell Box
         0 => {
             width = 400.0;
@@ -404,6 +404,78 @@ pub fn make_context() -> Context {
             );
 
             tone_map = ToneMap::Reinhard(1.0);
+        }
+        // bit of everything
+        7 => {
+            skybox = SkyBox::Equirectangular(
+                Image::load_from_hdri(Path::new(
+                    "assets/skyboxes/christmas_photo_studio_05_4k.hdr",
+                ))
+                .unwrap(),
+            );
+            camera.eye = vec3::new(3.0, 3.0, -26.0);
+
+            objects.push(Object::new(
+                hittables::InfinitePlane::new(
+                    vec3::new(0.0, -1.2, 0.0),
+                    vec3::new(0.0, 1.0, 0.0).normalized(),
+                ),
+                Lambertian::new(Color::splat(0.3)),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::HittableSDF::new(sdf::Torus::new(1.0, 0.5)),
+                Metal::new(Color::splat(0.85), 0.0),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::AABB::new(vec3::splat(-1.0), vec3::splat(1.0)),
+                Lambertian::new(Color::new(0.85, 0.2, 0.2)),
+                Some(Transform::new(
+                    mat4::translate(vec3::new(3.0, 0.0, 0.0))
+                        * mat4::rotate(vec3::splat(std::f32::consts::TAU / 8.0)),
+                )),
+            ));
+
+            objects.push(Object::new(
+                hittables::Sphere::new(vec3::new(0.0, 5.0, 0.0), 1.5),
+                Dielectric::new(1.45, Color::new(0.7, 0.7, 0.2)),
+                Some(Transform::new(mat4::scale(vec3::new(2.0, 1.0, 1.0)))),
+            ));
+
+            let meshes = load_obj("assets/models/suzanne.obj").unwrap();
+            let mesh = meshes.first().unwrap();
+
+            objects.push(Object::new(
+                hittables::Mesh::new(&mesh.vertices, &mesh.indices, &mesh.normals),
+                Metal::new(Color::splat(0.5), 0.5),
+                Some(Transform::new(
+                    mat4::rotate(vec3::new(0.0, std::f32::consts::TAU / 2.0, 0.0))
+                        * mat4::translate(vec3::new(2.0, 1.0, 1.0)),
+                )),
+            ));
+
+            objects.push(Object::new(
+                hittables::Triangle::new([
+                    vec3::new(-7.0, 0.0, -5.0),
+                    vec3::new(-7.0, 10.0, 0.0),
+                    vec3::new(-7.0, 0.0, 5.0),
+                ]),
+                Lambertian::new(Color::new(0.2, 0.7, 0.2)),
+                None,
+            ));
+
+            objects.push(Object::new(
+                hittables::Rect::new(
+                    vec3::new(7.0, 0.0, -5.0),
+                    vec3::new(0.0, 10.0, 0.0),
+                    vec3::new(0.0, 0.0, 10.0),
+                ),
+                Lambertian::new(Color::new(0.85, 0.2, 0.2)),
+                None,
+            ));
         }
         _ => panic!("oof"),
     }

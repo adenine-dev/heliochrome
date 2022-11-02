@@ -1,4 +1,4 @@
-use super::{Hit, Hittable};
+use super::{Hit, Hittable, Intersect};
 use crate::maths::{vec3, Ray};
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -46,12 +46,28 @@ impl AABB {
 
 impl Hittable for AABB {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
-        let normals = [vec3::unit_x(), vec3::unit_y(), vec3::unit_z()];
+        let normals = [
+            vec3::unit_x(),
+            -vec3::unit_x(),
+            vec3::unit_y(),
+            -vec3::unit_y(),
+            vec3::unit_z(),
+            -vec3::unit_z(),
+        ];
+        let intersection = self.intersect(ray, t_min, t_max)?;
+        Some(Hit::new(
+            ray,
+            intersection.t,
+            normals[intersection.i as usize],
+        ))
+    }
+
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
         let mut entrance = t_min - f32::EPSILON;
         let mut exit = t_max;
-        let mut n = vec3::splat(0.0);
+        let mut i = 0;
 
-        for (a, normal) in normals.iter().enumerate() {
+        for a in 0..3 {
             let inv_d = 1.0 / ray.direction[a];
             let mut close = (self.min[a] - ray.origin[a]) * inv_d;
             let mut far = (self.max[a] - ray.origin[a]) * inv_d;
@@ -66,7 +82,7 @@ impl Hittable for AABB {
             exit = exit.min(far);
             if close > entrance {
                 entrance = close;
-                n = ray.direction[a].signum() * normal;
+                i = ray.direction[a].signum().max(0.0) as u32 + a as u32 * 2;
             }
         }
 
@@ -74,7 +90,7 @@ impl Hittable for AABB {
             return None;
         }
 
-        Some(Hit::new(ray, entrance, n))
+        Some(Intersect { t: entrance, i })
     }
 
     fn make_bounding_box(&self) -> AABB {

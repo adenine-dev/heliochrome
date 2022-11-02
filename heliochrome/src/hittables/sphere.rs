@@ -1,4 +1,4 @@
-use super::AABB;
+use super::{Intersect, AABB};
 use crate::{
     hittables::{Hit, Hittable},
     maths::*,
@@ -18,6 +18,16 @@ impl Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Hit> {
+        let intersection = self.intersect(ray, t_min, t_max)?;
+
+        Some(Hit::new(
+            ray,
+            intersection.t,
+            (ray.at(intersection.t) - self.center) / self.radius,
+        ))
+    }
+
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
         let oc = ray.origin - self.center;
         let a = ray.direction.mag_sq();
         let half_b = oc.dot(ray.direction);
@@ -37,11 +47,7 @@ impl Hittable for Sphere {
             }
         }
 
-        Some(Hit::new(
-            ray,
-            root,
-            (ray.at(root) - self.center) / self.radius,
-        ))
+        Some(Intersect { t: root, i: 0 })
     }
 
     fn make_bounding_box(&self) -> AABB {

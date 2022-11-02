@@ -46,7 +46,7 @@
 //     }
 // }
 
-use super::{triangle_bounding_box, Hit, Hittable, Triangle, AABB};
+use super::{triangle_bounding_box, Hit, Hittable, Intersect, Triangle, AABB};
 use crate::{
     bvh::BVH,
     maths::{vec3, Ray},
@@ -119,6 +119,12 @@ impl Hittable for Mesh {
         } else {
             None
         }
+    }
+
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+        let (mut intersect, idx) = self.tris.intersect_with_index(ray, t_min, t_max)?;
+        intersect.i = idx as u32;
+        Some(intersect)
     }
 
     fn make_bounding_box(&self) -> AABB {

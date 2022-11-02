@@ -1,5 +1,5 @@
 use crate::{
-    hittables::{Hit, Hittable, HittableObject, AABB},
+    hittables::{Hit, Hittable, HittableObject, Intersect, AABB},
     materials::Material,
     maths::vec3,
     maths::Ray,
@@ -44,6 +44,16 @@ impl Hittable for Object {
         }
 
         hit
+    }
+
+    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersect> {
+        let r = if let Some(transform) = &self.transform {
+            transform.trans_ray(ray)
+        } else {
+            *ray
+        };
+
+        self.hittable.intersect(&r, t_min, t_max)
     }
 
     fn make_bounding_box(&self) -> AABB {
