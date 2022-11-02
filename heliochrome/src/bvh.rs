@@ -1,3 +1,5 @@
+use indicatif::{ProgressBar, ProgressStyle};
+
 use super::{
     hittables::{Hit, Hittable, AABB},
     maths::Ray,
@@ -85,49 +87,53 @@ impl<T: Hittable> BVH<T> {
         }
 
         let mut nodes = Vec::with_capacity(hittables.len() * 2 - 1);
-        let mut available = vec![false; hittables.len() * 2 - 1];
-        for i in 0..hittables.len() {
+        hittables.iter().enumerate().for_each(|(idx, hittable)| {
             nodes.push(BVHNode {
-                bounds: hittables[i].make_bounding_box(),
-                idx: i,
+                bounds: hittable.make_bounding_box(),
+                idx,
                 children: [INVALID_IDX; 2],
             });
-            available[i] = true;
-        }
+        });
+        let pb = ProgressBar::new((hittables.len() * 2 - 1) as u64).with_style(
+            ProgressStyle::with_template("[{elapsed_precise}] {wide_bar} {pos:>7}/{len:7}")
+                .unwrap(),
+        );
+
+        let mut active = (0..hittables.len()).collect::<Vec<_>>();
 
         while nodes.len() < hittables.len() * 2 - 1 {
             let mut best = f32::INFINITY;
             let mut bounds = AABB::default();
             let mut l = INVALID_IDX;
             let mut r = INVALID_IDX;
-            for i in 0..nodes.len() {
-                if available[i] {
-                    for j in 0..nodes.len() {
-                        if available[j] && i != j {
-                            let b = AABB::surrounding(&nodes[i].bounds, &nodes[j].bounds);
-                            let s = b.surface_area();
-                            if s <= best {
-                                best = s;
-                                bounds = b;
-                                l = i;
-                                r = j
-                            }
-                        }
+
+            let mut x = INVALID_IDX;
+            let mut y = INVALID_IDX;
+            for (x1, i) in active.iter().enumerate() {
+                for (y1, j) in active[(x1 + 1)..].iter().enumerate() {
+                    let b = AABB::surrounding(&nodes[*i].bounds, &nodes[*j].bounds);
+                    let s = b.surface_area();
+                    if s <= best {
+                        best = s;
+                        bounds = b;
+                        l = *i;
+                        r = *j;
+                        x = x1;
+                        y = y1 + x1 + 1;
                     }
                 }
             }
-
-            available[l] = false;
-            available[r] = false;
-
+            active[x] = nodes.len();
+            active.swap_remove(y);
             nodes.push(BVHNode {
                 bounds,
                 idx: INVALID_IDX,
                 children: [l, r],
             });
-            available[nodes.len() - 1] = true;
-        }
 
+            pb.inc(1);
+        }
+        pb.finish();
         Self { hittables, nodes }
     }
 
