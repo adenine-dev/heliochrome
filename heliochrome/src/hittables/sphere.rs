@@ -16,6 +16,18 @@ impl Sphere {
     }
 }
 
+pub fn random_to_sphere(radius: f32, dist_sq: f32) -> vec3 {
+    let r1 = rand::random::<f32>();
+    let r2 = rand::random::<f32>();
+    let z = 1.0 + r2 * ((1.0 - radius * radius / dist_sq).sqrt() - 1.0);
+
+    let phi = std::f32::consts::TAU * r1;
+    let x = phi.cos() * (1.0 - z * z).sqrt();
+    let y = phi.sin() * (1.0 - z * z).sqrt();
+
+    vec3::new(x, y, z)
+}
+
 impl Hittable for Sphere {
     fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
         let oc = ray.origin - self.center;
@@ -74,6 +86,6 @@ impl Hittable for Sphere {
         let direction = self.center - origin;
         let distance_squared = direction.mag_sq();
         let uvw = ONB::new_from_w(direction);
-        uvw.local(&vec3::random_to_sphere(self.radius, distance_squared))
+        uvw.local(&random_to_sphere(self.radius, distance_squared))
     }
 }

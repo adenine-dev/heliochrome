@@ -4,7 +4,7 @@ use std::ops::*;
 use impl_ops::*;
 use rand::distributions::{Distribution, Uniform};
 
-use crate::maths::{dvec3, misc::*, vec3};
+use crate::maths::{misc::*, vec3};
 
 macro_rules! vec4_impl {
     ($n:ident, $t:ident, $x:ident, $y:ident, $z:ident, $w:ident, $v3:ident) => {
@@ -268,4 +268,3 @@ macro_rules! vec4_impl {
 pub(crate) use vec4_impl;
 
 vec4_impl!(vec4, f32, x, y, z, w, vec3);
-vec4_impl!(dvec4, f64, x, y, z, w, dvec3);

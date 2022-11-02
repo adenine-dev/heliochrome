@@ -1,5 +1,8 @@
-use std::ops;
-use std::ops::*;
+use std::{
+    ops,
+    ops::*,
+    simd::{f32x4, SimdFloat, StdFloat},
+};
 
 use impl_ops::*;
 use rand::distributions::{Distribution, Uniform};
@@ -7,7 +10,7 @@ use rand::distributions::{Distribution, Uniform};
 use crate::maths::misc::*;
 
 macro_rules! vec3_impl {
-    ($n:ident, $t:ident, $x:ident, $y:ident, $z:ident) => {
+    ($n:ident, $t:ident, $b:ident, $x:ident, $y:ident, $z:ident) => {
         #[repr(C)]
         #[derive(Copy, Clone, Debug, Default, PartialEq)]
         pub struct $n {
@@ -29,7 +32,7 @@ macro_rules! vec3_impl {
                 }
             }
 
-            pub const fn unit_x() -> Self {
+            pub fn unit_x() -> Self {
                 Self {
                     $x: $t::splat(1.0),
                     $y: $t::splat(0.0),
@@ -37,7 +40,7 @@ macro_rules! vec3_impl {
                 }
             }
 
-            pub const fn unit_y() -> Self {
+            pub fn unit_y() -> Self {
                 Self {
                     $x: $t::splat(0.0),
                     $y: $t::splat(1.0),
@@ -45,7 +48,7 @@ macro_rules! vec3_impl {
                 }
             }
 
-            pub const fn unit_z() -> Self {
+            pub fn unit_z() -> Self {
                 Self {
                     $x: $t::splat(0.0),
                     $y: $t::splat(0.0),
@@ -67,9 +70,9 @@ macro_rules! vec3_impl {
 
             pub fn random() -> Self {
                 Self::new(
-                    rand::random::<$t>(),
-                    rand::random::<$t>(),
-                    rand::random::<$t>(),
+                    $t::splat(rand::random::<$b>()),
+                    $t::splat(rand::random::<$b>()),
+                    $t::splat(rand::random::<$b>()),
                 )
             }
 
@@ -78,8 +81,8 @@ macro_rules! vec3_impl {
                 let s = Uniform::new_inclusive(-1.0, 1.0);
 
                 loop {
-                    let ret = Self::new(s.sample(&mut rng), s.sample(&mut rng), 0.0);
-                    if ret.mag_sq() < 1.0 {
+                    let ret = Self::new($t::splat(s.sample(&mut rng)), $t::splat(s.sample(&mut rng)), $t::splat(0.0));
+                    if ret.mag_sq() < $t::splat(1.0) {
                         return ret;
                     }
                 }
@@ -91,8 +94,8 @@ macro_rules! vec3_impl {
                 let s = Uniform::new_inclusive(-1.0, 1.0);
 
                 loop {
-                    let ret = Self::new(s.sample(&mut rng), s.sample(&mut rng), s.sample(&mut rng));
-                    if ret.mag_sq() < 1.0 {
+                    let ret = Self::new($t::splat(s.sample(&mut rng)), $t::splat(s.sample(&mut rng)), $t::splat(s.sample(&mut rng)));
+                    if ret.mag_sq() < $t::splat(1.0) {
                         return ret;
                     }
                 }
@@ -100,41 +103,17 @@ macro_rules! vec3_impl {
 
             pub fn random_in_hemisphere(normal: &Self) -> Self {
                 let v = Self::random_in_unit_sphere();
-                if v.dot(*normal) > 0.0 {
+                if v.dot(*normal) > $t::splat(0.0) {
                     v
                 } else {
                     -v
                 }
             }
 
-            pub fn random_cosine_direction() -> Self {
-                let r1 = rand::random::<$t>();
-                let r2 = rand::random::<$t>();
-                let z = (1.0 - r2).sqrt();
-
-                let phi = std::$t::consts::TAU * r1;
-                let x = phi.cos() * r2.sqrt();
-                let y = phi.sin() * r2.sqrt();
-
-                Self::new(x, y, z)
-            }
-
-            pub fn random_to_sphere(radius: $t, dist_sq: $t) -> Self {
-                let r1 = rand::random::<$t>();
-                let r2 = rand::random::<$t>();
-                let z = 1.0 + r2*((1.0-radius*radius/dist_sq).sqrt() - 1.0);
-
-                let phi = std::$t::consts::TAU*r1;
-                let x = phi.cos()*(1.0-z*z).sqrt();
-                let y = phi.sin()*(1.0-z*z).sqrt();
-
-                Self::new(x, y, z)
-            }
-
             pub fn near_zero(&self) -> bool {
-                self.$x.abs() < $t::EPSILON
-                    && self.$y.abs() < $t::EPSILON
-                    && self.$z.abs() < $t::EPSILON
+                self.$x.abs() < $t::splat($b::EPSILON)
+                    && self.$y.abs() < $t::splat($b::EPSILON)
+                    && self.$z.abs() < $t::splat($b::EPSILON)
             }
 
             pub fn mag_sq(&self) -> $t {
@@ -150,6 +129,10 @@ macro_rules! vec3_impl {
                 *self
             }
 
+            pub fn normalized(&self) -> Self {
+                self.clone().normalize()
+            }
+
             pub fn sqrt(&self) -> Self {
                 Self::new(self.$x.sqrt(), self.$y.sqrt(), self.$z.sqrt())
             }
@@ -163,35 +146,26 @@ macro_rules! vec3_impl {
                 Self::new(self.$x.floor(), self.$y.floor(), self.$z.floor())
             }
 
-
-            pub fn powf(&self, n: $t) -> Self {
-                Self::new(self.$x.powf(n), self.$y.powf(n), self.$z.powf(n))
-            }
-
-            pub fn normalized(&self) -> Self {
-                self.clone().normalize()
-            }
-
             pub fn reflect_over(&self, n: $n) -> Self {
-                self - 2.0 * self.dot(n) * n
+                self - Self::splat($t::splat(2.0)) * self.dot(n) * n
             }
 
             pub fn refract(&self, n: $n, etai_over_etat: $t) -> $n {
-                let cos_theta = (-self).dot(n).min(1.0);
+                let cos_theta = (-self).dot(n).min($t::splat(1.0));
                 let r_out_perp = etai_over_etat * (self + cos_theta * n);
-                let r_out_parallel = -(1.0 - r_out_perp.mag_sq()).abs().sqrt() * n;
+                let r_out_parallel = -($t::splat(1.0) - r_out_perp.mag_sq()).abs().sqrt() * n;
                 r_out_perp + r_out_parallel
+            }
+
+            pub fn un_nan(mut self) -> $n {
+                if self.$x != self.$x {self.$x = $t::splat(0.0);}
+                if self.$y != self.$y {self.$y = $t::splat(0.0);}
+                if self.$z != self.$z {self.$z = $t::splat(0.0);}
+                self
             }
 
             pub fn project_on(&self, n: $n) -> $n {
                 (self.dot(n) / n.dot(n)) * n
-            }
-
-            pub fn un_nan(mut self) -> $n {
-                if self.$x != self.$x {self.$x = 0.0;}
-                if self.$y != self.$y {self.$y = 0.0;}
-                if self.$z != self.$z {self.$z = 0.0;}
-                self
             }
 
             pub fn min(&self, other: &$n) -> $n {
@@ -208,10 +182,6 @@ macro_rules! vec3_impl {
 
             pub fn signum(&self) -> $n {
                 Self::new(self.$x.signum(), self.$y.signum(), self.$z.signum())
-            }
-
-            pub fn exp(&self) -> $n {
-                Self::new(self.$x.exp(), self.$y.exp(), self.$z.exp())
             }
         }
 
@@ -315,5 +285,19 @@ macro_rules! vec3_impl {
 
 pub(crate) use vec3_impl;
 
-vec3_impl!(vec3, f32, x, y, z);
-vec3_impl!(dvec3, f64, x, y, z);
+vec3_impl!(vec3, f32, f32, x, y, z);
+vec3_impl!(mvec3, f32x4, f32, x, y, z);
+
+impl vec3 {
+    pub fn random_cosine_direction() -> Self {
+        let r1 = rand::random::<f32>();
+        let r2 = rand::random::<f32>();
+        let z = (1.0 - r2).sqrt();
+
+        let phi = std::f32::consts::TAU * r1;
+        let x = phi.cos() * r2.sqrt();
+        let y = phi.sin() * r2.sqrt();
+
+        Self::new(x, y, z)
+    }
+}

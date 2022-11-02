@@ -1,6 +1,6 @@
 use crate::maths::*;
 
-vec3_impl!(Color, f32, r, g, b);
+vec3_impl!(Color, f32, f32, r, g, b);
 
 impl Color {
     pub fn from_hex(hex: u32) -> Color {
@@ -17,6 +17,14 @@ impl Color {
 
     pub fn change_luminance(&self, nl: f32) -> Color {
         self * (nl / self.luminance())
+    }
+
+    pub fn exp(&self) -> Self {
+        Self::new(self.r.exp(), self.g.exp(), self.b.exp())
+    }
+
+    pub fn powf(&self, n: f32) -> Self {
+        Self::new(self.r.powf(n), self.g.powf(n), self.b.powf(n))
     }
 }
 
