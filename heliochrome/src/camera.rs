@@ -36,7 +36,7 @@ impl Camera {
     }
 
     pub fn get_ray(&self, uv: &vec2) -> Ray {
-        let h = (self.vfov.to_radians() / 2.0).tan();
+        let h = (self.vfov.to_radians() * 0.5).tan();
         let viewport_h = 2.0 * h;
         let viewport_w = self.aspect_ratio * viewport_h;
 
@@ -51,9 +51,9 @@ impl Camera {
         let horizontal = focus_dist * viewport_w * u;
         let vertical = focus_dist * viewport_h * v;
 
-        let lower_left = self.eye - horizontal / 2.0 - vertical / 2.0 - focus_dist * w;
+        let lower_left = self.eye - horizontal * 0.5 - vertical * 0.5 - focus_dist * w;
 
-        let rd = (self.aperture / 2.0) * vec3::random_in_unit_xy_disk();
+        let rd = (self.aperture * 0.5) * vec3::random_in_unit_xy_disk();
         let offset = u * rd.x + v * rd.y;
 
         Ray::new(

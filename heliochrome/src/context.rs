@@ -3,7 +3,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, RwLock};
 
 use indicatif;
-use indicatif::ParallelProgressIterator;
+use indicatif::{ParallelProgressIterator, ProgressIterator};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rayon::prelude::*;
 use rayon::{ThreadPool, ThreadPoolBuilder};
@@ -160,30 +160,25 @@ impl Context {
 
     pub fn render_sample(&mut self) -> Image {
         let mut out_image = Image::new(self.size);
-
-        let per_pixel = |(i, _color): (usize, &Color)| {
-            let u = (i % self.size.x as usize) as f32 + rand::random::<f32>();
-            let v = (i / self.size.x as usize) as f32 + rand::random::<f32>();
-            let uv = vec2::new(
-                u / (self.size.x - 1.0),
-                1.0 - (v / (self.size.y - 1.0)), // flip
-            );
-            let fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces);
-
-            if self.samples == 0 {
-                fragment
-            } else {
-                self.accumulated_image.buffer[i] + fragment
-            }
-        };
-
         self.accumulated_image.buffer = self
             .accumulated_image
             .buffer
             .par_iter()
             .progress_count(self.accumulated_image.buffer.len() as u64)
             .enumerate()
-            .map(per_pixel)
+            .map(|(i, color): (usize, &Color)| {
+                let u = (i % self.size.x as usize) as f32 + rand::random::<f32>();
+                let v = (i / self.size.x as usize) as f32 + rand::random::<f32>();
+                let uv = vec2::new(
+                    u / (self.size.x - 1.0),
+                    1.0 - (v / (self.size.y - 1.0)), // flip
+                );
+                let mut fragment = render_fragment(self.scene.clone(), &uv, self.quality.bounces);
+                if self.samples != 0 {
+                    fragment += color;
+                }
+                fragment
+            })
             .collect();
 
         self.samples += 1;

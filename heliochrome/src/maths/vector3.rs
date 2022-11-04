@@ -20,10 +20,12 @@ macro_rules! vec3_impl {
         }
 
         impl $n {
+            #[inline]
             pub const fn new($x: $t, $y: $t, $z: $t) -> Self {
                 Self { $x, $y, $z }
             }
 
+            #[inline]
             pub const fn splat(s: $t) -> Self {
                 Self {
                     $x: s,
@@ -32,6 +34,7 @@ macro_rules! vec3_impl {
                 }
             }
 
+            #[inline]
             pub fn unit_x() -> Self {
                 Self {
                     $x: $t::splat(1.0),
@@ -40,6 +43,7 @@ macro_rules! vec3_impl {
                 }
             }
 
+            #[inline]
             pub fn unit_y() -> Self {
                 Self {
                     $x: $t::splat(0.0),
@@ -48,6 +52,7 @@ macro_rules! vec3_impl {
                 }
             }
 
+            #[inline]
             pub fn unit_z() -> Self {
                 Self {
                     $x: $t::splat(0.0),
@@ -56,10 +61,12 @@ macro_rules! vec3_impl {
                 }
             }
 
+            #[inline]
             pub fn dot(&self, other: $n) -> $t {
                 (self.$x * other.$x) + (self.$y * other.$y) + (self.$z * other.$z)
             }
 
+            #[inline]
             pub fn cross(&self, other: $n) -> Self {
                 $n::new(
                     (self.$y * other.$z) + (-self.$z * other.$y),
@@ -68,6 +75,7 @@ macro_rules! vec3_impl {
                 )
             }
 
+            #[inline]
             pub fn random() -> Self {
                 Self::new(
                     $t::splat(rand::random::<$b>()),
@@ -76,6 +84,7 @@ macro_rules! vec3_impl {
                 )
             }
 
+            #[inline]
             pub fn random_in_unit_xy_disk() -> Self {
                 let mut rng = rand::thread_rng();
                 let s = Uniform::new_inclusive(-1.0, 1.0);
@@ -89,6 +98,7 @@ macro_rules! vec3_impl {
 
             }
 
+            #[inline]
             pub fn random_in_unit_sphere() -> Self {
                 let mut rng = rand::thread_rng();
                 let s = Uniform::new_inclusive(-1.0, 1.0);
@@ -101,6 +111,7 @@ macro_rules! vec3_impl {
                 }
             }
 
+            #[inline]
             pub fn random_in_hemisphere(normal: &Self) -> Self {
                 let v = Self::random_in_unit_sphere();
                 if v.dot(*normal) > $t::splat(0.0) {
@@ -110,46 +121,56 @@ macro_rules! vec3_impl {
                 }
             }
 
+            #[inline]
             pub fn near_zero(&self) -> bool {
                 self.$x.abs() < $t::splat($b::EPSILON)
                     && self.$y.abs() < $t::splat($b::EPSILON)
                     && self.$z.abs() < $t::splat($b::EPSILON)
             }
 
+            #[inline]
             pub fn mag_sq(&self) -> $t {
                 (self.$x * self.$x) + (self.$y * self.$y) + (self.$z * self.$z)
             }
 
+            #[inline]
             pub fn mag(&self) -> $t {
                 self.mag_sq().sqrt()
             }
 
+            #[inline]
             pub fn normalize(&mut self) -> Self {
                 *self /= self.mag();
                 *self
             }
 
+            #[inline]
             pub fn normalized(&self) -> Self {
                 self.clone().normalize()
             }
 
+            #[inline]
             pub fn sqrt(&self) -> Self {
                 Self::new(self.$x.sqrt(), self.$y.sqrt(), self.$z.sqrt())
             }
 
+            #[inline]
             pub fn abs(&self) -> Self {
                 Self::new(self.$x.abs(), self.$y.abs(), self.$z.abs())
             }
 
 
+            #[inline]
             pub fn floor(&self) -> Self {
                 Self::new(self.$x.floor(), self.$y.floor(), self.$z.floor())
             }
 
+            #[inline]
             pub fn reflect_over(&self, n: $n) -> Self {
                 self - Self::splat($t::splat(2.0)) * self.dot(n) * n
             }
 
+            #[inline]
             pub fn refract(&self, n: $n, etai_over_etat: $t) -> $n {
                 let cos_theta = (-self).dot(n).min($t::splat(1.0));
                 let r_out_perp = etai_over_etat * (self + cos_theta * n);
@@ -157,6 +178,7 @@ macro_rules! vec3_impl {
                 r_out_perp + r_out_parallel
             }
 
+            #[inline]
             pub fn un_nan(mut self) -> $n {
                 if self.$x != self.$x {self.$x = $t::splat(0.0);}
                 if self.$y != self.$y {self.$y = $t::splat(0.0);}
@@ -164,24 +186,44 @@ macro_rules! vec3_impl {
                 self
             }
 
+            #[inline]
             pub fn project_on(&self, n: $n) -> $n {
                 (self.dot(n) / n.dot(n)) * n
             }
 
+            #[inline]
             pub fn min(&self, other: &$n) -> $n {
                 Self::new(self.$x.min(other.$x), self.$y.min(other.$y), self.$z.min(other.$z))
             }
 
+            #[inline]
             pub fn max(&self, other: &$n) -> $n {
                 Self::new(self.$x.max(other.$x), self.$y.max(other.$y), self.$z.max(other.$z))
             }
 
+            #[inline]
             pub fn clamp(&self, min: $t, max: $t) -> $n {
                 Self::new(self.$x.clamp(min, max), self.$y.clamp(min, max), self.$z.clamp(min, max))
             }
 
+            #[inline]
             pub fn signum(&self) -> $n {
                 Self::new(self.$x.signum(), self.$y.signum(), self.$z.signum())
+            }
+
+            #[inline]
+            pub fn recip(&self) -> Self {
+                Self::new(self.$x.recip(), self.$y.recip(), self.$z.recip())
+            }
+
+            #[inline]
+            pub fn min_component(&self) -> $t {
+                self.$x.min(self.$y.min(self.$z))
+            }
+
+            #[inline]
+            pub fn max_component(&self) -> $t {
+                self.$x.max(self.$y.max(self.$z))
             }
         }
 

@@ -34,7 +34,7 @@ pub fn make_context() -> Context {
     let mut tone_map = ToneMap::HejlRichard;
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 1 {
+    match 8 {
         // Cornell Box
         0 => {
             width = 400.0;
@@ -135,14 +135,14 @@ pub fn make_context() -> Context {
                     .unwrap(),
             );
 
-            objects.push(Object::new(
-                hittables::InfinitePlane::new(
-                    vec3::new(0.0, -1.2, 0.0),
-                    vec3::new(0.0, 1.0, 0.0).normalized(),
-                ),
-                Lambertian::new(Color::splat(0.3)),
-                None,
-            ));
+            // objects.push(Object::new(
+            //     hittables::InfinitePlane::new(
+            //         vec3::new(0.0, -1.2, 0.0),
+            //         vec3::new(0.0, 1.0, 0.0).normalized(),
+            //     ),
+            //     Lambertian::new(Color::splat(0.3)),
+            //     None,
+            // ));
 
             objects.push(Object::new(
                 hittables::Sphere::new(vec3::new(-1.0, 0.0, -1.0), 0.95),
@@ -172,6 +172,8 @@ pub fn make_context() -> Context {
                 Dielectric::new(1.2, Color::new(0.6, 0.9, 1.0)),
                 None,
             ));
+
+            tone_map = ToneMap::Clamp;
         }
         // glass suzanne
         2 => {
@@ -477,6 +479,35 @@ pub fn make_context() -> Context {
                 None,
             ));
         }
+        // many orbs
+        8 => {
+            skybox = SkyBox::Equirectangular(
+                Image::load_from_hdri(Path::new("assets/skyboxes/snowy_forest_path_01_4k.hdr"))
+                    .unwrap(),
+            );
+
+            let s = 20i32;
+            camera.eye = vec3::splat(s as f32);
+            for y in 0..s {
+                for x in 0..s {
+                    let material: Material = match (x + y) % 3 {
+                        0 => Metal::new(Color::new(0.8, 0.8, 0.8), 0.0).into(),
+                        1 => Lambertian::new(Color::new(0.8, 0.8, 0.8)).into(),
+                        2 => Dielectric::new(1.5, Color::splat(1.0)).into(),
+                        _ => panic!(),
+                    };
+                    objects.push(Object::new(
+                        hittables::Sphere::new(
+                            vec3::new((x - s / 2) as f32, (y - s / 2) as f32, 0.0),
+                            0.45,
+                        ),
+                        material,
+                        None,
+                    ));
+                }
+            }
+        }
+
         _ => panic!("oof"),
     }
 

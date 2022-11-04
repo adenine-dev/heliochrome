@@ -28,7 +28,7 @@ impl SkyBox {
 
                 img.sample_uv(&uv)
             }
-            SkyBox::Debug => ((dir + vec3::splat(1.0)) / 2.0).into(),
+            SkyBox::Debug => ((dir + vec3::splat(1.0)) * 0.5).into(),
         }
     }
 }

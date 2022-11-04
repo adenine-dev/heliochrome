@@ -14,14 +14,17 @@ macro_rules! vec2_impl {
         }
 
         impl $n {
+            #[inline]
             pub const fn new($x: $t, $y: $t) -> Self {
                 Self { $x, $y }
             }
 
+            #[inline]
             pub const fn splat(s: $t) -> Self {
                 Self { $x: s, $y: s }
             }
 
+            #[inline]
             pub const fn unit_x() -> Self {
                 Self {
                     $x: $t::splat(1.0),
@@ -29,6 +32,7 @@ macro_rules! vec2_impl {
                 }
             }
 
+            #[inline]
             pub const fn unit_y() -> Self {
                 Self {
                     $x: $t::splat(0.0),
