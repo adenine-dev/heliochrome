@@ -4,7 +4,7 @@ use std::{
     cell::RefCell,
     path::Path,
     rc::Rc,
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
 use eframe::{
@@ -22,7 +22,6 @@ use heliochrome::{
 };
 
 mod make_context;
-use instant::Instant;
 use make_context::make_context;
 
 struct StateData {

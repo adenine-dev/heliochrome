@@ -1,5 +1,3 @@
-use indicatif::{ProgressBar, ProgressStyle};
-
 use super::Accelerator;
 use crate::{
     hittables::{Hittable, Intersection, AABB},
@@ -71,11 +69,6 @@ impl<T: Hittable> Accelerator<T> for BVH<T> {
                 children: [INVALID_IDX; 2],
             });
         });
-        let pb = ProgressBar::new((hittables.len() * 2 - 1) as u64).with_style(
-            ProgressStyle::with_template("[{elapsed_precise}] {wide_bar} {pos:>7}/{len:7}")
-                .unwrap(),
-        );
-
         let mut active = (0..hittables.len()).collect::<Vec<_>>();
 
         while nodes.len() < hittables.len() * 2 - 1 {
@@ -107,10 +100,7 @@ impl<T: Hittable> Accelerator<T> for BVH<T> {
                 idx: INVALID_IDX,
                 children: [l, r],
             });
-
-            pb.inc(1);
         }
-        pb.finish();
         Self { hittables, nodes }
     }
 
