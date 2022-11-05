@@ -111,7 +111,7 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
                 break;
             }
         } else {
-            color *= scene.skybox.sample(ray.direction.normalize());
+            color *= scene.skybox.sample(ray.direction);
             break;
         }
     }

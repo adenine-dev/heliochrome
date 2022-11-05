@@ -1,10 +1,12 @@
+use std::collections::vec_deque::Iter;
+
 use indicatif::{ProgressBar, ProgressStyle};
 
-use super::{
-    hittables::{BounceInfo, Hittable, AABB},
+use super::Accelerator;
+use crate::{
+    hittables::{Hittable, Intersection, AABB},
     maths::Ray,
 };
-use crate::{hittables::Intersection, maths::vec3};
 
 const INVALID_IDX: usize = usize::MAX;
 
@@ -54,34 +56,8 @@ pub struct BVH<T: Hittable> {
     nodes: Vec<BVHNode>,
 }
 
-impl<T: Hittable> Hittable for BVH<T> {
-    fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection> {
-        if let Some((intersection, _)) =
-            self.nodes
-                .last()?
-                .intersect(&self.nodes, &self.hittables, ray, t_min, t_max)
-        {
-            return Some(intersection);
-        }
-
-        None
-    }
-
-    fn get_bounce_info(&self, _ray: &Ray, _intersection: Intersection) -> BounceInfo {
-        panic!("don't call get bounce info on a bvh");
-    }
-
-    fn make_bounding_box(&self) -> AABB {
-        if let Some(last) = self.nodes.last() {
-            last.bounds
-        } else {
-            AABB::new(vec3::splat(-0.0001), vec3::splat(0.0001))
-        }
-    }
-}
-
-impl<T: Hittable> BVH<T> {
-    pub fn new(hittables: Vec<T>) -> Self {
+impl<T: Hittable> Accelerator<T> for BVH<T> {
+    fn new(hittables: Vec<T>) -> Self {
         if hittables.is_empty() {
             return BVH {
                 hittables,
@@ -140,7 +116,7 @@ impl<T: Hittable> BVH<T> {
         Self { hittables, nodes }
     }
 
-    pub fn intersect_with_index(
+    fn intersect_with_index(
         &self,
         ray: &Ray,
         t_min: f32,
@@ -151,11 +127,7 @@ impl<T: Hittable> BVH<T> {
             .intersect(&self.nodes, &self.hittables, ray, t_min, t_max)
     }
 
-    pub fn intersect_obj(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<(Intersection, &T)> {
-        let (intersection, idx) =
-            self.nodes
-                .last()?
-                .intersect(&self.nodes, &self.hittables, ray, t_min, t_max)?;
-        Some((intersection, &self.hittables[idx]))
+    fn get_nth(&self, idx: usize) -> &T {
+        &self.hittables[idx]
     }
 }

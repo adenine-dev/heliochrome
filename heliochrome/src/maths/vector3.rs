@@ -227,7 +227,7 @@ macro_rules! vec3_impl {
             }
         }
 
-        impl Index<usize> for $n {
+        impl const Index<usize> for $n {
             type Output = $t;
             fn index(&self, i: usize) -> &Self::Output {
                 match i {

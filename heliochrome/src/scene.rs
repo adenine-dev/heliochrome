@@ -1,8 +1,8 @@
 use crate::{
-    bvh::BVH,
+    accel::{Accel, Accelerator},
     camera::Camera,
     color::Color,
-    hittables::{BounceInfo, Intersection},
+    hittables::Intersection,
     image::Image,
     materials::Scatterable,
     maths::{vec2, vec3, Ray},
@@ -28,7 +28,7 @@ impl SkyBox {
 
                 img.sample_uv(&uv)
             }
-            SkyBox::Debug => ((dir + vec3::splat(1.0)) * 0.5).into(),
+            SkyBox::Debug => ((dir.normalized() + vec3::splat(1.0)) * 0.5).into(),
         }
     }
 }
@@ -37,13 +37,13 @@ pub struct Scene {
     pub camera: Camera,
     pub skybox: SkyBox,
 
-    pub objects: BVH<Object>,
+    pub objects: Accel<Object>,
     pub important_indices: Vec<usize>,
 }
 
 impl Scene {
     pub fn new(camera: Camera, skybox: SkyBox, objects: Vec<Object>) -> Self {
-        let objects = BVH::new(objects);
+        let objects = Accel::new(objects);
         let important_indices = objects
             .hittables
             .iter()
@@ -56,6 +56,7 @@ impl Scene {
                 }
             })
             .collect::<Vec<_>>();
+
         Self {
             camera,
             skybox,
@@ -71,14 +72,14 @@ impl Scene {
     pub fn make_importance_pdf(&self, origin: &vec3) -> Vec<ObjectPdf> {
         self.important_indices
             .iter()
-            .map(|idx| ObjectPdf::new(&self.objects.hittables[*idx], *origin))
+            .map(|idx| ObjectPdf::new(&self.objects.get_nth(*idx), *origin))
             .collect()
     }
 
     pub fn get_importants(&self) -> Vec<Object> {
         self.important_indices
             .iter()
-            .map(|idx| self.objects.hittables[*idx].clone())
+            .map(|idx| self.objects.get_nth(*idx).clone())
             .collect()
     }
 }

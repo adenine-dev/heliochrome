@@ -34,7 +34,7 @@ pub fn make_context() -> Context {
     let mut tone_map = ToneMap::HejlRichard;
     let mut skybox = SkyBox::Color(Color::splat(0.0));
 
-    match 8 {
+    match 7 {
         // Cornell Box
         0 => {
             width = 400.0;
@@ -478,7 +478,7 @@ pub fn make_context() -> Context {
                 Lambertian::new(Color::new(0.85, 0.2, 0.2)),
                 None,
             ));
-        }
+        }   
         // many orbs
         8 => {
             skybox = SkyBox::Equirectangular(

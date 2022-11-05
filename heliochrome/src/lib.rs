@@ -9,7 +9,7 @@
 
 pub mod load_obj;
 
-pub mod bvh;
+pub mod accel;
 pub mod camera;
 pub mod color;
 pub mod context;
