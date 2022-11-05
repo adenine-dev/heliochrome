@@ -1,5 +1,3 @@
-use std::collections::vec_deque::Iter;
-
 use indicatif::{ProgressBar, ProgressStyle};
 
 use super::Accelerator;

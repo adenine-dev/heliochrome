@@ -1,4 +1,3 @@
-use core::simd;
 use std::simd::{LaneCount, Simd, SimdFloat, SupportedLaneCount};
 
 #[const_trait]

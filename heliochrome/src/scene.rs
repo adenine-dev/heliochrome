@@ -72,7 +72,7 @@ impl Scene {
     pub fn make_importance_pdf(&self, origin: &vec3) -> Vec<ObjectPdf> {
         self.important_indices
             .iter()
-            .map(|idx| ObjectPdf::new(&self.objects.get_nth(*idx), *origin))
+            .map(|idx| ObjectPdf::new(self.objects.get_nth(*idx), *origin))
             .collect()
     }
 
