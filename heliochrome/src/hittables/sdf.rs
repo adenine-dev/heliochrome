@@ -7,7 +7,7 @@ const MIN_DIST: f32 = 0.000001;
 const MAX_MARCHES: u16 = 500;
 const MARCH_T_MAX: f32 = 10000.0;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HittableSDF {
     sdf: Arc<dyn SDF>,
 }

@@ -1,5 +1,6 @@
 use crate::{hittables::AABB, maths::vec3, sdf::SDF};
 
+#[derive(Debug)]
 pub struct Difference<A: SDF, B: SDF> {
     pub a: A,
     pub b: B,

@@ -1,7 +1,10 @@
+use std::{error::Error, fmt::Debug};
+
 use enum_dispatch::enum_dispatch;
 
-use crate::{maths::vec3, maths::Ray};
+use crate::{loader::FromHCY, maths::vec3, maths::Ray};
 
+#[derive(Debug)]
 pub struct BounceInfo {
     pub t: f32,
     pub p: vec3,
@@ -31,6 +34,7 @@ impl BounceInfo {
     }
 }
 
+#[derive(Debug)]
 pub struct Intersection {
     pub t: f32,
     pub i: u32,
@@ -38,7 +42,7 @@ pub struct Intersection {
 
 #[enum_dispatch]
 #[allow(unused_variables)] // default trait impls
-pub trait Hittable: Send + Sync + Clone {
+pub trait Hittable: Send + Sync + Clone + Debug {
     fn intersect(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<Intersection>;
 
     fn get_bounce_info(&self, ray: &Ray, intersection: Intersection) -> BounceInfo;
@@ -76,7 +80,7 @@ mod sdf;
 pub use sdf::*;
 
 #[enum_dispatch(Hittable)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum HittableObject {
     Sphere,
     InfinitePlane,
@@ -85,4 +89,20 @@ pub enum HittableObject {
     Mesh,
     AABB,
     HittableSDF,
+}
+
+impl FromHCY for HittableObject {
+    fn from_hcy(member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let member = member.ok_or("invalid syntax missing member specifier")?;
+        match member {
+            "rect" => Ok(HittableObject::Rect(Rect::from_hcy(None, lines)?)),
+            "aabb" => Ok(HittableObject::AABB(AABB::from_hcy(None, lines)?)),
+            "infinite plane" => Ok(HittableObject::InfinitePlane(InfinitePlane::from_hcy(
+                None, lines,
+            )?)),
+            "mesh" => Ok(HittableObject::Mesh(Mesh::from_hcy(None, lines)?)),
+            "sphere" => Ok(HittableObject::Sphere(Sphere::from_hcy(None, lines)?)),
+            _ => Err(format!("unknown primitive type {member}"))?,
+        }
+    }
 }

@@ -1,7 +1,12 @@
-use super::{BounceInfo, Hittable, Intersection, AABB};
-use crate::maths::{vec3, Ray, ONB};
+use std::error::Error;
 
-#[derive(Clone)]
+use super::{BounceInfo, Hittable, Intersection, AABB};
+use crate::{
+    loader::{parse_into, FromHCY},
+    maths::{vec3, Ray, ONB},
+};
+
+#[derive(Clone, Debug)]
 pub struct InfinitePlane {
     pub origin: vec3,
     pub normal: vec3,
@@ -38,5 +43,28 @@ impl Hittable for InfinitePlane {
             -v + self.origin - vec3::splat(0.0001),
             v + self.origin + vec3::splat(0.0001),
         )
+    }
+}
+
+impl FromHCY for InfinitePlane {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut origin = None;
+        let mut normal = None;
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "origin" => origin = Some(parse_into(value)?),
+                "normal" => normal = Some(parse_into(value)?),
+                _ => {}
+            }
+        }
+
+        Ok(InfinitePlane::new(
+            origin.ok_or("missing required key `origin`")?,
+            normal.ok_or("missing required key `normal`")?,
+        ))
     }
 }

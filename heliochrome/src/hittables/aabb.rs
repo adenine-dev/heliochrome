@@ -1,5 +1,10 @@
+use std::error::Error;
+
 use super::{BounceInfo, Hittable, Intersection};
-use crate::maths::{vec3, Ray};
+use crate::{
+    loader::{parse_into, FromHCY},
+    maths::{vec3, Ray},
+};
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct AABB {
@@ -85,5 +90,28 @@ impl Hittable for AABB {
 
     fn make_bounding_box(&self) -> AABB {
         *self
+    }
+}
+
+impl FromHCY for AABB {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut min = None;
+        let mut max = None;
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "min" => min = Some(parse_into(value)?),
+                "max" => max = Some(parse_into(value)?),
+                _ => {}
+            }
+        }
+
+        Ok(AABB::new(
+            min.ok_or("missing required key `min`")?,
+            max.ok_or("missing required key `max`")?,
+        ))
     }
 }

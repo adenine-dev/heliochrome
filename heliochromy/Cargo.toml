@@ -1,0 +1,11 @@
+[package]
+name = "heliochromy"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+heliochrome = {path = "../heliochrome"}
+clap = { version = "4.0.19", features = ["derive"] }
+indicatif = {version = "0.17.0"}

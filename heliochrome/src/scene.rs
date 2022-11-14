@@ -1,15 +1,19 @@
+use std::{error::Error, path::Path};
+
 use crate::{
     accel::{Accel, Accelerator},
     camera::Camera,
     color::Color,
     hittables::Intersection,
     image::Image,
+    loader::{collect_until_next_item, parse_into, FromHCY},
     materials::Scatterable,
     maths::{vec2, vec3, Ray},
     object::Object,
     pdf::ObjectPdf,
 };
 
+#[derive(Debug)]
 pub enum SkyBox {
     Color(Color),
     Equirectangular(Image),
@@ -33,6 +37,56 @@ impl SkyBox {
     }
 }
 
+impl FromHCY for SkyBox {
+    fn from_hcy(member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        if let Some(member) = member {
+            match member.trim() {
+                "color" => {
+                    let color = lines.iter().fold(
+                        Err(Box::<dyn Error>::from("invalid color")),
+                        |a, x| {
+                            if a.is_err() {
+                                let split = x.trim().split_once("color: ");
+                                if let Some((_, color)) = split {
+                                    parse_into::<Color>(color)
+                                } else {
+                                    a
+                                }
+                            } else {
+                                a
+                            }
+                        },
+                    )?;
+                    Ok(SkyBox::Color(color))
+                }
+                "debug" => Ok(SkyBox::Debug),
+                "hdri" => {
+                    let path = lines.iter().fold(
+                        Err(Box::<dyn Error>::from("invalid path syntax")),
+                        |a, x| {
+                            if a.is_err() {
+                                let split = x.trim().split_once("path: ");
+                                if let Some((_, path)) = split {
+                                    Ok(Path::new(path))
+                                } else {
+                                    a
+                                }
+                            } else {
+                                a
+                            }
+                        },
+                    )?;
+                    Ok(SkyBox::Equirectangular(Image::load_from_hdri(path)?))
+                }
+                _ => Err(format!("unknown member {member}"))?,
+            }
+        } else {
+            Err("invalid member syntax")?
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Scene {
     pub camera: Camera,
     pub skybox: SkyBox,
@@ -81,5 +135,52 @@ impl Scene {
             .iter()
             .map(|idx| self.objects.get_nth(*idx).clone())
             .collect()
+    }
+}
+
+impl FromHCY for Scene {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut camera = None;
+        let mut skybox = None;
+        let mut objects = None;
+
+        let mut line_iter = lines.iter();
+        while let Some(line) = line_iter.next() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "camera" => {
+                    camera = Some(
+                        Camera::from_hcy(None, collect_until_next_item(&mut line_iter))
+                            .map_err(|err| format!("could not parse camera key: {err}"))?,
+                    );
+                }
+                "skybox" => {
+                    skybox = Some(
+                        SkyBox::from_hcy(Some(value), collect_until_next_item(&mut line_iter))
+                            .map_err(|err| format!("could not parse skybox key: {err}"))?,
+                    )
+                }
+                "objects" => {
+                    let mut objs: Vec<Object> = vec![];
+                    let lines = collect_until_next_item(&mut line_iter);
+                    let mut line_iter = lines.iter();
+                    while let Some(line) = line_iter.next() {
+                        let lines = collect_until_next_item(&mut line_iter);
+                        if !lines.is_empty() {
+                            objs.push(Object::from_hcy(Some(line), lines)?);
+                        }
+                    }
+                    objects = Some(objs);
+                }
+                _ => {}
+            }
+        }
+        Ok(Scene::new(
+            camera.ok_or("Missing required key `camera`")?,
+            skybox.ok_or("Missing required key `skybox`")?,
+            objects.ok_or("Missing required key `objects`")?,
+        ))
     }
 }

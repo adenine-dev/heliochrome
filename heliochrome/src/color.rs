@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::maths::*;
 
 vec3_impl!(Color, f32, f32, r, g, b);
@@ -37,5 +39,21 @@ impl From<vec3> for Color {
 impl From<Color> for vec3 {
     fn from(color: Color) -> Self {
         vec3::new(color.r, color.g, color.b)
+    }
+}
+
+impl FromStr for Color {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let iter = s.split(',').into_iter().collect::<Vec<_>>();
+        if iter.len() == 3 {
+            Ok(Color::new(
+                iter[0].trim().parse().map_err(|x| format!("{x}"))?,
+                iter[1].trim().parse().map_err(|x| format!("{x}"))?,
+                iter[2].trim().parse().map_err(|x| format!("{x}"))?,
+            ))
+        } else {
+            Err("invalid color string, unexpected number of components".to_owned())
+        }
     }
 }

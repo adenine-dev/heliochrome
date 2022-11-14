@@ -1,10 +1,14 @@
+use std::error::Error;
+
 use super::{BounceInfo, Hittable, Intersection, Triangle, AABB};
 use crate::{
     accel::{Accel, Accelerator},
+    load_obj,
+    loader::{parse_into, FromHCY},
     maths::{vec3, Ray},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Mesh {
     tris: Accel<Triangle>,
     normals: Option<Vec<[vec3; 3]>>,
@@ -90,5 +94,32 @@ impl Hittable for Mesh {
         }
 
         AABB::new(min - vec3::splat(0.001), max + vec3::splat(0.001))
+    }
+}
+
+impl FromHCY for Mesh {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut path = None;
+        let mut idx = 0;
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "path" => path = Some(value.trim().to_owned()),
+                "idx" => idx = parse_into(value)?,
+                _ => {}
+            }
+        }
+
+        let path = path.ok_or("missing required key `path`")?;
+        let meshes = load_obj::load_obj(path)?;
+        let mesh = meshes.get(idx).ok_or(format!(
+            "invalid mesh index {idx}, obj file has {} meshes",
+            meshes.len(),
+        ))?;
+
+        Ok(Self::new(&mesh.vertices, &mesh.indices, &mesh.normals))
     }
 }

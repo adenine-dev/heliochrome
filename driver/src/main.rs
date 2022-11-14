@@ -82,9 +82,17 @@ impl Tab for ConfigTab {
         ui.label("image size: ");
         egui::Grid::new("size").show(ui, |ui| {
             ui.label("width:");
-            let resw = ui.add(egui::DragValue::new(&mut self.width).suffix("px"));
+            let resw = ui.add(
+                egui::DragValue::new(&mut self.width)
+                    .clamp_range(1..=u16::MAX)
+                    .suffix("px"),
+            );
             ui.label("height:");
-            let resh = ui.add(egui::DragValue::new(&mut self.height).suffix("px"));
+            let resh = ui.add(
+                egui::DragValue::new(&mut self.height)
+                    .clamp_range(1..=u16::MAX)
+                    .suffix("px"),
+            );
             ui.end_row();
             if resw.changed() || resh.changed() {
                 let mut state = self.state.borrow_mut();
@@ -384,54 +392,57 @@ impl Tab for RenderTab {
                 "Elapsed Time {:0>2}:{:0>2}:{:0>2}",
                 hours, minutes, seconds
             ));
-        }
 
-        {
-            let size = self.state.borrow().context.get_size();
-            if self.texture_handle.size()[0] != size.x as usize
-                || self.texture_handle.size()[1] != size.y as usize
             {
-                self.state.borrow_mut().image.buffer.fill(Color::new(
-                    EMPTY_TEXTURE_COLOR.r() as f32 / 255.0,
-                    EMPTY_TEXTURE_COLOR.g() as f32 / 255.0,
-                    EMPTY_TEXTURE_COLOR.b() as f32 / 255.0,
-                ));
+                let size = self.state.borrow().context.get_size();
+                if self.texture_handle.size()[0] != size.x as usize
+                    || self.texture_handle.size()[1] != size.y as usize
+                {
+                    self.state.borrow_mut().image.buffer.fill(Color::new(
+                        EMPTY_TEXTURE_COLOR.r() as f32 / 255.0,
+                        EMPTY_TEXTURE_COLOR.g() as f32 / 255.0,
+                        EMPTY_TEXTURE_COLOR.b() as f32 / 255.0,
+                    ));
 
-                self.texture_handle.set(
-                    ImageData::Color(ColorImage::new(
-                        [size.x as usize, size.y as usize],
-                        EMPTY_TEXTURE_COLOR,
-                    )),
-                    TextureFilter::Nearest,
-                );
+                    self.texture_handle.set(
+                        ImageData::Color(ColorImage::new(
+                            [size.x as usize, size.y as usize],
+                            EMPTY_TEXTURE_COLOR,
+                        )),
+                        TextureFilter::Nearest,
+                    );
+                }
+            }
+
+            let mut img = self.state.borrow().image.clone();
+
+            self.rendering = false;
+            self.state
+                .borrow()
+                .context
+                .pixel_receiver
+                .try_iter()
+                .take(500)
+                .for_each(|(c, pos)| {
+                    self.rendering = true;
+                    img.set_pixel(&pos, c);
+                });
+
+            self.state.borrow_mut().image = img.clone();
+            self.state.borrow().context.tone_map.map(&mut img);
+            self.texture_handle.set(
+                ImageData::Color(ColorImage::from_rgba_unmultiplied(
+                    [img.size.x as usize, img.size.y as usize],
+                    &img.to_gamma_corrected_rgba8(self.state.borrow().gamma),
+                )),
+                TextureFilter::Linear,
+            );
+
+            if !self.rendering {
+                self.state.borrow_mut().image = img.clone();
             }
         }
 
-        let mut img = self.state.borrow().image.clone();
-
-        self.state
-            .borrow()
-            .context
-            .pixel_receiver
-            .try_iter()
-            .take(1000)
-            .for_each(|(c, pos)| {
-                img.set_pixel(
-                    &pos,
-                    Color::new(
-                        c[0] as f32 / 255.0,
-                        c[1] as f32 / 255.0,
-                        c[2] as f32 / 255.0,
-                    ),
-                );
-                self.texture_handle.set_partial(
-                    [pos.x as usize, pos.y as usize],
-                    ImageData::Color(ColorImage::new([1, 1], Color32::from_rgb(c[0], c[1], c[2]))),
-                    TextureFilter::Linear,
-                );
-            });
-
-        self.state.borrow_mut().image = img;
         ui.centered_and_justified(|ui| {
             Plot::new("render")
                 .legend(Legend::default())

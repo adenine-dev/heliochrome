@@ -1,10 +1,13 @@
+use std::error::Error;
+
 use super::{Intersection, AABB};
 use crate::{
     hittables::{BounceInfo, Hittable},
+    loader::{parse_into, FromHCY},
     maths::*,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Sphere {
     pub center: vec3,
     pub radius: f32,
@@ -87,5 +90,28 @@ impl Hittable for Sphere {
         let distance_squared = direction.mag_sq();
         let uvw = ONB::new_from_w(direction);
         uvw.local(&random_to_sphere(self.radius, distance_squared))
+    }
+}
+
+impl FromHCY for Sphere {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut origin = None;
+        let mut radius = None;
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "origin" => origin = Some(parse_into(value)?),
+                "radius" => radius = Some(parse_into(value)?),
+                _ => {}
+            }
+        }
+
+        Ok(Sphere::new(
+            origin.ok_or("missing required key `origin`")?,
+            radius.ok_or("missing required key `radius`")?,
+        ))
     }
 }

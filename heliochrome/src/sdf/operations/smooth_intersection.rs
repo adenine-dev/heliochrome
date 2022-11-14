@@ -4,6 +4,7 @@ use crate::{
     sdf::SDF,
 };
 
+#[derive(Debug)]
 pub struct SmoothIntersection<A: SDF, B: SDF> {
     pub k: f32,
     pub a: A,

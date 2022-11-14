@@ -6,7 +6,7 @@ use image;
 use super::maths::vec2;
 use crate::color::Color;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Image {
     pub size: vec2,
     pub buffer: Vec<Color>,

@@ -1,12 +1,15 @@
+use std::error::Error;
+
 use crate::{
     hittables::{BounceInfo, Hittable, HittableObject, Intersection, AABB},
+    loader::{collect_until_next_item, FromHCY},
     materials::Material,
     maths::vec3,
     maths::Ray,
     transform::Transform,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Object {
     pub hittable: HittableObject,
     pub material: Material,
@@ -80,5 +83,53 @@ impl Hittable for Object {
         } else {
             self.hittable.random(origin)
         }
+    }
+}
+
+impl FromHCY for Object {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut hittable = None;
+        let mut material = None;
+        let mut transform = None;
+
+        let mut line_iter = lines.iter();
+        while let Some(line) = line_iter.next() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "primitive" => {
+                    hittable = Some(
+                        HittableObject::from_hcy(
+                            Some(value.trim()),
+                            collect_until_next_item(&mut line_iter),
+                        )
+                        .map_err(|err| format!("could not parse primitive key: {err}"))?,
+                    );
+                }
+                "material" => {
+                    material = Some(
+                        Material::from_hcy(
+                            Some(value.trim()),
+                            collect_until_next_item(&mut line_iter),
+                        )
+                        .map_err(|err| format!("could not parse material key: {err}"))?,
+                    );
+                }
+                "transform" => {
+                    transform = Some(
+                        Transform::from_hcy(None, collect_until_next_item(&mut line_iter))
+                            .map_err(|err| format!("could not parse transform key: {err}"))?,
+                    )
+                }
+                _ => {}
+            }
+        }
+
+        Ok(Object::new(
+            hittable.ok_or("missing required object parameter `primitive`")?,
+            material.ok_or("missing required object parameter `material`")?,
+            transform,
+        ))
     }
 }

@@ -12,13 +12,14 @@ use spmc;
 use crate::color::Color;
 use crate::hittables::Hittable;
 use crate::image::Image;
+use crate::loader::SceneConfig;
 use crate::materials::{ScatterType, Scatterable};
 use crate::maths::*;
 use crate::pdf::{ObjectListPdf, ProbabilityDensityFn};
 use crate::scene::Scene;
 use crate::tonemap::ToneMap;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct QualitySettings {
     pub samples: u16,
     pub bounces: u16,
@@ -49,18 +50,14 @@ pub struct Context {
     pub tone_map: ToneMap,
 
     // render things
-    pixel_sender: Sender<([u8; 4], vec2)>,
-    pub pixel_receiver: Receiver<([u8; 4], vec2)>,
+    pixel_sender: Sender<(Color, vec2)>,
+    pub pixel_receiver: Receiver<(Color, vec2)>,
     render_state: Arc<AtomicU8>,
     thread_pool: ThreadPool,
     active_threads: Arc<AtomicU32>,
 }
 
 const CHUNK_SIZE: usize = 16;
-
-fn gamma_correct(color: Color, gamma: f32) -> Color {
-    color.powf(1.0 / gamma)
-}
 
 pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Color {
     let scene = scene.read().unwrap();
@@ -120,13 +117,13 @@ pub fn render_fragment(scene: Arc<RwLock<Scene>>, uv: &vec2, bounces: u16) -> Co
 }
 
 impl Context {
-    pub fn new(size: vec2, scene: Scene, tone_map: ToneMap) -> Self {
+    pub fn new(size: vec2, quality: QualitySettings, scene: Scene, tone_map: ToneMap) -> Self {
         let thread_pool = ThreadPoolBuilder::new().build().unwrap();
-        let (pixel_sender, pixel_receiver) = mpsc::channel::<([u8; 4], vec2)>();
+        let (pixel_sender, pixel_receiver) = mpsc::channel::<(Color, vec2)>();
 
         Self {
             scene: Arc::new(RwLock::new(scene)),
-            quality: QualitySettings::default(),
+            quality,
             size,
             samples: 0,
             accumulated_image: Image::new(size),
@@ -138,6 +135,15 @@ impl Context {
             render_state: Arc::new(AtomicU8::new(RENDER_STATE_INACTIVE)),
             active_threads: Arc::new(AtomicU32::new(0)),
         }
+    }
+
+    pub fn new_from_config(config: SceneConfig) -> Self {
+        Self::new(
+            config.image_config.size,
+            config.image_config.quality,
+            config.scene,
+            config.image_config.tone_map,
+        )
     }
 
     pub fn get_size(&self) -> vec2 {
@@ -155,7 +161,7 @@ impl Context {
         self.accumulated_image = Image::new(size);
         self.out_image = Image::new(size);
         self.samples = 0;
-        self.scene.write().unwrap().camera.aspect_ratio = size.x / size.y;
+        self.scene.write().unwrap().camera.size = size;
     }
 
     pub fn render_sample(&mut self) -> Image {
@@ -290,13 +296,13 @@ impl Context {
                                 c += fragment;
                             }
 
-                            let out_color = gamma_correct(c / quality.samples as f32, 2.0);
-                            let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u8;
-                            let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u8;
-                            let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u8;
+                            let out_color = c / quality.samples as f32;
+                            // let red = ((out_color.r).clamp(0.0, 0.999) * 256.0) as u8;
+                            // let green = ((out_color.g).clamp(0.0, 0.999) * 256.0) as u8;
+                            // let blue = ((out_color.b).clamp(0.0, 0.999) * 256.0) as u8;
 
                             dtx.send((
-                                [red, green, blue, 0xff],
+                                out_color,
                                 // blue | (green << 8) | (red << 16) | (0xFF << 24),
                                 vec2::new(x as f32, y as f32),
                             ))

@@ -3,6 +3,7 @@
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]
 #![feature(let_chains)]
+#![feature(iter_advance_by)]
 // lib but not and maths
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
@@ -15,6 +16,7 @@ pub mod color;
 pub mod context;
 pub mod hittables;
 pub mod image;
+pub mod loader;
 pub mod materials;
 pub mod maths;
 pub mod object;

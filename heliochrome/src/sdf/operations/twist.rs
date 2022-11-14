@@ -6,6 +6,7 @@ use crate::{
     sdf::SDF,
 };
 
+#[derive(Debug)]
 pub struct Twist<P: SDF> {
     pub k: f32,
     pub primitive: P,

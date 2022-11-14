@@ -1,5 +1,8 @@
+use std::error::Error;
+
 use crate::{
     hittables::AABB,
+    loader::{parse_into, FromHCY},
     maths::{mat4, vec3, vec4, Ray},
 };
 
@@ -64,5 +67,27 @@ impl Transform {
         }
 
         AABB::new(min, max)
+    }
+}
+
+impl FromHCY for Transform {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut translate = mat4::identity();
+        let mut rotate = mat4::identity();
+        let mut scale = mat4::identity();
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "translate" => translate = mat4::translate(parse_into(value)?),
+                "rotate" => rotate = mat4::rotate_deg(parse_into(value)?),
+                "scale" => scale = mat4::scale(parse_into(value)?),
+                _ => {}
+            }
+        }
+
+        Ok(Transform::new(translate * rotate * scale))
     }
 }

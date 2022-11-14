@@ -1,14 +1,17 @@
+use std::error::Error;
+
 use rand::random;
 
 use super::ScatterType;
 use crate::{
     color::Color,
     hittables::BounceInfo,
+    loader::{parse_into, FromHCY},
     materials::{Scatter, Scatterable},
     maths::Ray,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Dielectric {
     pub ir: f32,
     pub color: Color,
@@ -50,5 +53,28 @@ impl Scatterable for Dielectric {
 
     fn is_important(&self) -> bool {
         false
+    }
+}
+
+impl FromHCY for Dielectric {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut ir = None;
+        let mut color = Some(Color::splat(1.0));
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "ir" => ir = Some(parse_into(value)?),
+                "color" => color = Some(parse_into(value)?),
+                _ => {}
+            }
+        }
+
+        Ok(Dielectric::new(
+            ir.ok_or("missing required key `ir`")?,
+            color.unwrap(),
+        ))
     }
 }

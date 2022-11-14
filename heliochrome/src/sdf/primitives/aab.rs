@@ -1,5 +1,6 @@
 use crate::{hittables::AABB, maths::vec3, sdf::SDF};
 
+#[derive(Debug)]
 pub struct AAB {
     pub extent: vec3,
 }

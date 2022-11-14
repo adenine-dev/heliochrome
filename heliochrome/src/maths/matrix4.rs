@@ -65,6 +65,10 @@ impl mat4 {
         ])
     }
 
+    pub fn rotate_deg(deg_euler_angles: vec3) -> Self {
+        Self::rotate(deg_euler_angles.to_rad())
+    }
+
     pub fn det(&self) -> f32 {
         let b00 = self[0][0] * self[1][1] - self[0][1] * self[1][0];
         let b01 = self[0][0] * self[1][2] - self[0][2] * self[1][0];

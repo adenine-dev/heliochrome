@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
 use crate::{
     hittables::{Hittable, Intersection},
     maths::Ray,
 };
 
-pub trait Accelerator<T: Hittable>: Clone {
+pub trait Accelerator<T: Hittable>: Clone + Debug {
     fn new(objs: Vec<T>) -> Self;
 
     fn intersect_with_index(

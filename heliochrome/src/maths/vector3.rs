@@ -2,6 +2,7 @@ use std::{
     ops,
     ops::*,
     simd::{f32x4, SimdFloat, StdFloat},
+    str::FromStr,
 };
 
 use impl_ops::*;
@@ -225,6 +226,16 @@ macro_rules! vec3_impl {
             pub fn max_component(&self) -> $t {
                 self.$x.max(self.$y.max(self.$z))
             }
+
+            #[inline]
+            pub fn to_rad(&self) -> $n {
+                Self::new(self.$x.to_radians(), self.$y.to_radians(), self.$z.to_radians())
+            }
+
+            #[inline]
+            pub fn to_deg(&self) -> $n {
+                Self::new(self.$x.to_degrees(), self.$y.to_degrees(), self.$z.to_degrees())
+            }
         }
 
         impl const Index<usize> for $n {
@@ -341,5 +352,21 @@ impl vec3 {
         let y = phi.sin() * r2.sqrt();
 
         Self::new(x, y, z)
+    }
+}
+
+impl FromStr for vec3 {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let iter = s.split(',').into_iter().collect::<Vec<_>>();
+        if iter.len() == 3 {
+            Ok(vec3::new(
+                iter[0].trim().parse().map_err(|x| format!("{x}"))?,
+                iter[1].trim().parse().map_err(|x| format!("{x}"))?,
+                iter[2].trim().parse().map_err(|x| format!("{x}"))?,
+            ))
+        } else {
+            Err("invalid vec3 string, unexpected number of components".to_owned())
+        }
     }
 }

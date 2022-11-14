@@ -1,7 +1,7 @@
 use super::{BounceInfo, Hittable, Intersection, AABB};
 use crate::maths::{vec3, Ray};
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Triangle {
     pub vertices: [vec3; 3],
 }

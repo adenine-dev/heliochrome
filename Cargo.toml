@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "driver", "heliochrome"
+    "driver", "heliochrome", "heliochromy"
 ]
 
 [profile.dev]

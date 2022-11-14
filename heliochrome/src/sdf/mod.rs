@@ -1,8 +1,10 @@
+use std::fmt::Debug;
+
 use crate::{hittables::AABB, maths::vec3};
 
 const NORMAL_H: f32 = 0.0001;
 
-pub trait SDF: Send + Sync {
+pub trait SDF: Send + Sync + Debug {
     fn dist(&self, p: vec3) -> f32;
 
     fn normal_at(&self, p: &vec3) -> vec3 {

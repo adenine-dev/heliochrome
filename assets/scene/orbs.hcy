@@ -1,0 +1,63 @@
+image:
+  width: 1920
+  height: 1080
+  bounces: 30
+  samples: 1000
+  tone map: clamp
+
+scene:
+  skybox: hdri
+    path: assets/skyboxes/snowy_forest_path_01_4k.hdr
+
+  camera:
+    eye: -3.8, 0.24, 7.3
+    at: 0.0, 0.0, 0.0
+    up: 0.0, 1.0, 0.0
+    vfov: 40.0
+    aperture: 0.2
+
+  objects:
+    floor: 
+      primitive: infinite plane
+        origin: 0.0, -1.0, 0.0
+        normal: 0.0, 1.0, 0.0
+      material: lambertian
+        albedo: 0.3, 0.3, 0.3
+
+    metal ball:
+      primitive: sphere
+        origin: -1.0, 0.0, -1.0
+        radius: 1.0
+      material: metal
+        albedo: 0.8, 0.8, 0.8
+
+    fuzzed metal ball:
+      primitive: sphere
+        origin: 1.0, 0.0, 1.0
+        radius: 1.0
+      material: metal
+        albedo: 0.4, 0.4, 0.4
+        fuzz: 0.7
+
+    glass ball outer:
+      primitive: sphere
+        origin: -1.0, 0.0, 1.0
+        radius: 1.0
+      material: dielectric
+        ir: 1.2
+        color: 0.6, 0.9, 1.0
+
+    glass ball inner:
+      primitive: sphere
+        origin: -1.0, 0.0, 1.0
+        radius: -0.9
+      material: dielectric
+        ir: 1.2
+        color: 0.6, 0.9, 1.0
+
+    diffuse ball inner:
+      primitive: sphere
+        origin: 1.0, 0.0, -1.0
+        radius: 1.0
+      material: lambertian
+        albedo: 0.1, 0.1, 0.1

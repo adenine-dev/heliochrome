@@ -1,5 +1,6 @@
 use crate::{hittables::AABB, maths::vec3, sdf::SDF};
 
+#[derive(Debug)]
 pub struct Sphere {
     pub r: f32,
     pub c: vec3,

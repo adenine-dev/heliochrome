@@ -2,6 +2,7 @@
 
 use crate::{hittables::AABB, maths::vec3, sdf::SDF};
 
+#[derive(Debug)]
 pub struct Modulo<A: SDF> {
     pub primitive: A,
     pub period: vec3,

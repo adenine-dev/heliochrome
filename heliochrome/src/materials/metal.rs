@@ -1,12 +1,15 @@
+use std::error::Error;
+
 use super::ScatterType;
 use crate::{
     color::Color,
     hittables::BounceInfo,
+    loader::{parse_into, FromHCY},
     materials::{Scatter, Scatterable},
     maths::{vec3, Ray},
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Metal {
     albedo: Color,
     fuzz: f32,
@@ -33,5 +36,28 @@ impl Scatterable for Metal {
         } else {
             None
         }
+    }
+}
+
+impl FromHCY for Metal {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut albedo = None;
+        let mut fuzz = Some(0.0);
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "albedo" => albedo = Some(parse_into(value)?),
+                "fuzz" => fuzz = Some(parse_into(value)?),
+                _ => {}
+            }
+        }
+
+        Ok(Metal::new(
+            albedo.ok_or("missing required key `albedo`")?,
+            fuzz.unwrap(),
+        ))
     }
 }

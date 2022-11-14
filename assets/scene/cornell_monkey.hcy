@@ -1,0 +1,77 @@
+image:
+  width: 750
+  height: 375
+  bounces: 12
+  samples: 1000
+  tone map: clamp
+
+scene:
+  skybox: color
+    color: 0.0, 0.0, 0.0
+
+  camera:
+    eye: 277.5, 138.75, -1000.0
+    at: 277.5, 138.75, 0.0
+    up: 0.0, 1.0, 0.0
+    vfov: 15.0
+    aperture: 0.0
+
+  objects:
+    left_wall:
+      primitive: rect
+        origin: 555.0, 0.0, 0.0
+        s1: 0.0, 277.5, 0.0
+        s2: 0.0, 0.0, 555.0
+      material: lambertian
+        albedo: 0.12, 0.12, 0.75
+
+    right_wall:
+      primitive: rect
+        origin: 0.0, 0.0, 0.0
+        s1: 0.0, 277.5, 0.0
+        s2: 0.0, 0.0, 555.0
+      material: lambertian
+        albedo: 0.65, 0.05, 0.05
+
+    floor:
+      primitive: rect
+        origin: 0.0, 0.0, 0.0
+        s1: 555.0, 0.0, 0.0
+        s2: 0.0, 0.0, 555.0
+      material: lambertian
+        albedo: 0.73, 0.73, 0.73
+        
+    ceiling:
+      primitive: rect
+        origin: 0.0, 277.5, 0.0
+        s1: 555.0, 0.0, 0.0
+        s2: 0.0, 0.0, 555.0
+      material: lambertian
+        albedo: 0.73, 0.73, 0.73
+        
+    back_wall:
+      primitive: rect
+        origin: 0.0, 0.0, 555.0
+        s1: 555.0, 0.0, 0.0
+        s2: 0.0, 277.5, 0.0
+      material: lambertian
+        albedo: 0.73, 0.73, 0.73
+        
+    light:
+      primitive: rect
+        origin: 213.0, 276.5, 227.0
+        s1: 130.0, 0.0, 0.0
+        s2: 0.0, 0.0, 105.0
+      material: diffuse_light
+        color: 1.0, 1.0, 1.0
+        intensity: 15.0
+
+    monkey:
+        primitive: mesh
+            path: assets/models/smoothanne.obj
+        material: lambertian
+            albedo: 0.73, 0.73, 0.73
+        transform:
+            translate: 277.5, 50.0, 277.5
+            scale: 100.0, 100.0, 100.0
+            rotate: 0, 210, -35.0

@@ -6,7 +6,7 @@ use crate::{
 
 const INVALID_IDX: usize = usize::MAX;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct BVHNode {
     bounds: AABB,
     idx: usize,
@@ -46,7 +46,7 @@ impl BVHNode {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BVH<T: Hittable> {
     pub hittables: Vec<T>,
     nodes: Vec<BVHNode>,

@@ -1,5 +1,10 @@
-use super::{BounceInfo, Hittable, Intersection, AABB};
-use crate::maths::{mat3, vec3, Ray};
+use std::error::Error;
+
+use crate::{
+    hittables::{BounceInfo, Hittable, Intersection, AABB},
+    loader::{parse_into, FromHCY},
+    maths::{mat3, vec3, Ray},
+};
 
 #[derive(Clone, Debug)]
 pub struct Rect {
@@ -70,5 +75,31 @@ impl Hittable for Rect {
         (self.origin + (self.s1 * rand::random::<f32>()) + (self.s2 * rand::random::<f32>())
             - origin)
             .normalize()
+    }
+}
+
+impl FromHCY for Rect {
+    fn from_hcy(_member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let mut origin = None;
+        let mut s1 = None;
+        let mut s2 = None;
+
+        for line in lines.into_iter() {
+            let (key, value) = line
+                .split_once(':')
+                .ok_or("invalid key value pair syntax")?;
+            match key.trim() {
+                "origin" => origin = Some(parse_into(value)?),
+                "s1" => s1 = Some(parse_into(value)?),
+                "s2" => s2 = Some(parse_into(value)?),
+                _ => {}
+            }
+        }
+
+        Ok(Rect::new(
+            origin.ok_or("missing required key `origin`")?,
+            s1.ok_or("missing required key `s1`")?,
+            s2.ok_or("missing required key `s2`")?,
+        ))
     }
 }

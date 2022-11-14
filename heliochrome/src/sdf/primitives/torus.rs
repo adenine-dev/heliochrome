@@ -4,6 +4,7 @@ use crate::{
     sdf::SDF,
 };
 
+#[derive(Debug)]
 pub struct Torus {
     r_major: f32,
     r_minor: f32,

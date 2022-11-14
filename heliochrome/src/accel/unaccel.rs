@@ -5,7 +5,7 @@ use crate::{
     maths::Ray,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Unaccel<T: Hittable> {
     pub hittables: Vec<T>,
 }

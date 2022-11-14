@@ -1,10 +1,13 @@
+use std::error::Error;
+
 use crate::{
     color::Color,
     image::Image,
+    loader::{parse_into, FromHCY},
     maths::{mat3, vec3},
 };
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Debug)]
 pub enum ToneMap {
     Clamp,
     Simple(f32),
@@ -117,5 +120,42 @@ impl ToString for ToneMap {
             ToneMap::ACES => "ACES",
         }
         .to_owned()
+    }
+}
+
+impl FromHCY for ToneMap {
+    fn from_hcy(member: Option<&str>, lines: Vec<String>) -> Result<Self, Box<dyn Error>> {
+        let member = member.ok_or("invalid syntax missing member specifier")?;
+        match member.trim() {
+            "clamp" => Ok(ToneMap::Clamp),
+            "simple" => {
+                let mut exposure = 1.0;
+                for line in lines {
+                    let (key, value) = line
+                        .split_once(':')
+                        .ok_or("invalid key value pair syntax")?;
+                    if key == "exposure" {
+                        exposure = parse_into(value)?;
+                    }
+                }
+                Ok(ToneMap::Simple(exposure))
+            }
+            "Reinhard" => {
+                let mut white_point = 1.0;
+                for line in lines {
+                    let (key, value) = line
+                        .split_once(':')
+                        .ok_or("invalid key value pair syntax")?;
+                    if key == "white point" {
+                        white_point = parse_into(value)?;
+                    }
+                }
+                Ok(ToneMap::Reinhard(white_point))
+            }
+            "HejlRichard" => Ok(ToneMap::HejlRichard),
+            "Hable" => Ok(ToneMap::Hable),
+            "ACES" => Ok(ToneMap::ACES),
+            _ => Err("invalid tone mapper")?,
+        }
     }
 }
