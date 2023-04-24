@@ -1,7 +1,5 @@
 [workspace]
-members = [
-    "driver", "heliochrome", "heliochromy"
-]
+members = ["driver", "heliochrome", "heliochromy"]
 
 [profile.dev]
 opt-level = 3

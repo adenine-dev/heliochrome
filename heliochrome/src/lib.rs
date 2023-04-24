@@ -1,4 +1,3 @@
-#![feature(map_first_last)]
 #![feature(portable_simd)]
 #![feature(const_trait_impl)]
 #![feature(stmt_expr_attributes)]

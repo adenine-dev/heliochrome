@@ -11,18 +11,56 @@ use eframe::{
     egui::{
         self,
         plot::{Legend, Plot, PlotImage, PlotPoint},
-        CollapsingHeader, ComboBox, Key, TextureFilter, Ui, WidgetText,
+        CollapsingHeader, ComboBox, Key, TextureFilter, TextureOptions, Ui, WidgetText,
     },
     epaint::{Color32, ColorImage, ImageData, TextureHandle, Vec2},
     CreationContext, NativeOptions,
 };
-use egui_dock::{DockArea, DynamicTabViewer, DynamicTree, NodeIndex, Style, Tab};
+use egui_dock::{DockArea, NodeIndex, Style, TabViewer, Tree};
 use heliochrome::{
     color::Color, context::Context, image::Image, maths::vec2, tonemap::ToneMap, util::write_image,
 };
 
 mod make_context;
 use make_context::make_context;
+
+// NOTE: this is pretty much just a bad copy paste of egui_dock 2.1 code to update it to 5.0, no clue why this changed, i liked it (T_T)
+pub trait Tab {
+    fn ui(&mut self, ui: &mut Ui);
+
+    fn title(&mut self) -> WidgetText;
+
+    fn on_close(&mut self) -> bool {
+        true
+    }
+
+    fn force_close(&mut self) -> bool {
+        false
+    }
+}
+struct DynamicTabViewer {}
+
+impl TabViewer for DynamicTabViewer {
+    type Tab = Box<dyn Tab>;
+
+    fn ui(&mut self, ui: &mut Ui, tab: &mut Self::Tab) {
+        tab.ui(ui)
+    }
+
+    fn title(&mut self, tab: &mut Self::Tab) -> WidgetText {
+        tab.title()
+    }
+
+    fn on_close(&mut self, tab: &mut Self::Tab) -> bool {
+        tab.on_close()
+    }
+
+    fn force_close(&mut self, tab: &mut Self::Tab) -> bool {
+        tab.force_close()
+    }
+}
+
+pub type DynamicTree = Tree<Box<dyn Tab>>;
 
 struct StateData {
     pub changed: bool,
@@ -329,7 +367,10 @@ impl RenderTab {
                 ],
                 EMPTY_TEXTURE_COLOR,
             )),
-            TextureFilter::Nearest,
+            TextureOptions {
+                magnification: TextureFilter::Nearest,
+                minification: TextureFilter::Nearest,
+            },
         );
         Self {
             texture_handle,
@@ -357,7 +398,10 @@ impl Tab for RenderTab {
                                 [size.x as usize, size.y as usize],
                                 EMPTY_TEXTURE_COLOR,
                             )),
-                            TextureFilter::Nearest,
+                            TextureOptions {
+                                magnification: TextureFilter::Nearest,
+                                minification: TextureFilter::Nearest,
+                            },
                         );
 
                         self.state.borrow_mut().image.buffer.fill(Color::new(
@@ -409,7 +453,10 @@ impl Tab for RenderTab {
                             [size.x as usize, size.y as usize],
                             EMPTY_TEXTURE_COLOR,
                         )),
-                        TextureFilter::Nearest,
+                        TextureOptions {
+                            magnification: TextureFilter::Nearest,
+                            minification: TextureFilter::Nearest,
+                        },
                     );
                 }
             }
@@ -435,7 +482,10 @@ impl Tab for RenderTab {
                     [img.size.x as usize, img.size.y as usize],
                     &img.to_gamma_corrected_rgba8(self.state.borrow().gamma),
                 )),
-                TextureFilter::Linear,
+                TextureOptions {
+                    magnification: TextureFilter::Linear,
+                    minification: TextureFilter::Linear,
+                },
             );
 
             if !self.rendering {
@@ -463,7 +513,7 @@ impl Tab for RenderTab {
                 });
         });
 
-        if ui.input().key_down(Key::S) && ui.input().modifiers.ctrl {
+        if ui.input(|i| i.key_down(Key::S)) && ui.input(|i| i.modifiers.ctrl) {
             self.state.borrow().save();
         }
     }
@@ -490,7 +540,10 @@ impl PreviewTab {
                 ],
                 EMPTY_TEXTURE_COLOR,
             )),
-            TextureFilter::Nearest,
+            TextureOptions {
+                magnification: TextureFilter::Nearest,
+                minification: TextureFilter::Nearest,
+            },
         );
         Self {
             texture_handle,
@@ -507,23 +560,23 @@ impl Tab for PreviewTab {
         let reset = {
             let state = self.state.borrow();
             let camera = &mut state.context.scene.write().unwrap().camera;
-            let input = ui.input();
+            // let input = ui.input(|i| i);
             let mut should_update = true;
             let camera_speed = (camera.at - camera.eye).mag() / 10.0;
-            if !ui.input().modifiers.ctrl {
-                if input.key_down(Key::A) {
+            if !ui.input(|i| i.modifiers.ctrl) {
+                if ui.input(|i| i.key_down(Key::A)) {
                     camera.eye -=
                         (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
-                } else if input.key_down(Key::D) {
+                } else if ui.input(|i| i.key_down(Key::D)) {
                     camera.eye +=
                         (camera.at - camera.eye).cross(camera.up).normalize() * camera_speed;
-                } else if input.key_down(Key::W) {
+                } else if ui.input(|i| i.key_down(Key::W)) {
                     camera.eye += (camera.at - camera.eye).normalize() * camera_speed;
-                } else if input.key_down(Key::S) {
+                } else if ui.input(|i| i.key_down(Key::S)) {
                     camera.eye -= (camera.at - camera.eye).normalize() * camera_speed;
-                } else if input.key_down(Key::Q) {
+                } else if ui.input(|i| i.key_down(Key::Q)) {
                     camera.eye += camera.up.normalize() * camera_speed;
-                } else if input.key_down(Key::E) {
+                } else if ui.input(|i| i.key_down(Key::E)) {
                     camera.eye -= camera.up.normalize() * camera_speed;
                 } else {
                     should_update = false;
@@ -550,14 +603,17 @@ impl Tab for PreviewTab {
                         [size.x as usize, size.y as usize],
                         EMPTY_TEXTURE_COLOR,
                     )),
-                    TextureFilter::Nearest,
+                    TextureOptions {
+                        magnification: TextureFilter::Nearest,
+                        minification: TextureFilter::Nearest,
+                    },
                 );
             }
         }
         let start_time = Instant::now();
 
         egui::Grid::new("size").show(ui, |ui| {
-            if ui.button("📷").clicked() || ui.input().key_down(Key::Space) {
+            if ui.button("📷").clicked() || ui.input(|i| i.key_down(Key::Space)) {
                 self.rendering = !self.rendering;
             }
             ui.label(format!("samples: {}", samples));
@@ -571,7 +627,10 @@ impl Tab for PreviewTab {
                         [size.x as usize, size.y as usize],
                         &self.state.borrow().image.to_gamma_corrected_rgba8(gamma),
                     )),
-                    TextureFilter::Linear,
+                    TextureOptions {
+                        magnification: TextureFilter::Linear,
+                        minification: TextureFilter::Linear,
+                    },
                 );
             }
         });
@@ -604,7 +663,7 @@ impl Tab for PreviewTab {
                 });
         });
 
-        if ui.input().key_down(Key::S) && ui.input().modifiers.ctrl {
+        if ui.input(|i| i.key_down(Key::S)) && ui.input(|i| i.modifiers.ctrl) {
             self.state.borrow().save();
         }
     }
@@ -656,5 +715,6 @@ fn main() {
         "Heliochrome",
         options,
         Box::new(|cc| Box::new(HeliochromeDriver::new(cc))),
-    );
+    )
+    .expect("oof");
 }

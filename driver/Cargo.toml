@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-heliochrome = {path = "../heliochrome"}
+heliochrome = { path = "../heliochrome" }
 indicatif = "0.17.0"
 softbuffer = "0.1.1"
-eframe = "0.19.0"
-egui_dock = "0.2.1"
+eframe = "0.21.3"
+egui_dock = "0.5"
